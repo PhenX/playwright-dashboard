@@ -133,7 +133,7 @@ export default eventHandler(async (event) => {
           // Store relative path (without storage path prefix)
           reportPath = join(`project-${project.id}`, reportDirName, 'index.html')
           console.log(`Extracted HTML report to storage, relative path: ${reportPath}`)
-          
+
           // Calculate the unzipped report size
           reportSize = await getDirectorySize(reportDir)
           console.log(`Report size (unzipped): ${reportSize} bytes`)
