@@ -4,26 +4,6 @@ const runId = route.params.id
 
 const { data: testRun, refresh } = await useFetch(`/api/test-runs/${runId}`)
 
-const columns = [{
-  key: 'id',
-  label: 'Test ID'
-}, {
-  key: 'title',
-  label: 'Test Title'
-}, {
-  key: 'status',
-  label: 'Status'
-}, {
-  key: 'duration',
-  label: 'Duration'
-}, {
-  key: 'retries',
-  label: 'Retries'
-}, {
-  key: 'actions',
-  label: 'Actions'
-}]
-
 function formatDuration(ms?: number | null) {
   if (!ms) return 'N/A'
   return `${(ms / 1000).toFixed(2)}s`
@@ -113,42 +93,32 @@ function getStatusColor(status: string) {
             <h3 class="text-lg font-medium">Test Cases</h3>
           </template>
 
-          <UTable :columns="columns" :rows="testRun?.testCases || []">
-            <template #id-data="{ row }">
-              <NuxtLink :to="`/test-cases/${row.id}`" class="text-primary hover:underline">
-                #{{ row.id }}
-              </NuxtLink>
-            </template>
-
-            <template #title-data="{ row }">
-              <div>
-                <div class="font-medium">{{ row.title }}</div>
-                <div v-if="row.location" class="text-xs text-gray-500">{{ row.location }}</div>
+          <div v-if="testRun?.testCases && testRun.testCases.length > 0" class="space-y-2">
+            <div v-for="testCase in testRun.testCases" :key="testCase.id" class="p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <NuxtLink :to="`/test-cases/${testCase.id}`" class="text-primary hover:underline font-medium">
+                      {{ testCase.title }}
+                    </NuxtLink>
+                    <UBadge :color="getStatusColor(testCase.status)">
+                      {{ testCase.status }}
+                    </UBadge>
+                  </div>
+                  <div class="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
+                    <span v-if="testCase.location">{{ testCase.location }}</span>
+                    <span>Duration: {{ formatDuration(testCase.duration) }}</span>
+                    <span v-if="testCase.retries > 0">Retries: {{ testCase.retries }}</span>
+                  </div>
+                </div>
+                <UButton :to="`/test-cases/${testCase.id}`" size="sm" variant="outline">
+                  View Details
+                </UButton>
               </div>
-            </template>
+            </div>
+          </div>
 
-            <template #status-data="{ row }">
-              <UBadge :color="getStatusColor(row.status)">
-                {{ row.status }}
-              </UBadge>
-            </template>
-
-            <template #duration-data="{ row }">
-              {{ formatDuration(row.duration) }}
-            </template>
-
-            <template #retries-data="{ row }">
-              {{ row.retries }}
-            </template>
-
-            <template #actions-data="{ row }">
-              <UButton :to="`/test-cases/${row.id}`" size="xs" variant="outline">
-                View Details
-              </UButton>
-            </template>
-          </UTable>
-
-          <div v-if="!testRun?.testCases || testRun.testCases.length === 0" class="text-center py-8 text-gray-500">
+          <div v-else class="text-center py-8 text-gray-500">
             No test cases recorded for this run.
           </div>
         </UCard>

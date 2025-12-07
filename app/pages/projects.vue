@@ -1,23 +1,6 @@
 <script setup lang="ts">
 const { data: projects, refresh } = await useFetch('/api/projects')
 
-const columns = [{
-  key: 'name',
-  label: 'Project Name'
-}, {
-  key: 'totalRuns',
-  label: 'Total Runs'
-}, {
-  key: 'latestRun.status',
-  label: 'Latest Status'
-}, {
-  key: 'latestRun.startTime',
-  label: 'Last Run'
-}, {
-  key: 'actions',
-  label: 'Actions'
-}]
-
 function formatDate(date: string | Date | null) {
   if (!date) return 'N/A'
   return new Date(date).toLocaleString()
@@ -54,37 +37,31 @@ function getStatusColor(status?: string) {
             <h2 class="text-xl font-semibold">Playwright Test Projects</h2>
           </template>
 
-          <UTable :columns="columns" :rows="projects || []">
-            <template #name-data="{ row }">
-              <NuxtLink :to="`/projects/${row.id}`" class="text-primary hover:underline font-medium">
-                {{ row.name }}
-              </NuxtLink>
-            </template>
+          <div v-if="projects && projects.length > 0" class="divide-y divide-gray-200 dark:divide-gray-800">
+            <div v-for="project in projects" :key="project.id" class="py-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 px-4 rounded">
+              <div class="flex-1">
+                <NuxtLink :to="`/projects/${project.id}`" class="text-primary hover:underline font-medium text-lg">
+                  {{ project.name }}
+                </NuxtLink>
+                <div class="mt-1 flex gap-4 text-sm text-gray-600 dark:text-gray-400">
+                  <span>{{ project.totalRuns }} test runs</span>
+                  <span v-if="project.latestRun">Last run: {{ formatDate(project.latestRun.startTime) }}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <UBadge v-if="project.latestRun" :color="getStatusColor(project.latestRun.status)" size="md">
+                  {{ project.latestRun.status }}
+                </UBadge>
+                <UButton :to="`/projects/${project.id}`" size="sm" variant="outline">
+                  View Details
+                </UButton>
+              </div>
+            </div>
+          </div>
 
-            <template #totalRuns-data="{ row }">
-              {{ row.totalRuns }}
-            </template>
-
-            <template #latestRun.status-data="{ row }">
-              <UBadge v-if="row.latestRun" :color="getStatusColor(row.latestRun.status)">
-                {{ row.latestRun.status }}
-              </UBadge>
-              <span v-else class="text-gray-400">No runs</span>
-            </template>
-
-            <template #latestRun.startTime-data="{ row }">
-              {{ formatDate(row.latestRun?.startTime) }}
-            </template>
-
-            <template #actions-data="{ row }">
-              <UButton :to="`/projects/${row.id}`" size="xs" variant="outline">
-                View Details
-              </UButton>
-            </template>
-          </UTable>
-
-          <div v-if="!projects || projects.length === 0" class="text-center py-8 text-gray-500">
-            No projects yet. Submit test results via the API to create projects.
+          <div v-else class="text-center py-12 text-gray-500">
+            <p class="text-lg mb-2">No projects yet</p>
+            <p class="text-sm">Submit test results via the API to create projects</p>
           </div>
         </UCard>
       </div>

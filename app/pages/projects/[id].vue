@@ -4,32 +4,6 @@ const projectId = route.params.id
 
 const { data: project, refresh } = await useFetch(`/api/projects/${projectId}`)
 
-const columns = [{
-  key: 'id',
-  label: 'Run ID'
-}, {
-  key: 'status',
-  label: 'Status'
-}, {
-  key: 'startTime',
-  label: 'Start Time'
-}, {
-  key: 'duration',
-  label: 'Duration'
-}, {
-  key: 'totalTests',
-  label: 'Total'
-}, {
-  key: 'passedTests',
-  label: 'Passed'
-}, {
-  key: 'failedTests',
-  label: 'Failed'
-}, {
-  key: 'actions',
-  label: 'Actions'
-}]
-
 function formatDate(date: string | Date) {
   return new Date(date).toLocaleString()
 }
@@ -83,47 +57,48 @@ function getStatusColor(status: string) {
           <div class="space-y-4">
             <div>
               <h3 class="text-lg font-medium mb-3">Test Runs</h3>
-              <UTable :columns="columns" :rows="project?.testRuns || []">
-                <template #id-data="{ row }">
-                  <NuxtLink :to="`/test-runs/${row.id}`" class="text-primary hover:underline">
-                    #{{ row.id }}
-                  </NuxtLink>
-                </template>
+              
+              <div v-if="project?.testRuns && project.testRuns.length > 0" class="space-y-2">
+                <div v-for="run in project.testRuns" :key="run.id" class="p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-3 mb-2">
+                        <NuxtLink :to="`/test-runs/${run.id}`" class="text-primary hover:underline font-medium">
+                          Run #{{ run.id }}
+                        </NuxtLink>
+                        <UBadge :color="getStatusColor(run.status)">
+                          {{ run.status }}
+                        </UBadge>
+                      </div>
+                      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span class="text-gray-500">Started:</span>
+                          <span class="ml-2">{{ formatDate(run.startTime) }}</span>
+                        </div>
+                        <div>
+                          <span class="text-gray-500">Duration:</span>
+                          <span class="ml-2">{{ formatDuration(run.duration) }}</span>
+                        </div>
+                        <div>
+                          <span class="text-gray-500">Total:</span>
+                          <span class="ml-2">{{ run.totalTests }}</span>
+                        </div>
+                        <div>
+                          <span class="text-gray-500">Passed:</span>
+                          <span class="ml-2 text-green-600">{{ run.passedTests }}</span>
+                          <span class="text-gray-500 ml-2">Failed:</span>
+                          <span class="ml-2 text-red-600">{{ run.failedTests }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <UButton :to="`/test-runs/${run.id}`" size="sm" variant="outline">
+                      View Details
+                    </UButton>
+                  </div>
+                </div>
+              </div>
 
-                <template #status-data="{ row }">
-                  <UBadge :color="getStatusColor(row.status)">
-                    {{ row.status }}
-                  </UBadge>
-                </template>
-
-                <template #startTime-data="{ row }">
-                  {{ formatDate(row.startTime) }}
-                </template>
-
-                <template #duration-data="{ row }">
-                  {{ formatDuration(row.duration) }}
-                </template>
-
-                <template #totalTests-data="{ row }">
-                  {{ row.totalTests }}
-                </template>
-
-                <template #passedTests-data="{ row }">
-                  <span class="text-green-600">{{ row.passedTests }}</span>
-                </template>
-
-                <template #failedTests-data="{ row }">
-                  <span class="text-red-600">{{ row.failedTests }}</span>
-                </template>
-
-                <template #actions-data="{ row }">
-                  <UButton :to="`/test-runs/${row.id}`" size="xs" variant="outline">
-                    View Details
-                  </UButton>
-                </template>
-              </UTable>
-
-              <div v-if="!project?.testRuns || project.testRuns.length === 0" class="text-center py-8 text-gray-500">
+              <div v-else class="text-center py-8 text-gray-500">
                 No test runs yet for this project.
               </div>
             </div>
