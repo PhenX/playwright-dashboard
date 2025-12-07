@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatBytes } from '~/utils'
+
 const route = useRoute()
 const projectId = route.params.id
 
@@ -118,6 +120,10 @@ function getStatusColor(status: string) {
                           <span class="ml-2 text-green-600">{{ run.passedTests }}</span>
                           <span class="text-gray-500 ml-2">Failed:</span>
                           <span class="ml-2 text-red-600">{{ run.failedTests }}</span>
+                        </div>
+                        <div v-if="run.reportSize">
+                          <span class="text-gray-500">Report Size:</span>
+                          <span class="ml-2">{{ formatBytes(run.reportSize) }}</span>
                         </div>
                       </div>
                     </div>
