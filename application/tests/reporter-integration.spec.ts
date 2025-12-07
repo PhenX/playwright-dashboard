@@ -13,7 +13,7 @@ test.describe('Reporter Integration Tests', () => {
   })
 
   test('reporter package.json should have correct metadata', async () => {
-    const packageJsonPath = join(process.cwd(), 'reporter', 'package.json')
+    const packageJsonPath = join(process.cwd(), '..', 'reporter', 'package.json')
     expect(existsSync(packageJsonPath)).toBe(true)
 
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
@@ -26,7 +26,7 @@ test.describe('Reporter Integration Tests', () => {
   })
 
   test('reporter should have TypeScript definitions', async () => {
-    const typeDefsPath = join(process.cwd(), 'reporter', 'index.d.ts')
+    const typeDefsPath = join(process.cwd(), '..', 'reporter', 'index.d.ts')
     expect(existsSync(typeDefsPath)).toBe(true)
 
     const typeDefs = readFileSync(typeDefsPath, 'utf-8')

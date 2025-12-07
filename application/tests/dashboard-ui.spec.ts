@@ -54,7 +54,7 @@ test.describe('Dashboard UI Tests', () => {
     await expect(page.getByText('ui-test-project')).toBeVisible()
 
     // Check for test run count
-    await expect(page.getByText('test runs')).toBeVisible()
+    await expect(page.getByText(/\d+ test runs/).first()).toBeVisible() // There may be multiple projects
   })
 
   test('should navigate to project details page', async ({ page }) => {
@@ -70,7 +70,7 @@ test.describe('Dashboard UI Tests', () => {
     await expect(page.getByText('ui-test-project')).toBeVisible()
 
     // Check for test runs section
-    await expect(page.getByText('Test Runs')).toBeVisible()
+    await expect(page.getByText('Test Runs').filter({visible: true})).toBeVisible() // There may be multiple projects
   })
 
   test('should navigate to test run details page', async ({ page }) => {
@@ -81,7 +81,7 @@ test.describe('Dashboard UI Tests', () => {
     await page.waitForURL(/\/projects\/\d+/)
 
     // Click on first test run
-    const viewDetailsButton = page.getByRole('button', { name: 'View Details' }).first()
+    const viewDetailsButton = page.getByRole('link', { name: 'View Details' }).first()
     await viewDetailsButton.click()
 
     // Wait for navigation

@@ -1,9 +1,6 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('API Server Tests', () => {
-  let _projectId: number
-  let _testRunId: number
-
   test('should submit test results via JSON API', async ({ request }) => {
     const response = await request.post('/api/test-runs/submit', {
       data: {
@@ -40,9 +37,6 @@ test.describe('API Server Tests', () => {
     expect(data.success).toBe(true)
     expect(data.testRunId).toBeDefined()
     expect(data.projectId).toBeDefined()
-
-    projectId = data.projectId
-    testRunId = data.testRunId
   })
 
   test('should get list of projects', async ({ request }) => {
