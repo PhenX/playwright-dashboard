@@ -18,6 +18,28 @@ const stats = computed(() => {
 const recentProjects = computed(() => {
   return projects.value?.slice(0, 5) || []
 })
+
+// Aggregate all test runs from all projects for the overview chart
+const allTestRuns = computed(() => {
+  if (!projects.value) return []
+  
+  const runs: any[] = []
+  projects.value.forEach(project => {
+    if (project.latestRun) {
+      runs.push({
+        id: project.latestRun.id,
+        status: project.latestRun.status,
+        startTime: project.latestRun.startTime,
+        passedTests: project.latestRun.passedTests || 0,
+        failedTests: project.latestRun.failedTests || 0,
+        skippedTests: project.latestRun.skippedTests || 0,
+        totalTests: project.latestRun.totalTests || 0
+      })
+    }
+  })
+  
+  return runs.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+})
 </script>
 
 <template>
@@ -46,6 +68,16 @@ const recentProjects = computed(() => {
             </div>
           </UCard>
         </div>
+
+        <!-- Test Runs Trend Chart -->
+        <UCard v-if="allTestRuns.length > 0">
+          <template #header>
+            <h2 class="text-xl font-semibold">Test Results Trend</h2>
+            <p class="text-sm text-gray-600 mt-1">Overview of test results across all projects</p>
+          </template>
+          
+          <TestRunsChart :test-runs="allTestRuns" :height="300" />
+        </UCard>
 
         <!-- Recent Projects -->
         <UCard>

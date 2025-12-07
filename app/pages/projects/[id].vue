@@ -46,6 +46,16 @@ function getStatusColor(status: string) {
           Back to Projects
         </UButton>
 
+        <!-- Test Runs Trend Chart -->
+        <UCard v-if="project?.testRuns && project.testRuns.length > 0">
+          <template #header>
+            <h2 class="text-xl font-semibold">Test Results Trend</h2>
+            <p class="text-sm text-gray-600 mt-1">Test run statistics over time for {{ project?.name }}</p>
+          </template>
+          
+          <TestRunsChart :test-runs="project.testRuns" :height="300" />
+        </UCard>
+
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
