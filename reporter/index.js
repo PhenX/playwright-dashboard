@@ -71,14 +71,26 @@ class PlaywrightDashboardReporter {
     this.endTime = new Date().toISOString();
     const duration = new Date(this.endTime) - new Date(this.startTime);
 
-    // Determine overall status
-    let overallStatus = 'passed';
-    if (this.failedTests > 0 || this.timedOutTests > 0) {
-      overallStatus = 'failed';
+    // Use Playwright's determination of overall status
+    // result.status can be: 'passed', 'failed', 'timedout', 'interrupted'
+    let overallStatus = 'failed'; // Default to failed for safety
+    
+    if (result && result.status) {
+      // Map Playwright's status to our status
+      if (result.status === 'passed') {
+        overallStatus = 'passed';
+      } else if (result.status === 'failed' || result.status === 'timedout' || result.status === 'interrupted') {
+        overallStatus = 'failed';
+      }
+    } else {
+      // Fallback to manual calculation if result.status is not available
+      if (this.failedTests === 0 && this.timedOutTests === 0 && this.totalTests > 0) {
+        overallStatus = 'passed';
+      }
     }
 
-    console.log(`[Playwright Dashboard] Test run completed. Status: ${overallStatus}`);
-    console.log(`[Playwright Dashboard] Total: ${this.totalTests}, Passed: ${this.passedTests}, Failed: ${this.failedTests}, Skipped: ${this.skippedTests}`);
+    console.log(`[Playwright Dashboard] Test run completed. Status: ${overallStatus} (Playwright result.status: ${result?.status || 'undefined'})`);
+    console.log(`[Playwright Dashboard] Total: ${this.totalTests}, Passed: ${this.passedTests}, Failed: ${this.failedTests}, Skipped: ${this.skippedTests}, TimedOut: ${this.timedOutTests}`);
 
     // Try to upload with files if available
     if (this.options.uploadTraces || this.options.uploadReport) {

@@ -76,8 +76,8 @@ export default defineConfig({
 
 ```
 [Playwright Dashboard] Starting test run for project: my-test-project
-[Playwright Dashboard] Test run completed. Status: passed
-[Playwright Dashboard] Total: 10, Passed: 9, Failed: 1, Skipped: 0
+[Playwright Dashboard] Test run completed. Status: failed (Playwright result.status: failed)
+[Playwright Dashboard] Total: 10, Passed: 9, Failed: 1, Skipped: 0, TimedOut: 0
 [Playwright Dashboard] Zipping HTML report directory: /path/to/playwright-report
 [Playwright Dashboard] Report archive created: 2458391 bytes
 [Playwright Dashboard] Adding HTML report archive: /tmp/.temp-dashboard/playwright-report-1234567890.zip
