@@ -43,6 +43,20 @@ export default eventHandler(async (event) => {
       contentType = 'application/zip'
     } else if (ext === '.json') {
       contentType = 'application/json'
+    } else if (ext === '.js') {
+      contentType = 'application/javascript'
+    } else if (ext === '.css') {
+      contentType = 'text/css'
+    } else if (ext === '.png') {
+      contentType = 'image/png'
+    } else if (ext === '.jpg' || ext === '.jpeg') {
+      contentType = 'image/jpeg'
+    } else if (ext === '.svg') {
+      contentType = 'image/svg+xml'
+    } else if (ext === '.woff' || ext === '.woff2') {
+      contentType = 'font/woff2'
+    } else if (ext === '.ttf') {
+      contentType = 'font/ttf'
     }
 
     setResponseHeader(event, 'Content-Type', contentType)

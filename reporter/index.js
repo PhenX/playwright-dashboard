@@ -4,6 +4,7 @@ const { URL } = require('url');
 const fs = require('fs');
 const path = require('path');
 const FormData = require('form-data');
+const archiver = require('archiver');
 
 /**
  * Playwright Dashboard Reporter
@@ -200,14 +201,22 @@ class PlaywrightDashboardReporter {
     });
     form.append('testCases', JSON.stringify(testCasesData));
 
-    // Add HTML report if available
+    // Add HTML report if available (zip the entire directory)
     if (this.options.uploadReport) {
-      const reportPath = this.findHTMLReport();
-      if (reportPath && fs.existsSync(reportPath)) {
-        console.log(`[Playwright Dashboard] Adding HTML report: ${reportPath}`);
-        form.append('htmlReport', fs.createReadStream(reportPath), {
-          filename: 'index.html'
-        });
+      const reportDir = this.findHTMLReportDirectory();
+      if (reportDir && fs.existsSync(reportDir)) {
+        console.log(`[Playwright Dashboard] Zipping HTML report directory: ${reportDir}`);
+        try {
+          const zipPath = await this.zipDirectory(reportDir);
+          if (zipPath && fs.existsSync(zipPath)) {
+            console.log(`[Playwright Dashboard] Adding HTML report archive: ${zipPath}`);
+            form.append('htmlReport', fs.createReadStream(zipPath), {
+              filename: 'playwright-report.zip'
+            });
+          }
+        } catch (error) {
+          console.warn(`[Playwright Dashboard] Failed to zip HTML report: ${error.message}`);
+        }
       }
     }
 
@@ -297,6 +306,58 @@ class PlaywrightDashboardReporter {
     }
 
     return null;
+  }
+
+  findHTMLReportDirectory() {
+    // Common locations for Playwright HTML report directories
+    const possibleDirs = [
+      'playwright-report',
+      './playwright-report',
+      path.join(process.cwd(), 'playwright-report')
+    ];
+
+    for (const reportDir of possibleDirs) {
+      if (fs.existsSync(reportDir) && fs.statSync(reportDir).isDirectory()) {
+        // Verify it contains index.html
+        const indexPath = path.join(reportDir, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          return reportDir;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  async zipDirectory(sourceDir) {
+    return new Promise((resolve, reject) => {
+      const tempDir = path.join(process.cwd(), '.temp-dashboard');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      const outputPath = path.join(tempDir, `playwright-report-${Date.now()}.zip`);
+      const output = fs.createWriteStream(outputPath);
+      const archive = archiver('zip', {
+        zlib: { level: 9 } // Maximum compression
+      });
+
+      output.on('close', () => {
+        console.log(`[Playwright Dashboard] Report archive created: ${archive.pointer()} bytes`);
+        resolve(outputPath);
+      });
+
+      archive.on('error', (err) => {
+        reject(err);
+      });
+
+      archive.pipe(output);
+      
+      // Add all files from the report directory
+      archive.directory(sourceDir, false);
+      
+      archive.finalize();
+    });
   }
 
   findTraceFiles(testCase) {

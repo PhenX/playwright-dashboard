@@ -56,7 +56,7 @@ export default eventHandler(async (event) => {
     } else if (part.name?.startsWith('trace_') && part.filename) {
       // Extract test case index from field name like 'trace_0', 'trace_1', etc.
       const match = part.name.match(/trace_(\d+)/)
-      if (match) {
+      if (match && match[1]) {
         const index = parseInt(match[1])
         // Validate index is reasonable (< 10000)
         if (index >= 0 && index < 10000) {
@@ -111,9 +111,40 @@ export default eventHandler(async (event) => {
   let reportPath: string | null = null
   if (htmlReports.length > 0) {
     const report = htmlReports[0]
-    const reportFilename = `run-${Date.now()}-${report.filename}`
-    reportPath = join(projectPath, reportFilename)
-    await writeFile(reportPath, report.data)
+    
+    if (!report) {
+      console.error('Report is undefined')
+    } else {
+      // Check if it's a zip file
+      if (report.filename.endsWith('.zip')) {
+        // Extract zip file
+        const reportDirName = `run-${Date.now()}-report`
+        const reportDir = join(projectPath, reportDirName)
+        await mkdir(reportDir, { recursive: true })
+        
+        // Use adm-zip to extract the archive
+        try {
+          const AdmZip = (await import('adm-zip')).default
+          const zip = new AdmZip(report.data)
+          zip.extractAllTo(reportDir, true)
+          
+          // Point to the index.html inside the extracted directory
+          reportPath = join(reportDir, 'index.html')
+          console.log(`Extracted HTML report to: ${reportPath}`)
+        } catch (error) {
+          console.error(`Failed to extract HTML report: ${error}`)
+          // Save as zip file if extraction fails
+          const reportFilename = `run-${Date.now()}-${report.filename}`
+          reportPath = join(projectPath, reportFilename)
+          await writeFile(reportPath, report.data)
+        }
+      } else {
+        // Save as regular file (backward compatibility)
+        const reportFilename = `run-${Date.now()}-${report.filename}`
+        reportPath = join(projectPath, reportFilename)
+        await writeFile(reportPath, report.data)
+      }
+    }
   }
 
   // Create test run
@@ -163,6 +194,8 @@ export default eventHandler(async (event) => {
     const allTraces = []
     for (let i = 0; i < insertedTestCases.length; i++) {
       const testCase = insertedTestCases[i]
+      if (!testCase) continue
+      
       const traceFilesForCase = traceFiles.filter(t => t.testCaseIndex === i)
       
       for (const traceFile of traceFilesForCase) {
