@@ -14,12 +14,6 @@ export interface DashboardReporterOptions {
   projectName?: string;
 
   /**
-   * Whether to upload trace files
-   * @default true
-   */
-  uploadTraces?: boolean;
-
-  /**
    * Whether to upload HTML report
    * @default true
    */
@@ -28,20 +22,19 @@ export interface DashboardReporterOptions {
 
 /**
  * Playwright Dashboard Reporter
- * 
+ *
  * A custom reporter that sends test results to a Playwright Dashboard server.
- * 
+ *
  * @example
  * ```typescript
  * // playwright.config.ts
  * import { defineConfig } from '@playwright/test';
- * 
+ *
  * export default defineConfig({
  *   reporter: [
  *     ['playwright-dashboard-reporter', {
  *       serverUrl: 'http://localhost:3000',
  *       projectName: 'my-project',
- *       uploadTraces: true,
  *       uploadReport: true
  *     }]
  *   ]

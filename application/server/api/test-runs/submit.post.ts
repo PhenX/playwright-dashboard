@@ -1,10 +1,10 @@
 import { getDatabase } from '../../database'
-import { projects, testRuns, testCases, traces } from '../../database/schema'
+import { projects, testRuns, testCases } from '../../database/schema'
 import { eq } from 'drizzle-orm'
 
 export default eventHandler(async (event) => {
   const body = await readBody(event)
-  
+
   // Validate required fields
   if (!body.projectName || !body.status || !body.startTime) {
     throw createError({
@@ -18,7 +18,7 @@ export default eventHandler(async (event) => {
   // Get or create project
   const existingProjects = await db.select().from(projects).where(eq(projects.name, body.projectName))
   let project = existingProjects[0]
-  
+
   if (!project) {
     const result = await db.insert(projects).values({
       name: body.projectName,
@@ -69,29 +69,8 @@ export default eventHandler(async (event) => {
       error: testCase.error || null,
       retries: testCase.retries || 0
     }))
-    
-    const insertedTestCases = await db.insert(testCases).values(testCaseValues).returning()
 
-    // Collect all traces to insert in bulk
-    const allTraces = []
-    for (let i = 0; i < body.testCases.length; i++) {
-      const testCase = body.testCases[i]
-      const insertedCase = insertedTestCases[i]
-      
-      if (testCase.traces && Array.isArray(testCase.traces) && insertedCase) {
-        for (const trace of testCase.traces) {
-          allTraces.push({
-            testCaseId: insertedCase.id,
-            tracePath: trace.tracePath
-          })
-        }
-      }
-    }
-
-    // Bulk insert traces if any
-    if (allTraces.length > 0) {
-      await db.insert(traces).values(allTraces)
-    }
+    await db.insert(testCases).values(testCaseValues)
   }
 
   return {

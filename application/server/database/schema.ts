@@ -38,14 +38,6 @@ export const testCases = sqliteTable('test_cases', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
 })
 
-// Traces table
-export const traces = sqliteTable('traces', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  testCaseId: integer('test_case_id').notNull().references(() => testCases.id),
-  tracePath: text('trace_path').notNull(),
-  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
-})
-
 // Type exports for TypeScript
 export type Project = typeof projects.$inferSelect
 export type NewProject = typeof projects.$inferInsert
@@ -53,5 +45,3 @@ export type TestRun = typeof testRuns.$inferSelect
 export type NewTestRun = typeof testRuns.$inferInsert
 export type TestCase = typeof testCases.$inferSelect
 export type NewTestCase = typeof testCases.$inferInsert
-export type Trace = typeof traces.$inferSelect
-export type NewTrace = typeof traces.$inferInsert

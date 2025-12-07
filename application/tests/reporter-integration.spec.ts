@@ -33,7 +33,6 @@ test.describe('Reporter Integration Tests', () => {
     expect(typeDefs).toContain('DashboardReporterOptions');
     expect(typeDefs).toContain('serverUrl');
     expect(typeDefs).toContain('projectName');
-    expect(typeDefs).toContain('uploadTraces');
     expect(typeDefs).toContain('uploadReport');
   });
 });

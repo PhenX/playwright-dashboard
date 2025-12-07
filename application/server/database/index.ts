@@ -55,17 +55,8 @@ export function initDatabase() {
         FOREIGN KEY (test_run_id) REFERENCES test_runs(id)
       );
 
-      CREATE TABLE IF NOT EXISTS traces (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        test_case_id INTEGER NOT NULL,
-        trace_path TEXT NOT NULL,
-        created_at INTEGER NOT NULL,
-        FOREIGN KEY (test_case_id) REFERENCES test_cases(id)
-      );
-
       CREATE INDEX IF NOT EXISTS idx_test_runs_project_id ON test_runs(project_id);
       CREATE INDEX IF NOT EXISTS idx_test_cases_test_run_id ON test_cases(test_run_id);
-      CREATE INDEX IF NOT EXISTS idx_traces_test_case_id ON traces(test_case_id);
     `)
   }
 

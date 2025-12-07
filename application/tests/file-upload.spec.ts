@@ -12,7 +12,7 @@ test.describe('File Upload API Tests', () => {
     if (!existsSync(tempDir)) {
       mkdirSync(tempDir, { recursive: true });
     }
-    
+
     // Create mock HTML report
     const htmlContent = `
       <!DOCTYPE html>
@@ -22,14 +22,14 @@ test.describe('File Upload API Tests', () => {
       </html>
     `;
     writeFileSync(join(tempDir, 'test-report.html'), htmlContent);
-    
+
     // Create mock trace file (just a text file for testing)
     writeFileSync(join(tempDir, 'trace.zip'), 'Mock trace data');
   });
 
   test('should upload test results with HTML report', async ({ request }) => {
     const form = new FormData();
-    
+
     form.append('projectName', 'upload-test-project');
     form.append('testRun', JSON.stringify({
       status: 'passed',
@@ -48,14 +48,14 @@ test.describe('File Upload API Tests', () => {
         location: 'tests/test.spec.ts:10:5'
       }
     ]));
-    
+
     // Read the file
     const htmlReport = readFileSync(join(tempDir, 'test-report.html'));
     form.append('htmlReport', htmlReport, {
       filename: 'index.html',
       contentType: 'text/html'
     });
-    
+
     const response = await request.post('/api/test-runs/upload', {
       multipart: {
         projectName: 'upload-test-project',
@@ -171,12 +171,12 @@ test.describe('File Upload API Tests', () => {
 
     const uploadData = await uploadResponse.json();
     expect(uploadData.reportPath).toBeDefined();
-    
+
     // Try to download the report
     if (uploadData.reportPath) {
       const reportPath = uploadData.reportPath.replace('.data/storage/', '');
       const downloadResponse = await request.get(`/api/files/${reportPath}`);
-      
+
       expect(downloadResponse.ok()).toBeTruthy();
       expect(downloadResponse.headers()['content-type']).toContain('text/html');
     }

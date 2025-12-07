@@ -7,7 +7,7 @@ import { existsSync } from 'fs'
 
 export default eventHandler(async (event) => {
   const formData = await readMultipartFormData(event)
-  
+
   if (!formData) {
     throw createError({
       statusCode: 400,
@@ -83,7 +83,7 @@ export default eventHandler(async (event) => {
   // Get or create project
   const existingProjects = await db.select().from(projects).where(eq(projects.name, projectName))
   let project = existingProjects[0]
-  
+
   if (!project) {
     const result = await db.insert(projects).values({
       name: projectName,
@@ -102,7 +102,7 @@ export default eventHandler(async (event) => {
   // Create storage directory structure
   const storagePath = process.env.STORAGE_PATH || '.data/storage'
   const projectPath = join(storagePath, `project-${project.id}`)
-  
+
   if (!existsSync(projectPath)) {
     await mkdir(projectPath, { recursive: true })
   }
@@ -111,7 +111,7 @@ export default eventHandler(async (event) => {
   let reportPath: string | null = null
   if (htmlReports.length > 0) {
     const report = htmlReports[0]
-    
+
     if (!report) {
       console.error('Report is undefined')
     } else {
@@ -121,13 +121,13 @@ export default eventHandler(async (event) => {
         const reportDirName = `run-${Date.now()}-report`
         const reportDir = join(projectPath, reportDirName)
         await mkdir(reportDir, { recursive: true })
-        
+
         // Use adm-zip to extract the archive
         try {
           const AdmZip = (await import('adm-zip')).default
           const zip = new AdmZip(report.data)
           zip.extractAllTo(reportDir, true)
-          
+
           // Store relative path (without storage path prefix)
           reportPath = join(`project-${project.id}`, reportDirName, 'index.html')
           console.log(`Extracted HTML report to storage, relative path: ${reportPath}`)
@@ -180,7 +180,7 @@ export default eventHandler(async (event) => {
     await mkdir(testRunPath, { recursive: true })
   }
 
-  // Insert test cases with traces
+  // Insert test cases
   if (testCasesData && testCasesData.length > 0) {
     const testCaseValues = testCasesData.map(testCase => ({
       testRunId: testRun.id,
@@ -191,36 +191,8 @@ export default eventHandler(async (event) => {
       error: testCase.error || null,
       retries: testCase.retries || 0
     }))
-    
-    const insertedTestCases = await db.insert(testCases).values(testCaseValues).returning()
 
-    // Save trace files and create trace records
-    const allTraces = []
-    for (let i = 0; i < insertedTestCases.length; i++) {
-      const testCase = insertedTestCases[i]
-      if (!testCase) continue
-      
-      const traceFilesForCase = traceFiles.filter(t => t.testCaseIndex === i)
-      
-      for (const traceFile of traceFilesForCase) {
-        const traceFilename = `test-${testCase.id}-${traceFile.filename}`
-        const fullTracePath = join(testRunPath, traceFilename)
-        await writeFile(fullTracePath, traceFile.data)
-        
-        // Store relative path (without storage path prefix)
-        const relativeTracePath = join(`project-${project.id}`, `run-${testRun.id}`, traceFilename)
-        
-        allTraces.push({
-          testCaseId: testCase.id,
-          tracePath: relativeTracePath
-        })
-      }
-    }
-
-    // Bulk insert traces
-    if (allTraces.length > 0) {
-      await db.insert(traces).values(allTraces)
-    }
+    await db.insert(testCases).values(testCaseValues)
   }
 
   return {
@@ -228,6 +200,5 @@ export default eventHandler(async (event) => {
     testRunId: testRun.id,
     projectId: project.id,
     reportPath: reportPath,
-    tracesCount: traceFiles.length
   }
 })

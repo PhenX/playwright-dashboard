@@ -81,35 +81,6 @@ function getStatusColor(status: string) {
             </div>
           </div>
         </UCard>
-
-        <UCard v-if="testCase?.traces && testCase.traces.length > 0">
-          <template #header>
-            <h3 class="text-lg font-medium">Traces</h3>
-          </template>
-
-          <div class="space-y-2">
-            <div v-for="trace in testCase.traces" :key="trace.id" class="p-3 bg-gray-50 dark:bg-gray-800 rounded">
-              <div class="flex items-center justify-between">
-                <div class="flex-1">
-                  <p class="text-sm font-medium">Trace #{{ trace.id }}</p>
-                  <code class="text-xs text-gray-600 dark:text-gray-400">{{ trace.tracePath }}</code>
-                  <p class="text-xs text-gray-500 mt-1">{{ new Date(trace.createdAt).toLocaleString() }}</p>
-                </div>
-                <UButton 
-                  :to="`/api/files/${getFileApiPath(trace.tracePath)}`"
-                  size="sm"
-                  icon="i-lucide-download"
-                >
-                  Download
-                </UButton>
-              </div>
-            </div>
-          </div>
-        </UCard>
-
-        <div v-else class="text-center py-8 text-gray-500">
-          No traces available for this test case.
-        </div>
       </div>
     </template>
   </UDashboardPanel>
