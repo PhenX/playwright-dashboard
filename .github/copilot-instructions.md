@@ -18,11 +18,13 @@ This is a Playwright test results dashboard built with Nuxt 4, using the Nuxt UI
 ### Backend (Server Directory)
 - **Database**: `server/database/` - Schema and database initialization
 - **API Routes**: `server/api/` - REST API endpoints
-  - `POST /api/test-runs/submit` - Submit new test results (auto-creates projects)
+  - `POST /api/test-runs/submit` - Submit new test results as JSON (auto-creates projects)
+  - `POST /api/test-runs/upload` - Upload test results with HTML reports and trace files
   - `GET /api/projects` - List all projects with stats
   - `GET /api/projects/[id]` - Get project details with test runs
   - `GET /api/test-runs/[id]` - Get test run details with test cases
   - `GET /api/test-cases/[id]` - Get test case details with traces
+  - `GET /api/files/[...path]` - Download HTML reports and trace files
 
 ### Frontend (App Directory)
 - **Pages**:
@@ -40,9 +42,13 @@ This is a Playwright test results dashboard built with Nuxt 4, using the Nuxt UI
    - Duration and timing information
    - Test case details and locations
    - Error messages for failed tests
-   - Trace file paths
+   - HTML report files
+   - Trace files (can be downloaded and opened)
 3. **Dashboard Views**: Multiple views for projects, runs, and test cases
-4. **REST API**: Simple JSON API for submitting test results
+4. **REST API**: 
+   - JSON API for submitting test results
+   - Multipart API for uploading HTML reports and trace files
+5. **File Storage**: HTML reports and trace files stored in `.data/storage` directory
 
 ## Code Style
 - **Keep it simple**: Code is intentionally simple for easy modifications by AI assistants

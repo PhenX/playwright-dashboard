@@ -35,7 +35,7 @@ The database will be automatically initialized on first API call.
 
 ## API Usage
 
-### Submit Test Results
+### Submit Test Results (JSON)
 
 Send test results to the dashboard via POST request:
 
@@ -51,38 +51,44 @@ curl -X POST http://localhost:3000/api/test-runs/submit \
     "passedTests": 9,
     "failedTests": 1,
     "skippedTests": 0,
-    "testCases": [
-      {
-        "title": "should login successfully",
-        "status": "passed",
-        "duration": 1500,
-        "location": "tests/login.spec.ts:10:5",
-        "retries": 0
-      },
-      {
-        "title": "should handle errors",
-        "status": "failed",
-        "duration": 2300,
-        "location": "tests/errors.spec.ts:5:5",
-        "error": "Expected true but got false",
-        "retries": 1,
-        "traces": [
-          {
-            "tracePath": "/traces/error-test-trace.zip"
-          }
-        ]
-      }
-    ]
+    "testCases": [...]
   }'
 ```
 
+### Upload Test Results with Files (HTML Reports & Traces)
+
+Upload Playwright test results with HTML reports and trace files:
+
+```bash
+curl -X POST http://localhost:3000/api/test-runs/upload \
+  -F "projectName=my-project" \
+  -F "testRun={\"status\":\"passed\",\"startTime\":\"2024-01-01T12:00:00Z\",\"duration\":120000,\"totalTests\":10,\"passedTests\":9,\"failedTests\":1,\"skippedTests\":0}" \
+  -F "testCases=[{\"title\":\"test 1\",\"status\":\"passed\",\"duration\":1500,\"location\":\"tests/test.spec.ts:10:5\"}]" \
+  -F "htmlReport=@./playwright-report/index.html" \
+  -F "trace_0=@./test-results/test-1/trace.zip"
+```
+
+**Form Fields:**
+- `projectName` - Project name (string)
+- `testRun` - Test run metadata (JSON string)
+- `testCases` - Array of test cases (JSON string)
+- `htmlReport` - HTML report file (optional)
+- `trace_N` - Trace file for test case at index N (optional, multiple allowed)
+
 ### API Endpoints
 
-- `POST /api/test-runs/submit` - Submit test run results (auto-creates projects)
+**Submission:**
+- `POST /api/test-runs/submit` - Submit test results as JSON (auto-creates projects)
+- `POST /api/test-runs/upload` - Upload test results with HTML reports and trace files
+
+**Query:**
 - `GET /api/projects` - List all projects with statistics
 - `GET /api/projects/[id]` - Get project details with test runs
 - `GET /api/test-runs/[id]` - Get test run details with test cases
 - `GET /api/test-cases/[id]` - Get test case details with traces
+
+**Files:**
+- `GET /api/files/[...path]` - Download HTML reports and trace files
 
 ## Project Structure
 

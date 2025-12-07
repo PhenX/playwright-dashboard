@@ -82,8 +82,18 @@ function getStatusColor(status: string) {
             </div>
 
             <div v-if="testRun?.reportPath" class="pt-4 border-t">
-              <p class="text-sm text-gray-500 mb-2">Report Path</p>
-              <code class="text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded">{{ testRun.reportPath }}</code>
+              <p class="text-sm text-gray-500 mb-2">HTML Report</p>
+              <div class="flex items-center gap-2">
+                <code class="text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded flex-1">{{ testRun.reportPath }}</code>
+                <UButton 
+                  :to="`/api/files/${testRun.reportPath.replace('.data/storage/', '')}`" 
+                  target="_blank"
+                  size="sm"
+                  icon="i-lucide-external-link"
+                >
+                  View Report
+                </UButton>
+              </div>
             </div>
           </div>
         </UCard>
