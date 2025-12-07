@@ -86,7 +86,7 @@ function getStatusColor(status: string) {
               <div class="flex items-center gap-2">
                 <code class="text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded flex-1">{{ testRun.reportPath }}</code>
                 <UButton 
-                  :to="`/api/files/${testRun.reportPath.replace('.data/storage/', '')}`" 
+                  :to="`/api/files/${getFileApiPath(testRun.reportPath)}`" 
                   target="_blank"
                   size="sm"
                   icon="i-lucide-external-link"

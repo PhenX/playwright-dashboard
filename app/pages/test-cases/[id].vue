@@ -96,7 +96,7 @@ function getStatusColor(status: string) {
                   <p class="text-xs text-gray-500 mt-1">{{ new Date(trace.createdAt).toLocaleString() }}</p>
                 </div>
                 <UButton 
-                  :to="`/api/files/${trace.tracePath.replace('.data/storage/', '')}`"
+                  :to="`/api/files/${getFileApiPath(trace.tracePath)}`"
                   size="sm"
                   icon="i-lucide-download"
                 >

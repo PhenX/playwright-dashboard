@@ -1,6 +1,6 @@
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
-import { extname } from 'path'
+import { extname, join } from 'path'
 
 export default eventHandler(async (event) => {
   const path = getRouterParam(event, 'path')
@@ -21,7 +21,8 @@ export default eventHandler(async (event) => {
   }
 
   const storagePath = process.env.STORAGE_PATH || '.data/storage'
-  const fullPath = `${storagePath}/${path}`
+  const { join } = await import('path')
+  const fullPath = join(storagePath, path)
 
   if (!existsSync(fullPath)) {
     throw createError({
@@ -48,10 +49,11 @@ export default eventHandler(async (event) => {
     setResponseHeader(event, 'Content-Length', fileContent.length.toString())
     
     return fileContent
-  } catch (error) {
+  } catch (error: any) {
+    console.error('Failed to read file:', fullPath, error)
     throw createError({
       statusCode: 500,
-      message: 'Failed to read file'
+      message: error.code === 'EACCES' ? 'Permission denied' : 'Failed to read file'
     })
   }
 })

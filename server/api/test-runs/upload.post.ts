@@ -15,6 +15,11 @@ export default eventHandler(async (event) => {
     })
   }
 
+  // Helper function to sanitize filename
+  function sanitizeFilename(filename: string): string {
+    return filename.replace(/[^a-zA-Z0-9._-]/g, '_')
+  }
+
   // Parse form fields
   let projectName: string | undefined
   let testRunData: any
@@ -26,23 +31,41 @@ export default eventHandler(async (event) => {
     if (part.name === 'projectName') {
       projectName = part.data.toString('utf-8')
     } else if (part.name === 'testRun') {
-      testRunData = JSON.parse(part.data.toString('utf-8'))
+      try {
+        testRunData = JSON.parse(part.data.toString('utf-8'))
+      } catch (error) {
+        throw createError({
+          statusCode: 400,
+          message: 'Invalid JSON in testRun field'
+        })
+      }
     } else if (part.name === 'testCases') {
-      testCasesData = JSON.parse(part.data.toString('utf-8'))
+      try {
+        testCasesData = JSON.parse(part.data.toString('utf-8'))
+      } catch (error) {
+        throw createError({
+          statusCode: 400,
+          message: 'Invalid JSON in testCases field'
+        })
+      }
     } else if (part.name === 'htmlReport' && part.filename) {
       htmlReports.push({
-        filename: part.filename,
+        filename: sanitizeFilename(part.filename),
         data: part.data
       })
     } else if (part.name?.startsWith('trace_') && part.filename) {
       // Extract test case index from field name like 'trace_0', 'trace_1', etc.
       const match = part.name.match(/trace_(\d+)/)
       if (match) {
-        traceFiles.push({
-          testCaseIndex: parseInt(match[1]),
-          filename: part.filename,
-          data: part.data
-        })
+        const index = parseInt(match[1])
+        // Validate index is reasonable (< 10000)
+        if (index >= 0 && index < 10000) {
+          traceFiles.push({
+            testCaseIndex: index,
+            filename: sanitizeFilename(part.filename),
+            data: part.data
+          })
+        }
       }
     }
   }
