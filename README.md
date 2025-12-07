@@ -174,9 +174,43 @@ See [`reporter/README.md`](./reporter/README.md) for detailed documentation.
 │   ├── index.d.ts          # TypeScript definitions
 │   ├── package.json
 │   └── README.md           # Reporter documentation
+├── tests/
+│   └── functional/         # Functional tests
+│       ├── api-server.spec.ts
+│       ├── dashboard-ui.spec.ts
+│       ├── reporter-integration.spec.ts
+│       ├── file-upload.spec.ts
+│       └── README.md       # Test documentation
+├── playwright.config.ts    # Playwright test configuration
 └── .github/
     └── copilot-instructions.md  # Instructions for AI assistants
 ```
+
+## Testing
+
+The project includes comprehensive functional tests using Playwright Test.
+
+### Run Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run with UI mode
+npm run test:ui
+
+# View test report
+npm run test:report
+```
+
+### Test Coverage
+
+- **API Server Tests**: REST API endpoints, error handling, data validation
+- **Dashboard UI Tests**: Page rendering, navigation, responsive design
+- **Reporter Integration Tests**: Reporter functionality, configuration, uploads
+- **File Upload Tests**: File uploads, downloads, security
+
+See [`tests/functional/README.md`](./tests/functional/README.md) for detailed testing documentation.
 
 ## Database Schema
 
