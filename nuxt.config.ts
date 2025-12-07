@@ -4,10 +4,6 @@ export default defineNuxtConfig({
     '@nuxt/ui',
   ],
   devtools: { enabled: true },
-  future: {
-    compatibilityVersion: 4,
-  },
-  compatibilityDate: '2024-04-03',
   colorMode: {
     preference: 'light'
   }
