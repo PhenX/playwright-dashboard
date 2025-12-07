@@ -5,40 +5,63 @@ defineProps<{
   collapsed?: boolean
 }>()
 
-const teams = ref([{
-  label: 'Nuxt',
-  avatar: {
-    src: 'https://github.com/nuxt.png',
-    alt: 'Nuxt'
-  }
-}, {
-  label: 'NuxtHub',
-  avatar: {
-    src: 'https://github.com/nuxt-hub.png',
-    alt: 'NuxtHub'
-  }
-}, {
-  label: 'NuxtLabs',
-  avatar: {
-    src: 'https://github.com/nuxtlabs.png',
-    alt: 'NuxtLabs'
-  }
-}])
-const selectedTeam = ref(teams.value[0])
+const route = useRoute()
+const router = useRouter()
 
-const items = computed<DropdownMenuItem[][]>(() => {
-  return [teams.value.map(team => ({
-    ...team,
-    onSelect() {
-      selectedTeam.value = team
+// Fetch available projects
+const { data: projects, refresh } = await useFetch('/api/projects')
+
+// Get current project from route
+const currentProjectId = computed(() => {
+  const id = route.params.id
+  return id ? parseInt(id as string) : null
+})
+
+// Find the selected project
+const selectedProject = computed(() => {
+  if (!currentProjectId.value || !projects.value) {
+    return {
+      label: 'All Projects',
+      icon: 'i-lucide-folder-open'
     }
-  })), [{
-    label: 'Create team',
-    icon: 'i-lucide-circle-plus'
-  }, {
-    label: 'Manage teams',
-    icon: 'i-lucide-cog'
-  }]]
+  }
+  
+  const project = projects.value.find((p: any) => p.id === currentProjectId.value)
+  return project ? {
+    label: project.name,
+    icon: 'i-lucide-folder'
+  } : {
+    label: 'All Projects',
+    icon: 'i-lucide-folder-open'
+  }
+})
+
+// Create dropdown items
+const items = computed<DropdownMenuItem[][]>(() => {
+  const projectItems = [{
+    label: 'All Projects',
+    icon: 'i-lucide-folder-open',
+    onSelect() {
+      router.push('/projects')
+    }
+  }]
+  
+  if (projects.value && projects.value.length > 0) {
+    projectItems.push(...projects.value.map((project: any) => ({
+      label: project.name,
+      icon: 'i-lucide-folder',
+      onSelect() {
+        router.push(`/projects/${project.id}`)
+      }
+    })))
+  }
+  
+  return [projectItems]
+})
+
+// Refresh projects when route changes
+watch(() => route.path, () => {
+  refresh()
 })
 </script>
 
@@ -50,8 +73,8 @@ const items = computed<DropdownMenuItem[][]>(() => {
   >
     <UButton
       v-bind="{
-        ...selectedTeam,
-        label: collapsed ? undefined : selectedTeam?.label,
+        ...selectedProject,
+        label: collapsed ? undefined : selectedProject?.label,
         trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
       }"
       color="neutral"
