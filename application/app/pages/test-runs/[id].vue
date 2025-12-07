@@ -1,8 +1,35 @@
 <script setup lang="ts">
+interface TestCase {
+  id: number
+  title: string
+  status: string
+  duration?: number
+  location?: string
+  error?: string
+  retries?: number
+}
+
+interface TestRun {
+  id: number
+  status: string
+  startTime: string
+  duration?: number
+  totalTests: number
+  passedTests: number
+  failedTests: number
+  skippedTests: number
+  reportPath?: string
+  testCases?: TestCase[]
+  project?: {
+    id: number
+    name: string
+  }
+}
+
 const route = useRoute()
 const runId = route.params.id
 
-const { data: testRun, refresh } = await useFetch(`/api/test-runs/${runId}`)
+const { data: testRun, refresh } = await useFetch<TestRun>(`/api/test-runs/${runId}`)
 
 function formatDuration(ms?: number | null) {
   if (!ms) return 'N/A'
@@ -162,7 +189,7 @@ function getStatusColor(status: string) {
                   <div class="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
                     <span v-if="testCase.location">{{ testCase.location }}</span>
                     <span>Duration: {{ formatDuration(testCase.duration) }}</span>
-                    <span v-if="testCase.retries > 0">Retries: {{ testCase.retries }}</span>
+                    <span v-if="testCase.retries && testCase.retries > 0">Retries: {{ testCase.retries }}</span>
                   </div>
                 </div>
                 <UButton :to="`/test-cases/${testCase.id}`" size="sm" variant="outline">

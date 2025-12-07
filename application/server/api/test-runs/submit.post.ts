@@ -60,7 +60,14 @@ export default eventHandler(async (event) => {
   // Insert test cases if provided
   if (body.testCases && Array.isArray(body.testCases) && body.testCases.length > 0) {
     // Bulk insert test cases for better performance
-    const testCaseValues = body.testCases.map(testCase => ({
+    const testCaseValues = body.testCases.map((testCase: {
+      title: string
+      location?: string
+      status: string
+      duration?: number
+      error?: string
+      retries?: number
+    }) => ({
       testRunId: testRun.id,
       title: testCase.title,
       location: testCase.location || null,

@@ -60,7 +60,7 @@ export default eventHandler(async (event) => {
     }
 
     setResponseHeader(event, 'Content-Type', contentType)
-    setResponseHeader(event, 'Content-Length', fileContent.length.toString())
+    setResponseHeader(event, 'Content-Length', fileContent.length)
 
     return fileContent
   } catch (error: unknown) {

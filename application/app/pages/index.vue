@@ -30,6 +30,7 @@ const allTestRuns = computed(() => {
     passedTests: number
     failedTests: number
     skippedTests: number
+    totalTests: number
   }> = []
   projects.value.forEach((project) => {
     if (project.latestRun) {
