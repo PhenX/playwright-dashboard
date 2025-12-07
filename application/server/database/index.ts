@@ -37,6 +37,7 @@ export function initDatabase() {
         failed_tests INTEGER NOT NULL DEFAULT 0,
         skipped_tests INTEGER NOT NULL DEFAULT 0,
         report_path TEXT,
+        report_size INTEGER,
         metadata TEXT,
         created_at INTEGER NOT NULL,
         FOREIGN KEY (project_id) REFERENCES projects(id)

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { formatBytes } from '~/utils'
+
 interface TestCase {
   id: number
   title: string
@@ -19,6 +21,7 @@ interface TestRun {
   failedTests: number
   skippedTests: number
   reportPath?: string
+  reportSize?: number
   testCases?: TestCase[]
   project?: {
     id: number
@@ -152,7 +155,7 @@ function getStatusColor(status: string) {
               <p class="text-sm text-gray-500 mb-2">
                 HTML Report
               </p>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 mb-2">
                 <code class="text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded flex-1">{{ testRun.reportPath }}</code>
                 <UButton
                   :to="`/api/files/${getFileApiPath(testRun.reportPath)}`"
@@ -162,6 +165,10 @@ function getStatusColor(status: string) {
                 >
                   View Report
                 </UButton>
+              </div>
+              <div v-if="testRun?.reportSize" class="text-sm text-gray-600">
+                <span class="text-gray-500">Report Size (unzipped):</span>
+                <span class="ml-2 font-medium">{{ formatBytes(testRun.reportSize) }}</span>
               </div>
             </div>
           </div>

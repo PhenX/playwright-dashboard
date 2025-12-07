@@ -4,6 +4,7 @@ import { eq } from 'drizzle-orm'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { existsSync } from 'fs'
+import { getDirectorySize } from '../../utils/filesize'
 
 export default eventHandler(async (event) => {
   const formData = await readMultipartFormData(event)
@@ -109,6 +110,7 @@ export default eventHandler(async (event) => {
 
   // Save HTML report if provided
   let reportPath: string | null = null
+  let reportSize: number | null = null
   if (htmlReports.length > 0) {
     const report = htmlReports[0]
 
@@ -131,6 +133,10 @@ export default eventHandler(async (event) => {
           // Store relative path (without storage path prefix)
           reportPath = join(`project-${project.id}`, reportDirName, 'index.html')
           console.log(`Extracted HTML report to storage, relative path: ${reportPath}`)
+          
+          // Calculate the unzipped report size
+          reportSize = await getDirectorySize(reportDir)
+          console.log(`Report size (unzipped): ${reportSize} bytes`)
         } catch (error) {
           console.error(`Failed to extract HTML report: ${error}`)
           // Save as zip file if extraction fails
@@ -139,6 +145,8 @@ export default eventHandler(async (event) => {
           await writeFile(fullPath, report.data)
           // Store relative path
           reportPath = join(`project-${project.id}`, reportFilename)
+          // Store the zip file size
+          reportSize = report.data.length
         }
       } else {
         // Save as regular file (backward compatibility)
@@ -147,6 +155,8 @@ export default eventHandler(async (event) => {
         await writeFile(fullPath, report.data)
         // Store relative path
         reportPath = join(`project-${project.id}`, reportFilename)
+        // Store file size
+        reportSize = report.data.length
       }
     }
   }
@@ -162,6 +172,7 @@ export default eventHandler(async (event) => {
     failedTests: (testRunData.failedTests as number | undefined) || 0,
     skippedTests: (testRunData.skippedTests as number | undefined) || 0,
     reportPath: reportPath,
+    reportSize: reportSize,
     metadata: testRunData.metadata || null
   }).returning()
 
