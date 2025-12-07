@@ -1,5 +1,5 @@
 import { getDatabase } from '../../database'
-import { projects, testRuns, testCases, traces } from '../../database/schema'
+import { projects, testRuns, testCases } from '../../database/schema'
 import { eq } from 'drizzle-orm'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
@@ -22,10 +22,10 @@ export default eventHandler(async (event) => {
 
   // Parse form fields
   let projectName: string | undefined
-  let testRunData: any
-  let testCasesData: any[] = []
-  const htmlReports: { filename: string; data: Buffer }[] = []
-  const traceFiles: { testCaseIndex: number; filename: string; data: Buffer }[] = []
+  let testRunData: Record<string, unknown>
+  let testCasesData: Record<string, unknown>[] = []
+  const htmlReports: { filename: string, data: Buffer }[] = []
+  const traceFiles: { testCaseIndex: number, filename: string, data: Buffer }[] = []
 
   for (const part of formData) {
     if (part.name === 'projectName') {
@@ -33,7 +33,7 @@ export default eventHandler(async (event) => {
     } else if (part.name === 'testRun') {
       try {
         testRunData = JSON.parse(part.data.toString('utf-8'))
-      } catch (error) {
+      } catch {
         throw createError({
           statusCode: 400,
           message: 'Invalid JSON in testRun field'
@@ -42,7 +42,7 @@ export default eventHandler(async (event) => {
     } else if (part.name === 'testCases') {
       try {
         testCasesData = JSON.parse(part.data.toString('utf-8'))
-      } catch (error) {
+      } catch {
         throw createError({
           statusCode: 400,
           message: 'Invalid JSON in testCases field'
@@ -199,6 +199,6 @@ export default eventHandler(async (event) => {
     success: true,
     testRunId: testRun.id,
     projectId: project.id,
-    reportPath: reportPath,
+    reportPath: reportPath
   }
 })

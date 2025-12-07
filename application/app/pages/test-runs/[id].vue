@@ -28,21 +28,33 @@ function getStatusColor(status: string) {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton icon="i-lucide-refresh-cw" size="md" @click="() => refresh()" label="Refresh" />
+          <UButton
+            icon="i-lucide-refresh-cw"
+            size="md"
+            label="Refresh"
+            @click="() => refresh()"
+          />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton :to="`/projects/${testRun?.project?.id}`" icon="i-lucide-arrow-left" variant="ghost" size="sm">
+        <UButton
+          :to="`/projects/${testRun?.project?.id}`"
+          icon="i-lucide-arrow-left"
+          variant="ghost"
+          size="sm"
+        >
           Back to Project
         </UButton>
 
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
-              <h2 class="text-xl font-semibold">Test Run #{{ testRun?.id }}</h2>
+              <h2 class="text-xl font-semibold">
+                Test Run #{{ testRun?.id }}
+              </h2>
               <UBadge v-if="testRun" :color="getStatusColor(testRun.status)" size="lg">
                 {{ testRun.status }}
               </UBadge>
@@ -52,41 +64,71 @@ function getStatusColor(status: string) {
           <div class="space-y-4">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
-                <p class="text-sm text-gray-500">Project</p>
-                <p class="font-medium">{{ testRun?.project?.name }}</p>
+                <p class="text-sm text-gray-500">
+                  Project
+                </p>
+                <p class="font-medium">
+                  {{ testRun?.project?.name }}
+                </p>
               </div>
               <div>
-                <p class="text-sm text-gray-500">Total Tests</p>
-                <p class="font-medium">{{ testRun?.totalTests }}</p>
+                <p class="text-sm text-gray-500">
+                  Total Tests
+                </p>
+                <p class="font-medium">
+                  {{ testRun?.totalTests }}
+                </p>
               </div>
               <div>
-                <p class="text-sm text-gray-500">Passed</p>
-                <p class="font-medium text-green-600">{{ testRun?.passedTests }}</p>
+                <p class="text-sm text-gray-500">
+                  Passed
+                </p>
+                <p class="font-medium text-green-600">
+                  {{ testRun?.passedTests }}
+                </p>
               </div>
               <div>
-                <p class="text-sm text-gray-500">Failed</p>
-                <p class="font-medium text-red-600">{{ testRun?.failedTests }}</p>
+                <p class="text-sm text-gray-500">
+                  Failed
+                </p>
+                <p class="font-medium text-red-600">
+                  {{ testRun?.failedTests }}
+                </p>
               </div>
               <div>
-                <p class="text-sm text-gray-500">Skipped</p>
-                <p class="font-medium">{{ testRun?.skippedTests }}</p>
+                <p class="text-sm text-gray-500">
+                  Skipped
+                </p>
+                <p class="font-medium">
+                  {{ testRun?.skippedTests }}
+                </p>
               </div>
               <div>
-                <p class="text-sm text-gray-500">Duration</p>
-                <p class="font-medium">{{ formatDuration(testRun?.duration) }}</p>
+                <p class="text-sm text-gray-500">
+                  Duration
+                </p>
+                <p class="font-medium">
+                  {{ formatDuration(testRun?.duration) }}
+                </p>
               </div>
               <div>
-                <p class="text-sm text-gray-500">Start Time</p>
-                <p class="font-medium">{{ testRun?.startTime ? new Date(testRun.startTime).toLocaleString() : 'N/A' }}</p>
+                <p class="text-sm text-gray-500">
+                  Start Time
+                </p>
+                <p class="font-medium">
+                  {{ testRun?.startTime ? new Date(testRun.startTime).toLocaleString() : 'N/A' }}
+                </p>
               </div>
             </div>
 
             <div v-if="testRun?.reportPath" class="pt-4 border-t">
-              <p class="text-sm text-gray-500 mb-2">HTML Report</p>
+              <p class="text-sm text-gray-500 mb-2">
+                HTML Report
+              </p>
               <div class="flex items-center gap-2">
                 <code class="text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded flex-1">{{ testRun.reportPath }}</code>
-                <UButton 
-                  :to="`/api/files/${getFileApiPath(testRun.reportPath)}`" 
+                <UButton
+                  :to="`/api/files/${getFileApiPath(testRun.reportPath)}`"
                   target="_blank"
                   size="sm"
                   icon="i-lucide-external-link"
@@ -100,7 +142,9 @@ function getStatusColor(status: string) {
 
         <UCard>
           <template #header>
-            <h3 class="text-lg font-medium">Test Cases</h3>
+            <h3 class="text-lg font-medium">
+              Test Cases
+            </h3>
           </template>
 
           <div v-if="testRun?.testCases && testRun.testCases.length > 0" class="space-y-2">

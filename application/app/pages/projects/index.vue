@@ -25,7 +25,12 @@ function getStatusColor(status?: string) {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton icon="i-lucide-refresh-cw" size="md" @click="() => refresh()" label="Refresh" />
+          <UButton
+            icon="i-lucide-refresh-cw"
+            size="md"
+            label="Refresh"
+            @click="() => refresh()"
+          />
         </template>
       </UDashboardNavbar>
     </template>
@@ -34,7 +39,9 @@ function getStatusColor(status?: string) {
       <div class="p-4">
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold">Playwright Test Projects</h2>
+            <h2 class="text-xl font-semibold">
+              Playwright Test Projects
+            </h2>
           </template>
 
           <div v-if="projects && projects.length > 0" class="divide-y divide-gray-200 dark:divide-gray-800">
@@ -60,8 +67,12 @@ function getStatusColor(status?: string) {
           </div>
 
           <div v-else class="text-center py-12 text-gray-500">
-            <p class="text-lg mb-2">No projects yet</p>
-            <p class="text-sm">Submit test results via the API to create projects</p>
+            <p class="text-lg mb-2">
+              No projects yet
+            </p>
+            <p class="text-sm">
+              Submit test results via the API to create projects
+            </p>
           </div>
         </UCard>
       </div>

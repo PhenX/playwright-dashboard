@@ -28,21 +28,33 @@ function getStatusColor(status: string) {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton icon="i-lucide-refresh-cw" size="md" @click="() => refresh()" label="Refresh" />
+          <UButton
+            icon="i-lucide-refresh-cw"
+            size="md"
+            label="Refresh"
+            @click="() => refresh()"
+          />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton :to="`/test-runs/${testCase?.testRun?.id}`" icon="i-lucide-arrow-left" variant="ghost" size="sm">
+        <UButton
+          :to="`/test-runs/${testCase?.testRun?.id}`"
+          icon="i-lucide-arrow-left"
+          variant="ghost"
+          size="sm"
+        >
           Back to Test Run
         </UButton>
 
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
-              <h2 class="text-xl font-semibold">Test Case #{{ testCase?.id }}</h2>
+              <h2 class="text-xl font-semibold">
+                Test Case #{{ testCase?.id }}
+              </h2>
               <UBadge v-if="testCase" :color="getStatusColor(testCase.status)" size="lg">
                 {{ testCase.status }}
               </UBadge>
@@ -51,32 +63,52 @@ function getStatusColor(status: string) {
 
           <div class="space-y-4">
             <div>
-              <p class="text-sm text-gray-500">Title</p>
-              <p class="font-medium text-lg">{{ testCase?.title }}</p>
+              <p class="text-sm text-gray-500">
+                Title
+              </p>
+              <p class="font-medium text-lg">
+                {{ testCase?.title }}
+              </p>
             </div>
 
             <div v-if="testCase?.location">
-              <p class="text-sm text-gray-500">Location</p>
+              <p class="text-sm text-gray-500">
+                Location
+              </p>
               <code class="text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded block">{{ testCase.location }}</code>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
-                <p class="text-sm text-gray-500">Duration</p>
-                <p class="font-medium">{{ formatDuration(testCase?.duration) }}</p>
+                <p class="text-sm text-gray-500">
+                  Duration
+                </p>
+                <p class="font-medium">
+                  {{ formatDuration(testCase?.duration) }}
+                </p>
               </div>
               <div>
-                <p class="text-sm text-gray-500">Retries</p>
-                <p class="font-medium">{{ testCase?.retries }}</p>
+                <p class="text-sm text-gray-500">
+                  Retries
+                </p>
+                <p class="font-medium">
+                  {{ testCase?.retries }}
+                </p>
               </div>
               <div>
-                <p class="text-sm text-gray-500">Status</p>
-                <p class="font-medium">{{ testCase?.status }}</p>
+                <p class="text-sm text-gray-500">
+                  Status
+                </p>
+                <p class="font-medium">
+                  {{ testCase?.status }}
+                </p>
               </div>
             </div>
 
             <div v-if="testCase?.error" class="pt-4 border-t">
-              <p class="text-sm text-gray-500 mb-2">Error Details</p>
+              <p class="text-sm text-gray-500 mb-2">
+                Error Details
+              </p>
               <pre class="text-sm bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 p-4 rounded overflow-x-auto">{{ testCase.error }}</pre>
             </div>
           </div>

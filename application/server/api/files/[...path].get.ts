@@ -1,10 +1,10 @@
 import { readFile } from 'fs/promises'
 import { existsSync } from 'fs'
-import { extname, join } from 'path'
+import { extname } from 'path'
 
 export default eventHandler(async (event) => {
   const path = getRouterParam(event, 'path')
-  
+
   if (!path) {
     throw createError({
       statusCode: 400,
@@ -34,7 +34,7 @@ export default eventHandler(async (event) => {
   try {
     const fileContent = await readFile(fullPath)
     const ext = extname(fullPath).toLowerCase()
-    
+
     // Set appropriate content type
     let contentType = 'application/octet-stream'
     if (ext === '.html' || ext === '.htm') {
@@ -61,13 +61,14 @@ export default eventHandler(async (event) => {
 
     setResponseHeader(event, 'Content-Type', contentType)
     setResponseHeader(event, 'Content-Length', fileContent.length.toString())
-    
+
     return fileContent
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to read file:', fullPath, error)
+    const errorCode = (error as { code?: string })?.code
     throw createError({
       statusCode: 500,
-      message: error.code === 'EACCES' ? 'Permission denied' : 'Failed to read file'
+      message: errorCode === 'EACCES' ? 'Permission denied' : 'Failed to read file'
     })
   }
 })
