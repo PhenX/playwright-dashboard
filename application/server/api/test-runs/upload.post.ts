@@ -1,5 +1,5 @@
 import { getDatabase } from '../../database'
-import { projects, testRuns, testCases, traces } from '../../database/schema'
+import { projects, testRuns, testCases } from '../../database/schema'
 import { eq } from 'drizzle-orm'
 import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
@@ -22,10 +22,10 @@ export default eventHandler(async (event) => {
 
   // Parse form fields
   let projectName: string | undefined
-  let testRunData: any
-  let testCasesData: any[] = []
-  const htmlReports: { filename: string; data: Buffer }[] = []
-  const traceFiles: { testCaseIndex: number; filename: string; data: Buffer }[] = []
+  let testRunData: Record<string, unknown> | undefined
+  let testCasesData: Record<string, unknown>[] = []
+  const htmlReports: { filename: string, data: Buffer }[] = []
+  const traceFiles: { testCaseIndex: number, filename: string, data: Buffer }[] = []
 
   for (const part of formData) {
     if (part.name === 'projectName') {
@@ -33,7 +33,7 @@ export default eventHandler(async (event) => {
     } else if (part.name === 'testRun') {
       try {
         testRunData = JSON.parse(part.data.toString('utf-8'))
-      } catch (error) {
+      } catch {
         throw createError({
           statusCode: 400,
           message: 'Invalid JSON in testRun field'
@@ -42,7 +42,7 @@ export default eventHandler(async (event) => {
     } else if (part.name === 'testCases') {
       try {
         testCasesData = JSON.parse(part.data.toString('utf-8'))
-      } catch (error) {
+      } catch {
         throw createError({
           statusCode: 400,
           message: 'Invalid JSON in testCases field'
@@ -87,7 +87,7 @@ export default eventHandler(async (event) => {
   if (!project) {
     const result = await db.insert(projects).values({
       name: projectName,
-      description: testRunData.projectDescription || null
+      description: (testRunData.projectDescription as string | null | undefined) || null
     }).returning()
     project = result[0]
   }
@@ -154,13 +154,13 @@ export default eventHandler(async (event) => {
   // Create test run
   const testRunResult = await db.insert(testRuns).values({
     projectId: project.id,
-    status: testRunData.status,
-    startTime: new Date(testRunData.startTime),
-    duration: testRunData.duration || null,
-    totalTests: testRunData.totalTests || 0,
-    passedTests: testRunData.passedTests || 0,
-    failedTests: testRunData.failedTests || 0,
-    skippedTests: testRunData.skippedTests || 0,
+    status: testRunData.status as string,
+    startTime: new Date(testRunData.startTime as string | number | Date),
+    duration: (testRunData.duration as number | null | undefined) || null,
+    totalTests: (testRunData.totalTests as number | undefined) || 0,
+    passedTests: (testRunData.passedTests as number | undefined) || 0,
+    failedTests: (testRunData.failedTests as number | undefined) || 0,
+    skippedTests: (testRunData.skippedTests as number | undefined) || 0,
     reportPath: reportPath,
     metadata: testRunData.metadata || null
   }).returning()
@@ -184,12 +184,12 @@ export default eventHandler(async (event) => {
   if (testCasesData && testCasesData.length > 0) {
     const testCaseValues = testCasesData.map(testCase => ({
       testRunId: testRun.id,
-      title: testCase.title,
-      location: testCase.location || null,
-      status: testCase.status,
-      duration: testCase.duration || null,
-      error: testCase.error || null,
-      retries: testCase.retries || 0
+      title: testCase.title as string,
+      location: (testCase.location as string | null | undefined) || null,
+      status: testCase.status as string,
+      duration: (testCase.duration as number | null | undefined) || null,
+      error: (testCase.error as string | null | undefined) || null,
+      retries: (testCase.retries as number | undefined) || 0
     }))
 
     await db.insert(testCases).values(testCaseValues)
@@ -199,6 +199,6 @@ export default eventHandler(async (event) => {
     success: true,
     testRunId: testRun.id,
     projectId: project.id,
-    reportPath: reportPath,
+    reportPath: reportPath
   }
 })

@@ -8,7 +8,7 @@ export function getFileApiPath(filePath: string): string {
   if (!filePath.startsWith('.') && !filePath.startsWith('/')) {
     return filePath
   }
-  
+
   // Remove storage path prefix for backward compatibility with absolute paths
   const storagePath = '.data/storage/'
   return filePath.replace(storagePath, '')

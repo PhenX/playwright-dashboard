@@ -6,7 +6,7 @@ const stats = computed(() => {
   const totalRuns = projects.value?.reduce((sum, p) => sum + (p.totalRuns || 0), 0) || 0
   const recentRuns = projects.value?.filter(p => p.latestRun).length || 0
   const passedRuns = projects.value?.filter(p => p.latestRun?.status === 'passed').length || 0
-  
+
   return [
     { label: 'Total Projects', value: totalProjects, icon: 'i-lucide-folder' },
     { label: 'Total Test Runs', value: totalRuns, icon: 'i-lucide-play-circle' },
@@ -22,9 +22,17 @@ const recentProjects = computed(() => {
 // Aggregate all test runs from all projects for the overview chart
 const allTestRuns = computed(() => {
   if (!projects.value) return []
-  
-  const runs: any[] = []
-  projects.value.forEach(project => {
+
+  const runs: Array<{
+    id: number
+    status: string
+    startTime: string
+    passedTests: number
+    failedTests: number
+    skippedTests: number
+    totalTests: number
+  }> = []
+  projects.value.forEach((project) => {
     if (project.latestRun) {
       runs.push({
         id: project.latestRun.id,
@@ -37,7 +45,7 @@ const allTestRuns = computed(() => {
       })
     }
   })
-  
+
   return runs.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
 })
 </script>
@@ -62,8 +70,12 @@ const allTestRuns = computed(() => {
                 <UIcon :name="stat.icon" class="size-6 text-primary" />
               </div>
               <div>
-                <p class="text-2xl font-bold">{{ stat.value }}</p>
-                <p class="text-sm text-gray-600">{{ stat.label }}</p>
+                <p class="text-2xl font-bold">
+                  {{ stat.value }}
+                </p>
+                <p class="text-sm text-gray-600">
+                  {{ stat.label }}
+                </p>
               </div>
             </div>
           </UCard>
@@ -72,10 +84,14 @@ const allTestRuns = computed(() => {
         <!-- Test Runs Trend Chart -->
         <UCard v-if="allTestRuns.length > 0">
           <template #header>
-            <h2 class="text-xl font-semibold">Test Results Trend</h2>
-            <p class="text-sm text-gray-600 mt-1">Overview of test results across all projects</p>
+            <h2 class="text-xl font-semibold">
+              Test Results Trend
+            </h2>
+            <p class="text-sm text-gray-600 mt-1">
+              Overview of test results across all projects
+            </p>
           </template>
-          
+
           <TestRunsChart :test-runs="allTestRuns" :height="300" />
         </UCard>
 
@@ -83,7 +99,9 @@ const allTestRuns = computed(() => {
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
-              <h2 class="text-xl font-semibold">Recent Projects</h2>
+              <h2 class="text-xl font-semibold">
+                Recent Projects
+              </h2>
               <UButton to="/projects" variant="outline" size="sm">
                 View All
               </UButton>
@@ -96,7 +114,9 @@ const allTestRuns = computed(() => {
                 <NuxtLink :to="`/projects/${project.id}`" class="font-medium text-primary hover:underline">
                   {{ project.name }}
                 </NuxtLink>
-                <p class="text-sm text-gray-600">{{ project.totalRuns }} test runs</p>
+                <p class="text-sm text-gray-600">
+                  {{ project.totalRuns }} test runs
+                </p>
               </div>
               <UBadge v-if="project.latestRun" :color="project.latestRun.status === 'passed' ? 'success' : 'error'">
                 {{ project.latestRun.status }}
@@ -112,7 +132,9 @@ const allTestRuns = computed(() => {
         <!-- Getting Started -->
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold">Getting Started</h2>
+            <h2 class="text-xl font-semibold">
+              Getting Started
+            </h2>
           </template>
 
           <div class="space-y-4">

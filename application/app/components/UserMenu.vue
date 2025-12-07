@@ -13,7 +13,7 @@ const neutrals = ['slate', 'gray', 'zinc', 'neutral', 'stone']
 
 const user = ref({
   name: 'Configuration',
-  icon: 'i-lucide-cog',
+  icon: 'i-lucide-cog'
 })
 
 const items = computed<DropdownMenuItem[][]>(() => ([[{

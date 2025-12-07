@@ -29,6 +29,6 @@ export default eventHandler(async (event) => {
 
   return {
     ...testCase,
-    testRun,
+    testRun
   }
 })

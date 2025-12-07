@@ -42,19 +42,29 @@ const chartData = computed(() => {
   }))
 })
 
+// Type for data point
+type DataPoint = {
+  date: Date
+  passed: number
+  failed: number
+  skipped: number
+  flaky: number
+  total: number
+}
+
 // X accessor for date
-const x = (d: any) => d.date
+const x = (d: DataPoint) => d.date
 
 // Y accessors for each metric
-const yPassed = (d: any) => d.passed
-const yFailed = (d: any) => d.failed
-const ySkipped = (d: any) => d.skipped
+const yPassed = (d: DataPoint) => d.passed
+const yFailed = (d: DataPoint) => d.failed
+const ySkipped = (d: DataPoint) => d.skipped
 
 // Colors for each area
 const areaColors = ['rgb(34, 197, 94)', 'rgb(239, 68, 68)', 'rgb(245, 158, 11)']
 
-// Template for tooltip
-const tooltipTemplate = (d: any) => {
+// Template for tooltip (unused but kept for future use)
+const _tooltipTemplate = (d: DataPoint) => {
   if (!d) return ''
   return `
     <div class="p-2">
@@ -122,15 +132,15 @@ const tooltipTemplate = (d: any) => {
     <!-- Legend -->
     <div class="flex items-center justify-center gap-6 mt-4 text-sm">
       <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-green-500"></div>
+        <div class="w-3 h-3 rounded-full bg-green-500" />
         <span>Passed</span>
       </div>
       <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-red-500"></div>
+        <div class="w-3 h-3 rounded-full bg-red-500" />
         <span>Failed</span>
       </div>
       <div class="flex items-center gap-2">
-        <div class="w-3 h-3 rounded-full bg-orange-500"></div>
+        <div class="w-3 h-3 rounded-full bg-orange-500" />
         <span>Skipped</span>
       </div>
     </div>

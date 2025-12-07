@@ -41,10 +41,15 @@ const formatNumber = new Intl.NumberFormat('en', { style: 'currency', currency: 
 
 const formatDate = (date: Date): string => {
   return ({
-    daily: format(date, 'd MMM'),
-    weekly: format(date, 'd MMM'),
-    monthly: format(date, 'MMM yyy')
-  })[props.period]
+    'daily': format(date, 'd MMM'),
+    'weekly': format(date, 'd MMM'),
+    'monthly': format(date, 'MMM yyy'),
+    '1d': format(date, 'd MMM'),
+    '7d': format(date, 'd MMM'),
+    '30d': format(date, 'd MMM'),
+    '90d': format(date, 'd MMM'),
+    '1y': format(date, 'MMM yyy')
+  } as Record<Period, string>)[props.period]
 }
 
 const xTicks = (i: number) => {

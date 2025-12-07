@@ -35,39 +35,59 @@ function getStatusColor(status: string) {
           <UDashboardSidebarCollapse />
         </template>
         <template #right>
-          <UButton icon="i-lucide-refresh-cw" size="md" @click="() => refresh()" label="Refresh" />
+          <UButton
+            icon="i-lucide-refresh-cw"
+            size="md"
+            label="Refresh"
+            @click="() => refresh()"
+          />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton to="/projects" icon="i-lucide-arrow-left" variant="ghost" size="sm">
+        <UButton
+          to="/projects"
+          icon="i-lucide-arrow-left"
+          variant="ghost"
+          size="sm"
+        >
           Back to Projects
         </UButton>
 
         <!-- Test Runs Trend Chart -->
         <UCard v-if="project?.testRuns && project.testRuns.length > 0">
           <template #header>
-            <h2 class="text-xl font-semibold">Test Results Trend</h2>
-            <p class="text-sm text-gray-600 mt-1">Test run statistics over time for {{ project?.name }}</p>
+            <h2 class="text-xl font-semibold">
+              Test Results Trend
+            </h2>
+            <p class="text-sm text-gray-600 mt-1">
+              Test run statistics over time for {{ project?.name }}
+            </p>
           </template>
-          
+
           <TestRunsChart :test-runs="project.testRuns" :height="300" />
         </UCard>
 
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
-              <h2 class="text-xl font-semibold">{{ project?.name }}</h2>
+              <h2 class="text-xl font-semibold">
+                {{ project?.name }}
+              </h2>
             </div>
-            <p v-if="project?.description" class="text-gray-600 mt-2">{{ project.description }}</p>
+            <p v-if="project?.description" class="text-gray-600 mt-2">
+              {{ project.description }}
+            </p>
           </template>
 
           <div class="space-y-4">
             <div>
-              <h3 class="text-lg font-medium mb-3">Test Runs</h3>
-              
+              <h3 class="text-lg font-medium mb-3">
+                Test Runs
+              </h3>
+
               <div v-if="project?.testRuns && project.testRuns.length > 0" class="space-y-2">
                 <div v-for="run in project.testRuns" :key="run.id" class="p-4 border border-gray-200 dark:border-gray-800 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50">
                   <div class="flex items-start justify-between">
