@@ -42,13 +42,16 @@ This is a Playwright test results dashboard built with Nuxt 4, using the Nuxt UI
    - Duration and timing information
    - Test case details and locations
    - Error messages for failed tests
-   - HTML report files
-   - Trace files (can be downloaded and opened)
+   - Complete HTML report directories (with all assets: CSS, JS, images, fonts)
+   - Trace files (can be downloaded and opened in Playwright Trace Viewer)
 3. **Dashboard Views**: Multiple views for projects, runs, and test cases
 4. **REST API**: 
    - JSON API for submitting test results
-   - Multipart API for uploading HTML reports and trace files
-5. **File Storage**: HTML reports and trace files stored in `.data/storage` directory
+   - Multipart API for uploading HTML reports (as zip) and trace files
+5. **File Storage**: 
+   - HTML reports extracted and stored in `.data/storage` directory
+   - Trace files stored alongside test cases
+   - All report assets (CSS, JS, images) properly served with correct MIME types
 
 ## Code Style
 - **Keep it simple**: Code is intentionally simple for easy modifications by AI assistants
