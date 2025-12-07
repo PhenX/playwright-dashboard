@@ -52,6 +52,7 @@ This is a Playwright test results dashboard built with Nuxt 4, using the Nuxt UI
    - HTML reports extracted and stored in `.data/storage` directory
    - Trace files stored alongside test cases
    - All report assets (CSS, JS, images) properly served with correct MIME types
+   - **Path Storage**: Database stores relative paths (e.g., `project-1/run-123/index.html`) without the storage directory prefix for portability
 
 ## Code Style
 - **Keep it simple**: Code is intentionally simple for easy modifications by AI assistants

@@ -128,21 +128,25 @@ export default eventHandler(async (event) => {
           const zip = new AdmZip(report.data)
           zip.extractAllTo(reportDir, true)
           
-          // Point to the index.html inside the extracted directory
-          reportPath = join(reportDir, 'index.html')
-          console.log(`Extracted HTML report to: ${reportPath}`)
+          // Store relative path (without storage path prefix)
+          reportPath = join(`project-${project.id}`, reportDirName, 'index.html')
+          console.log(`Extracted HTML report to storage, relative path: ${reportPath}`)
         } catch (error) {
           console.error(`Failed to extract HTML report: ${error}`)
           // Save as zip file if extraction fails
           const reportFilename = `run-${Date.now()}-${report.filename}`
-          reportPath = join(projectPath, reportFilename)
-          await writeFile(reportPath, report.data)
+          const fullPath = join(projectPath, reportFilename)
+          await writeFile(fullPath, report.data)
+          // Store relative path
+          reportPath = join(`project-${project.id}`, reportFilename)
         }
       } else {
         // Save as regular file (backward compatibility)
         const reportFilename = `run-${Date.now()}-${report.filename}`
-        reportPath = join(projectPath, reportFilename)
-        await writeFile(reportPath, report.data)
+        const fullPath = join(projectPath, reportFilename)
+        await writeFile(fullPath, report.data)
+        // Store relative path
+        reportPath = join(`project-${project.id}`, reportFilename)
       }
     }
   }
@@ -200,12 +204,15 @@ export default eventHandler(async (event) => {
       
       for (const traceFile of traceFilesForCase) {
         const traceFilename = `test-${testCase.id}-${traceFile.filename}`
-        const tracePath = join(testRunPath, traceFilename)
-        await writeFile(tracePath, traceFile.data)
+        const fullTracePath = join(testRunPath, traceFilename)
+        await writeFile(fullTracePath, traceFile.data)
+        
+        // Store relative path (without storage path prefix)
+        const relativeTracePath = join(`project-${project.id}`, `run-${testRun.id}`, traceFilename)
         
         allTraces.push({
           testCaseId: testCase.id,
-          tracePath: tracePath
+          tracePath: relativeTracePath
         })
       }
     }
