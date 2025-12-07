@@ -1,64 +1,250 @@
-# Nuxt Dashboard Template
+# Playwright Dashboard
 
 [![Nuxt UI](https://img.shields.io/badge/Made%20with-Nuxt%20UI-00DC82?logo=nuxt&labelColor=020420)](https://ui.nuxt.com)
 
-Get started with the Nuxt dashboard template with multiple pages, collapsible sidebar, keyboard shortcuts, light & dark more, command palette and more, powered by [Nuxt UI](https://ui.nuxt.com).
+A modern dashboard for storing and visualizing Playwright test results, built with Nuxt 4 and powered by [Nuxt UI](https://ui.nuxt.com).
 
-- [Live demo](https://dashboard-template.nuxt.dev/)
-- [Documentation](https://ui.nuxt.com/docs/getting-started/installation/nuxt)
+## Features
 
-<a href="https://dashboard-template.nuxt.dev/" target="_blank">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://ui.nuxt.com/assets/templates/nuxt/dashboard-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png">
-    <img alt="Nuxt Dashboard Template" src="https://ui.nuxt.com/assets/templates/nuxt/dashboard-light.png">
-  </picture>
-</a>
-
-> The dashboard template for Vue is on https://github.com/nuxt-ui-templates/dashboard-vue.
+- 📊 **Test Results Storage** - Store complete Playwright test run data
+- 🎯 **Project Organization** - Tests organized by projects with automatic project creation
+- 📈 **Dashboard Overview** - View test statistics and trends at a glance
+- 🔍 **Detailed Views** - Drill down from projects → test runs → test cases → traces
+- 🔌 **REST API** - Simple JSON API for submitting test results
+- 📦 **Playwright Reporter** - Custom reporter for automatic result submission
+- 💾 **SQLite Database** - Lightweight database storage with Drizzle ORM
+- 📁 **File Upload** - Upload HTML reports and trace files
+- 🎨 **Modern UI** - Beautiful interface with light/dark mode support
+- 🚀 **Auto-create Projects** - Unknown projects are automatically created via API
 
 ## Quick Start
 
-```bash [Terminal]
-npm create nuxt@latest -- -t github:nuxt-ui-templates/dashboard
-```
-
-## Deploy your own
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-name=dashboard&repository-url=https%3A%2F%2Fgithub.com%2Fnuxt-ui-templates%2Fdashboard&demo-image=https%3A%2F%2Fui.nuxt.com%2Fassets%2Ftemplates%2Fnuxt%2Fdashboard-dark.png&demo-url=https%3A%2F%2Fdashboard-template.nuxt.dev%2F&demo-title=Nuxt%20Dashboard%20Template&demo-description=A%20dashboard%20template%20with%20multi-column%20layout%20for%20building%20sophisticated%20admin%20interfaces.)
-
-## Setup
-
-Make sure to install the dependencies:
+### Installation
 
 ```bash
 npm install
 ```
 
-## Development Server
+### Development Server
 
 Start the development server on `http://localhost:3000`:
 
 ```bash
-npm dev
+npm run dev
 ```
+
+The database will be automatically initialized on first API call.
+
+## API Usage
+
+### Submit Test Results (JSON)
+
+Send test results to the dashboard via POST request:
+
+```bash
+curl -X POST http://localhost:3000/api/test-runs/submit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectName": "my-project",
+    "status": "passed",
+    "startTime": "2024-01-01T12:00:00Z",
+    "duration": 120000,
+    "totalTests": 10,
+    "passedTests": 9,
+    "failedTests": 1,
+    "skippedTests": 0,
+    "testCases": [...]
+  }'
+```
+
+### Upload Test Results with Files (HTML Reports & Traces)
+
+Upload Playwright test results with HTML reports and trace files:
+
+```bash
+curl -X POST http://localhost:3000/api/test-runs/upload \
+  -F "projectName=my-project" \
+  -F "testRun={\"status\":\"passed\",\"startTime\":\"2024-01-01T12:00:00Z\",\"duration\":120000,\"totalTests\":10,\"passedTests\":9,\"failedTests\":1,\"skippedTests\":0}" \
+  -F "testCases=[{\"title\":\"test 1\",\"status\":\"passed\",\"duration\":1500,\"location\":\"tests/test.spec.ts:10:5\"}]" \
+  -F "htmlReport=@./playwright-report/index.html" \
+  -F "trace_0=@./test-results/test-1/trace.zip"
+```
+
+**Form Fields:**
+- `projectName` - Project name (string)
+- `testRun` - Test run metadata (JSON string)
+- `testCases` - Array of test cases (JSON string)
+- `htmlReport` - HTML report file (optional)
+- `trace_N` - Trace file for test case at index N (optional, multiple allowed)
+
+### API Endpoints
+
+**Submission:**
+- `POST /api/test-runs/submit` - Submit test results as JSON (auto-creates projects)
+- `POST /api/test-runs/upload` - Upload test results with HTML reports and trace files
+
+**Query:**
+- `GET /api/projects` - List all projects with statistics
+- `GET /api/projects/[id]` - Get project details with test runs
+- `GET /api/test-runs/[id]` - Get test run details with test cases
+- `GET /api/test-cases/[id]` - Get test case details with traces
+
+**Files:**
+- `GET /api/files/[...path]` - Download HTML reports and trace files
+
+## Using the Playwright Reporter
+
+The dashboard includes a custom Playwright reporter for automatic test result submission.
+
+### Installation
+
+```bash
+cd reporter
+npm install
+npm link
+```
+
+In your Playwright project:
+
+```bash
+npm link playwright-dashboard-reporter
+```
+
+### Configuration
+
+Add to your `playwright.config.ts`:
+
+```typescript
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [
+    ['list'], // Keep your existing reporters
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'http://localhost:3000',
+      projectName: 'my-test-project',
+      uploadTraces: true,
+      uploadReport: true
+    }]
+  ],
+  
+  use: {
+    trace: 'retain-on-failure', // Enable traces
+  },
+});
+```
+
+### Options
+
+- `serverUrl` (string): Dashboard server URL (default: `http://localhost:3000`)
+- `projectName` (string): Project name in dashboard (default: `default-project`)
+- `uploadTraces` (boolean): Upload trace files (default: `true`)
+- `uploadReport` (boolean): Upload HTML report (default: `true`)
+
+See [`reporter/README.md`](./reporter/README.md) for detailed documentation.
+
+## Project Structure
+
+```
+├── .data/                    # SQLite database storage (gitignored)
+├── app/
+│   ├── pages/               # Dashboard pages
+│   │   ├── index.vue        # Home dashboard
+│   │   ├── projects.vue     # Projects list
+│   │   ├── projects/[id].vue    # Project details
+│   │   ├── test-runs/[id].vue   # Test run details
+│   │   └── test-cases/[id].vue  # Test case details
+│   └── layouts/
+│       └── default.vue      # Main layout with navigation
+├── server/
+│   ├── database/
+│   │   ├── schema.ts        # Database schema (Drizzle ORM)
+│   │   └── index.ts         # Database initialization
+│   └── api/                 # API endpoints
+│       ├── projects.get.ts
+│       ├── projects/[id].get.ts
+│       ├── test-runs/
+│       │   ├── submit.post.ts
+│       │   ├── upload.post.ts
+│       │   └── [id].get.ts
+│       ├── test-cases/[id].get.ts
+│       └── files/[...path].get.ts
+├── reporter/                # Playwright Reporter package
+│   ├── index.js            # Reporter implementation
+│   ├── index.d.ts          # TypeScript definitions
+│   ├── package.json
+│   └── README.md           # Reporter documentation
+├── tests/
+│   └── functional/         # Functional tests
+│       ├── api-server.spec.ts
+│       ├── dashboard-ui.spec.ts
+│       ├── reporter-integration.spec.ts
+│       ├── file-upload.spec.ts
+│       └── README.md       # Test documentation
+├── playwright.config.ts    # Playwright test configuration
+└── .github/
+    └── copilot-instructions.md  # Instructions for AI assistants
+```
+
+## Testing
+
+The project includes comprehensive functional tests using Playwright Test.
+
+### Run Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run with UI mode
+npm run test:ui
+
+# View test report
+npm run test:report
+```
+
+### Test Coverage
+
+- **API Server Tests**: REST API endpoints, error handling, data validation
+- **Dashboard UI Tests**: Page rendering, navigation, responsive design
+- **Reporter Integration Tests**: Reporter functionality, configuration, uploads
+- **File Upload Tests**: File uploads, downloads, security
+
+See [`tests/functional/README.md`](./tests/functional/README.md) for detailed testing documentation.
+
+## Database Schema
+
+The dashboard uses SQLite with the following tables:
+
+- **projects** - Test projects
+- **test_runs** - Test execution runs
+- **test_cases** - Individual test cases
+- **traces** - Playwright trace files
 
 ## Production
 
 Build the application for production:
 
 ```bash
-npm build
+npm run build
 ```
 
-Locally preview production build:
+Preview the production build:
 
 ```bash
-npm preview
+npm run preview
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+## Development Commands
 
-## Renovate integration
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run typecheck    # Run TypeScript type checking
+npm run lint         # Run ESLint
+```
 
-Install [Renovate GitHub app](https://github.com/apps/renovate/installations/select_target) on your repository and you are good to go.
+## Contributing
+
+See [.github/copilot-instructions.md](.github/copilot-instructions.md) for detailed development guidelines and architecture information.

@@ -25,3 +25,8 @@ logs
 
 # VSC
 .history
+
+# Test artifacts
+test-results/
+playwright-report/
+.test-temp/

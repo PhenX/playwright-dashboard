@@ -1,0 +1,91 @@
+<script setup lang="ts">
+import type { DropdownMenuItem } from '@nuxt/ui'
+
+defineProps<{
+  collapsed?: boolean
+}>()
+
+const route = useRoute()
+const router = useRouter()
+
+// Fetch available projects
+const { data: projects, refresh } = await useFetch('/api/projects')
+
+// Get current project from route
+const currentProjectId = computed(() => {
+  const id = route.params.id
+  return id ? parseInt(id as string) : null
+})
+
+// Find the selected project
+const selectedProject = computed(() => {
+  if (!currentProjectId.value || !projects.value) {
+    return {
+      label: 'All Projects',
+      icon: 'i-lucide-folder-open'
+    }
+  }
+  
+  const project = projects.value.find((p: any) => p.id === currentProjectId.value)
+  return project ? {
+    label: project.name,
+    icon: 'i-lucide-folder'
+  } : {
+    label: 'All Projects',
+    icon: 'i-lucide-folder-open'
+  }
+})
+
+// Create dropdown items
+const items = computed<DropdownMenuItem[][]>(() => {
+  const projectItems = [{
+    label: 'All Projects',
+    icon: 'i-lucide-folder-open',
+    onSelect() {
+      router.push('/projects')
+    }
+  }]
+  
+  if (projects.value && projects.value.length > 0) {
+    projectItems.push(...projects.value.map((project: any) => ({
+      label: project.name,
+      icon: 'i-lucide-folder',
+      onSelect() {
+        router.push(`/projects/${project.id}`)
+      }
+    })))
+  }
+  
+  return [projectItems]
+})
+
+// Refresh projects when route changes
+watch(() => route.path, () => {
+  refresh()
+})
+</script>
+
+<template>
+  <UDropdownMenu
+    :items="items"
+    :content="{ align: 'center', collisionPadding: 12 }"
+    :ui="{ content: collapsed ? 'w-40' : 'w-(--reka-dropdown-menu-trigger-width)' }"
+  >
+    <UButton
+      v-bind="{
+        ...selectedProject,
+        label: collapsed ? undefined : selectedProject?.label,
+        trailingIcon: collapsed ? undefined : 'i-lucide-chevrons-up-down'
+      }"
+      color="neutral"
+      variant="ghost"
+      block
+      :square="collapsed"
+      class="data-[state=open]:bg-elevated"
+      :class="[!collapsed && 'py-2']"
+      :ui="{
+        trailingIcon: 'text-dimmed'
+      }"
+    />
+  </UDropdownMenu>
+</template>
