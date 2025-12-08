@@ -350,30 +350,12 @@ class PlaywrightDashboardReporter {
     const traceFilesSet = new Set();
 
     // Look in attachments for trace files
+    // This is the primary and most reliable source since Playwright provides the exact paths
     if (testCase.attachments && testCase.attachments.length > 0) {
       for (const attachment of testCase.attachments) {
         if (attachment.name === 'trace' && attachment.path) {
           // Normalize path to absolute path for deduplication
           const normalizedPath = path.resolve(attachment.path);
-          traceFilesSet.add(normalizedPath);
-        }
-      }
-    }
-
-    // Also look in common test-results directories
-    const testResultsDirs = [
-      'test-results',
-      './test-results',
-      path.join(process.cwd(), 'test-results')
-    ];
-
-    for (const dir of testResultsDirs) {
-      if (fs.existsSync(dir)) {
-        // Find trace.zip files
-        const files = this.findFilesRecursive(dir, 'trace.zip');
-        for (const file of files) {
-          // Normalize path to absolute path for deduplication
-          const normalizedPath = path.resolve(file);
           traceFilesSet.add(normalizedPath);
         }
       }

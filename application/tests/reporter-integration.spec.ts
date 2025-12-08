@@ -34,5 +34,6 @@ test.describe('Reporter Integration Tests', () => {
     expect(typeDefs).toContain('serverUrl')
     expect(typeDefs).toContain('projectName')
     expect(typeDefs).toContain('uploadReport')
+    expect(typeDefs).toContain('uploadTraces')
   })
 })

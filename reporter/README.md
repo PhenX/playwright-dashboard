@@ -58,7 +58,7 @@ export default defineConfig({
 
 - **Automatic Upload**: Automatically uploads test results after test run completion
 - **Complete HTML Reports**: Compresses and uploads entire HTML report directory with all assets (CSS, JS, images, fonts) using zstd compression
-- **Trace Files**: Uploads all trace files for failed tests
+- **Trace Files**: Uploads trace files from test attachments (configure with `trace: 'on'` or `trace: 'retain-on-failure'` in Playwright config)
 - **Fallback**: Falls back to JSON-only upload if file upload fails
 - **Status Tracking**: Tracks passed, failed, skipped, and timed-out tests
 - **Project Management**: Automatically creates projects if they don't exist
