@@ -36,6 +36,7 @@ export function initDatabase() {
         passed_tests INTEGER NOT NULL DEFAULT 0,
         failed_tests INTEGER NOT NULL DEFAULT 0,
         skipped_tests INTEGER NOT NULL DEFAULT 0,
+        flaky_tests INTEGER NOT NULL DEFAULT 0,
         report_path TEXT,
         report_size INTEGER,
         metadata TEXT,

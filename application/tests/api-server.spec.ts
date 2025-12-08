@@ -145,4 +145,82 @@ test.describe('API Server Tests', () => {
 
     expect(response.ok()).toBeFalsy()
   })
+
+  test('should calculate and store flaky tests correctly', async ({ request }) => {
+    const response = await request.post('/api/test-runs/submit', {
+      data: {
+        projectName: 'test-flaky-project',
+        status: 'passed',
+        startTime: new Date().toISOString(),
+        duration: 150000,
+        totalTests: 5,
+        passedTests: 5,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: [
+          {
+            title: 'stable test',
+            status: 'passed',
+            duration: 1000,
+            location: 'tests/stable.spec.ts:5:5',
+            retries: 0
+          },
+          {
+            title: 'flaky test 1',
+            status: 'passed',
+            duration: 2000,
+            location: 'tests/flaky1.spec.ts:10:5',
+            retries: 1
+          },
+          {
+            title: 'flaky test 2',
+            status: 'passed',
+            duration: 1500,
+            location: 'tests/flaky2.spec.ts:15:5',
+            retries: 2
+          },
+          {
+            title: 'another stable test',
+            status: 'passed',
+            duration: 1200,
+            location: 'tests/stable2.spec.ts:20:5',
+            retries: 0
+          },
+          {
+            title: 'failed test with retries',
+            status: 'failed',
+            duration: 3000,
+            location: 'tests/failed.spec.ts:25:5',
+            error: 'Test failed even after retries',
+            retries: 3
+          }
+        ]
+      }
+    })
+
+    expect(response.ok()).toBeTruthy()
+    const data = await response.json()
+    expect(data.success).toBe(true)
+    expect(data.testRunId).toBeDefined()
+
+    // Verify the test run has the correct flaky test count
+    const testRunResponse = await request.get(`/api/test-runs/${data.testRunId}`)
+    expect(testRunResponse.ok()).toBeTruthy()
+    const testRunDetails = await testRunResponse.json()
+    
+    // Should count only tests that passed after retries (2 tests)
+    expect(testRunDetails.flakyTests).toBe(2)
+  })
+
+  test('should include flaky tests in project statistics', async ({ request }) => {
+    const projectsResponse = await request.get('/api/projects')
+    expect(projectsResponse.ok()).toBeTruthy()
+    
+    const projects = await projectsResponse.json()
+    const flakyProject = projects.find((p: { name: string }) => p.name === 'test-flaky-project')
+    
+    expect(flakyProject).toBeDefined()
+    expect(flakyProject.latestRun).toBeDefined()
+    expect(flakyProject.latestRun.flakyTests).toBe(2)
+  })
 })

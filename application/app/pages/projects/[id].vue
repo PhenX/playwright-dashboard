@@ -121,6 +121,10 @@ function getStatusColor(status: string) {
                           <span class="text-gray-500 ml-2">Failed:</span>
                           <span class="ml-2 text-red-600">{{ run.failedTests }}</span>
                         </div>
+                        <div v-if="run.flakyTests > 0">
+                          <span class="text-gray-500">Flaky:</span>
+                          <span class="ml-2 text-purple-600">{{ run.flakyTests }}</span>
+                        </div>
                         <div v-if="run.reportSize">
                           <span class="text-gray-500">Report Size:</span>
                           <span class="ml-2">{{ formatBytes(run.reportSize) }}</span>

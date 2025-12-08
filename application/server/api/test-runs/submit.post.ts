@@ -57,8 +57,15 @@ export default eventHandler(async (event) => {
     })
   }
 
-  // Insert test cases if provided
+  // Insert test cases if provided and calculate flaky tests
+  let flakyTestCount = 0
   if (body.testCases && Array.isArray(body.testCases) && body.testCases.length > 0) {
+    // Calculate flaky tests (tests that passed after retries)
+    flakyTestCount = body.testCases.filter((testCase: {
+      status: string
+      retries?: number
+    }) => testCase.status === 'passed' && (testCase.retries || 0) > 0).length
+
     // Bulk insert test cases for better performance
     const testCaseValues = body.testCases.map((testCase: {
       title: string
@@ -78,6 +85,13 @@ export default eventHandler(async (event) => {
     }))
 
     await db.insert(testCases).values(testCaseValues)
+  }
+
+  // Update test run with flaky test count if any were found
+  if (flakyTestCount > 0) {
+    await db.update(testRuns)
+      .set({ flakyTests: flakyTestCount })
+      .where(eq(testRuns.id, testRun.id))
   }
 
   return {

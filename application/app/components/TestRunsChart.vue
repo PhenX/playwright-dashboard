@@ -9,6 +9,7 @@ interface TestRun {
   passedTests: number
   failedTests: number
   skippedTests: number
+  flakyTests: number
   totalTests: number
 }
 
@@ -37,7 +38,7 @@ const chartData = computed(() => {
     passed: run.passedTests || 0,
     failed: run.failedTests || 0,
     skipped: run.skippedTests || 0,
-    flaky: 0, // We don't track flaky tests yet, but adding for future
+    flaky: run.flakyTests || 0,
     total: run.totalTests || 0
   }))
 })
@@ -59,9 +60,10 @@ const x = (d: DataPoint) => d.date
 const yPassed = (d: DataPoint) => d.passed
 const yFailed = (d: DataPoint) => d.failed
 const ySkipped = (d: DataPoint) => d.skipped
+const yFlaky = (d: DataPoint) => d.flaky
 
 // Colors for each area
-const areaColors = ['rgb(34, 197, 94)', 'rgb(239, 68, 68)', 'rgb(245, 158, 11)']
+const areaColors = ['rgb(34, 197, 94)', 'rgb(239, 68, 68)', 'rgb(245, 158, 11)', 'rgb(147, 51, 234)']
 
 // Template for tooltip (unused but kept for future use)
 const _tooltipTemplate = (d: DataPoint) => {
@@ -99,7 +101,7 @@ const _tooltipTemplate = (d: DataPoint) => {
       <!-- Areas for stacked visualization -->
       <VisArea
         :x="x"
-        :y="[yPassed, yFailed, ySkipped]"
+        :y="[yPassed, yFailed, ySkipped, yFlaky]"
         :color="areaColors"
         :curve-type="CurveType.MonotoneX"
       />
@@ -107,7 +109,7 @@ const _tooltipTemplate = (d: DataPoint) => {
       <!-- Lines for better visibility -->
       <VisLine
         :x="x"
-        :y="[yPassed, yFailed, ySkipped]"
+        :y="[yPassed, yFailed, ySkipped, yFlaky]"
         :color="areaColors"
         :curve-type="CurveType.MonotoneX"
         :line-width="2"
@@ -142,6 +144,10 @@ const _tooltipTemplate = (d: DataPoint) => {
       <div class="flex items-center gap-2">
         <div class="w-3 h-3 rounded-full bg-orange-500" />
         <span>Skipped</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="w-3 h-3 rounded-full bg-purple-600" />
+        <span>Flaky</span>
       </div>
     </div>
   </div>
