@@ -20,6 +20,7 @@ export const testRuns = sqliteTable('test_runs', {
   passedTests: integer('passed_tests').notNull().default(0),
   failedTests: integer('failed_tests').notNull().default(0),
   skippedTests: integer('skipped_tests').notNull().default(0),
+  flakyTests: integer('flaky_tests').notNull().default(0),
   reportPath: text('report_path'),
   reportSize: integer('report_size'), // in bytes (unzipped size)
   metadata: text('metadata', { mode: 'json' }), // Additional metadata as JSON

@@ -6,12 +6,14 @@ const stats = computed(() => {
   const totalRuns = projects.value?.reduce((sum, p) => sum + (p.totalRuns || 0), 0) || 0
   const recentRuns = projects.value?.filter(p => p.latestRun).length || 0
   const passedRuns = projects.value?.filter(p => p.latestRun?.status === 'passed').length || 0
+  const totalFlakyTests = projects.value?.reduce((sum, p) => sum + (p.latestRun?.flakyTests || 0), 0) || 0
 
   return [
     { label: 'Total Projects', value: totalProjects, icon: 'i-lucide-folder' },
     { label: 'Total Test Runs', value: totalRuns, icon: 'i-lucide-play-circle' },
     { label: 'Active Projects', value: recentRuns, icon: 'i-lucide-activity' },
-    { label: 'Passing Projects', value: passedRuns, icon: 'i-lucide-check-circle' }
+    { label: 'Passing Projects', value: passedRuns, icon: 'i-lucide-check-circle' },
+    { label: 'Flaky Tests', value: totalFlakyTests, icon: 'i-lucide-alert-triangle' }
   ]
 })
 
@@ -30,6 +32,7 @@ const allTestRuns = computed(() => {
     passedTests: number
     failedTests: number
     skippedTests: number
+    flakyTests: number
     totalTests: number
   }> = []
   projects.value.forEach((project) => {
@@ -41,6 +44,7 @@ const allTestRuns = computed(() => {
         passedTests: project.latestRun.passedTests || 0,
         failedTests: project.latestRun.failedTests || 0,
         skippedTests: project.latestRun.skippedTests || 0,
+        flakyTests: project.latestRun.flakyTests || 0,
         totalTests: project.latestRun.totalTests || 0
       })
     }
