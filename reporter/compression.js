@@ -35,8 +35,8 @@ async function compressDirectory(sourceDir) {
   
   collectFiles(sourceDir);
   
-  // Create a simple archive format:
-  // For each file: [path_length (4 bytes)][path][content_length (4 bytes)][content]
+  // Create a simple archive format (little-endian byte order):
+  // For each file: [path_length (4 bytes LE)][path (UTF-8)][content_length (4 bytes LE)][content]
   const parts = [];
   
   for (const file of files) {

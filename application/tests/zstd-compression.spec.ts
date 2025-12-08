@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 'fs'
 import { join } from 'path'
-import FormData from 'form-data'
 import { compress } from '@mongodb-js/zstd'
 
 test.describe('Zstd Compression Tests', () => {
