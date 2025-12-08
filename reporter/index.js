@@ -347,13 +347,15 @@ class PlaywrightDashboardReporter {
 
 
   findTraceFiles(testCase) {
-    const traceFiles = [];
+    const traceFilesSet = new Set();
 
     // Look in attachments for trace files
     if (testCase.attachments && testCase.attachments.length > 0) {
       for (const attachment of testCase.attachments) {
         if (attachment.name === 'trace' && attachment.path) {
-          traceFiles.push(attachment.path);
+          // Normalize path to absolute path for deduplication
+          const normalizedPath = path.resolve(attachment.path);
+          traceFilesSet.add(normalizedPath);
         }
       }
     }
@@ -369,11 +371,16 @@ class PlaywrightDashboardReporter {
       if (fs.existsSync(dir)) {
         // Find trace.zip files
         const files = this.findFilesRecursive(dir, 'trace.zip');
-        traceFiles.push(...files);
+        for (const file of files) {
+          // Normalize path to absolute path for deduplication
+          const normalizedPath = path.resolve(file);
+          traceFilesSet.add(normalizedPath);
+        }
       }
     }
 
-    return traceFiles;
+    // Convert Set back to array
+    return Array.from(traceFilesSet);
   }
 
   findFilesRecursive(dir, filename) {
