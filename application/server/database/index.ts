@@ -104,10 +104,10 @@ export function initDatabase() {
 
     // Migrate old data if the old table has data and new tables are empty
     try {
-      const oldTableCheck = sqlite.prepare('SELECT name FROM sqlite_master WHERE type="table" AND name="test_cases_old"').get()
+      const oldTableCheck = sqlite.prepare('SELECT COUNT(*) as count FROM sqlite_master WHERE type=? AND name=?').get('table', 'test_cases_old') as { count: number }
       const newTableCheck = sqlite.prepare('SELECT COUNT(*) as count FROM test_cases').get() as { count: number }
       
-      if (oldTableCheck && newTableCheck.count === 0) {
+      if (oldTableCheck && oldTableCheck.count > 0 && newTableCheck.count === 0) {
         // Check if old table has data
         const oldDataCheck = sqlite.prepare('SELECT COUNT(*) as count FROM test_cases_old').get() as { count: number }
         
