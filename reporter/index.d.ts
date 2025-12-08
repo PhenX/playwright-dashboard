@@ -18,6 +18,12 @@ export interface DashboardReporterOptions {
    * @default true
    */
   uploadReport?: boolean;
+
+  /**
+   * Whether to upload trace files
+   * @default true
+   */
+  uploadTraces?: boolean;
 }
 
 /**
