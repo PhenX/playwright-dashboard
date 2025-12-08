@@ -167,7 +167,7 @@ function getStatusColor(status: string) {
                 </UButton>
               </div>
               <div v-if="testRun?.reportSize" class="text-sm text-gray-600">
-                <span class="text-gray-500">Report Size (unzipped):</span>
+                <span class="text-gray-500">Report Size (decompressed):</span>
                 <span class="ml-2 font-medium">{{ formatBytes(testRun.reportSize) }}</span>
               </div>
             </div>

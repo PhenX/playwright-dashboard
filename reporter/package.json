@@ -16,7 +16,8 @@
     "@playwright/test": "^1.40.0"
   },
   "dependencies": {
-    "form-data": "^4.0.0",
-    "archiver": "^7.0.0"
+    "@mongodb-js/zstd": "^7.0.0",
+    "archiver": "^7.0.0",
+    "form-data": "^4.0.0"
   }
 }
