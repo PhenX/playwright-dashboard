@@ -30,4 +30,5 @@ logs
 test-results/
 playwright-report/
 .test-temp/
+.test-temp-zstd/
 .temp-dashboard/

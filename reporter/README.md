@@ -57,7 +57,7 @@ export default defineConfig({
 ## Features
 
 - **Automatic Upload**: Automatically uploads test results after test run completion
-- **Complete HTML Reports**: Zips and uploads entire HTML report directory with all assets (CSS, JS, images, fonts)
+- **Complete HTML Reports**: Compresses and uploads entire HTML report directory with all assets (CSS, JS, images, fonts) using zstd compression
 - **Trace Files**: Uploads all trace files for failed tests
 - **Fallback**: Falls back to JSON-only upload if file upload fails
 - **Status Tracking**: Tracks passed, failed, skipped, and timed-out tests
@@ -67,9 +67,9 @@ export default defineConfig({
 
 1. The reporter collects test results during the test run
 2. After all tests complete, it uploads results to the dashboard
-3. If `uploadReport` is enabled, it zips the entire `playwright-report` directory and uploads it
+3. If `uploadReport` is enabled, it compresses the entire `playwright-report` directory using zstd and uploads it
 4. If `uploadTraces` is enabled, it finds and uploads all trace files
-5. The server extracts the report and makes it available for viewing
+5. The server decompresses the report and makes it available for viewing
 6. Results are visible in the Playwright Dashboard web interface with fully functional HTML reports
 
 ## Example Output
@@ -78,9 +78,8 @@ export default defineConfig({
 [Playwright Dashboard] Starting test run for project: my-test-project
 [Playwright Dashboard] Test run completed. Status: failed (Playwright result.status: failed)
 [Playwright Dashboard] Total: 10, Passed: 9, Failed: 1, Skipped: 0, TimedOut: 0
-[Playwright Dashboard] Zipping HTML report directory: /path/to/playwright-report
-[Playwright Dashboard] Report archive created: 2458391 bytes
-[Playwright Dashboard] Adding HTML report archive: /tmp/.temp-dashboard/playwright-report-1234567890.zip
+[Playwright Dashboard] Compressing HTML report directory: /path/to/playwright-report
+[Playwright Dashboard] Adding HTML report archive: 2458391 bytes
 [Playwright Dashboard] Adding trace file: test-results/test-1/trace.zip
 [Playwright Dashboard] Found 1 trace files
 [Playwright Dashboard] Successfully uploaded test results with files to http://localhost:3000

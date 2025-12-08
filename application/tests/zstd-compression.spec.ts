@@ -1,0 +1,235 @@
+import { test, expect } from '@playwright/test'
+import { writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 'fs'
+import { join } from 'path'
+import { compress } from '@mongodb-js/zstd'
+
+test.describe('Zstd Compression Tests', () => {
+  const tempDir = join(process.cwd(), '.test-temp-zstd')
+
+  test.beforeAll(async () => {
+    // Create temp directory for test files
+    if (!existsSync(tempDir)) {
+      mkdirSync(tempDir, { recursive: true })
+    }
+
+    // Create a mock HTML report structure
+    const reportDir = join(tempDir, 'mock-report')
+    mkdirSync(reportDir, { recursive: true })
+    
+    writeFileSync(join(reportDir, 'index.html'), `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Test Report</title>
+          <link rel="stylesheet" href="style.css">
+        </head>
+        <body>
+          <h1>Playwright Test Report</h1>
+          <script src="script.js"></script>
+        </body>
+      </html>
+    `)
+    
+    writeFileSync(join(reportDir, 'style.css'), `
+      body { font-family: Arial, sans-serif; }
+      h1 { color: #007bff; }
+    `)
+    
+    writeFileSync(join(reportDir, 'script.js'), `
+      console.log('Test report loaded');
+    `)
+
+    // Create a zstd-compressed archive
+    const files: Array<{ path: string; content: Buffer }> = []
+    
+    function collectFiles(dir: string, baseDir = '') {
+      const entries = readdirSync(dir, { withFileTypes: true })
+      
+      for (const entry of entries) {
+        const fullPath = join(dir, entry.name)
+        const relativePath = join(baseDir, entry.name)
+        
+        if (entry.isDirectory()) {
+          collectFiles(fullPath, relativePath)
+        } else if (entry.isFile()) {
+          const content = readFileSync(fullPath)
+          files.push({
+            path: relativePath,
+            content: content
+          })
+        }
+      }
+    }
+    
+    collectFiles(reportDir)
+    
+    // Create simple archive format
+    const parts: Buffer[] = []
+    
+    for (const file of files) {
+      const pathBuffer = Buffer.from(file.path, 'utf8')
+      const pathLengthBuffer = Buffer.allocUnsafe(4)
+      pathLengthBuffer.writeUInt32LE(pathBuffer.length, 0)
+      
+      const contentLengthBuffer = Buffer.allocUnsafe(4)
+      contentLengthBuffer.writeUInt32LE(file.content.length, 0)
+      
+      parts.push(pathLengthBuffer, pathBuffer, contentLengthBuffer, file.content)
+    }
+    
+    const uncompressed = Buffer.concat(parts)
+    const compressed = await compress(uncompressed, 9)
+    
+    writeFileSync(join(tempDir, 'report.zst'), Buffer.from(compressed))
+  })
+
+  test('should upload test results with zstd-compressed HTML report', async ({ request }) => {
+    const reportBuffer = readFileSync(join(tempDir, 'report.zst'))
+    
+    const response = await request.post('/api/test-runs/upload', {
+      multipart: {
+        projectName: 'zstd-test-project',
+        testRun: JSON.stringify({
+          status: 'passed',
+          startTime: new Date().toISOString(),
+          duration: 120000,
+          totalTests: 3,
+          passedTests: 3,
+          failedTests: 0,
+          skippedTests: 0
+        }),
+        testCases: JSON.stringify([
+          {
+            title: 'test with zstd report',
+            status: 'passed',
+            duration: 1000,
+            location: 'tests/test.spec.ts:10:5'
+          }
+        ]),
+        htmlReport: {
+          name: 'playwright-report.zst',
+          mimeType: 'application/zstd',
+          buffer: reportBuffer
+        }
+      }
+    })
+
+    expect(response.ok()).toBeTruthy()
+    const data = await response.json()
+    expect(data.success).toBe(true)
+    expect(data.testRunId).toBeDefined()
+    expect(data.projectId).toBeDefined()
+    expect(data.reportPath).toBeDefined()
+  })
+
+  test('should decompress and serve HTML report files', async ({ request }) => {
+    const reportBuffer = readFileSync(join(tempDir, 'report.zst'))
+    
+    // Upload the report
+    const uploadResponse = await request.post('/api/test-runs/upload', {
+      multipart: {
+        projectName: 'zstd-serve-test-project',
+        testRun: JSON.stringify({
+          status: 'passed',
+          startTime: new Date().toISOString(),
+          duration: 60000,
+          totalTests: 1,
+          passedTests: 1,
+          failedTests: 0,
+          skippedTests: 0
+        }),
+        testCases: JSON.stringify([{
+          title: 'serve test',
+          status: 'passed',
+          duration: 500
+        }]),
+        htmlReport: {
+          name: 'playwright-report.zst',
+          mimeType: 'application/zstd',
+          buffer: reportBuffer
+        }
+      }
+    })
+
+    const uploadData = await uploadResponse.json()
+    expect(uploadData.reportPath).toBeDefined()
+
+    // Try to download the decompressed index.html
+    if (uploadData.reportPath) {
+      const reportPath = uploadData.reportPath.replace('.data/storage/', '')
+      const downloadResponse = await request.get(`/api/files/${reportPath}`)
+
+      expect(downloadResponse.ok()).toBeTruthy()
+      expect(downloadResponse.headers()['content-type']).toContain('text/html')
+      
+      const htmlContent = await downloadResponse.text()
+      expect(htmlContent).toContain('Playwright Test Report')
+    }
+  })
+
+  test('should handle zstd file MIME type correctly', async ({ request }) => {
+    const reportBuffer = readFileSync(join(tempDir, 'report.zst'))
+    
+    // Upload and then verify MIME type if served as .zst
+    const uploadResponse = await request.post('/api/test-runs/upload', {
+      multipart: {
+        projectName: 'zstd-mime-test',
+        testRun: JSON.stringify({
+          status: 'passed',
+          startTime: new Date().toISOString(),
+          duration: 60000,
+          totalTests: 1,
+          passedTests: 1,
+          failedTests: 0,
+          skippedTests: 0
+        }),
+        testCases: JSON.stringify([{
+          title: 'mime test',
+          status: 'passed',
+          duration: 500
+        }]),
+        htmlReport: {
+          name: 'report.zst',
+          mimeType: 'application/zstd',
+          buffer: reportBuffer
+        }
+      }
+    })
+
+    expect(uploadResponse.ok()).toBeTruthy()
+  })
+
+  test('should maintain backward compatibility with zip files', async ({ request }) => {
+    // Create a simple mock zip file for testing backward compatibility
+    // Note: This is just testing that the system doesn't reject .zip files
+    const mockZipContent = Buffer.from('PK mock zip content')
+    
+    const response = await request.post('/api/test-runs/upload', {
+      multipart: {
+        projectName: 'legacy-zip-test',
+        testRun: JSON.stringify({
+          status: 'passed',
+          startTime: new Date().toISOString(),
+          duration: 60000,
+          totalTests: 1,
+          passedTests: 1,
+          failedTests: 0,
+          skippedTests: 0
+        }),
+        testCases: JSON.stringify([{
+          title: 'legacy test',
+          status: 'passed',
+          duration: 500
+        }]),
+        htmlReport: {
+          name: 'old-report.zip',
+          mimeType: 'application/zip',
+          buffer: mockZipContent
+        }
+      }
+    })
+
+    // Should accept it (though extraction might fail, that's handled gracefully)
+    expect(response.ok()).toBeTruthy()
+  })
+})

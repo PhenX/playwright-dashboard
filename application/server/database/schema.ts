@@ -22,7 +22,7 @@ export const testRuns = sqliteTable('test_runs', {
   skippedTests: integer('skipped_tests').notNull().default(0),
   flakyTests: integer('flaky_tests').notNull().default(0),
   reportPath: text('report_path'),
-  reportSize: integer('report_size'), // in bytes (unzipped size)
+  reportSize: integer('report_size'), // in bytes (decompressed size)
   metadata: text('metadata', { mode: 'json' }), // Additional metadata as JSON
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
 })

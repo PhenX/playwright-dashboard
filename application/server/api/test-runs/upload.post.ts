@@ -5,6 +5,7 @@ import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { getDirectorySize } from '../../utils/filesize'
+import { decompressDirectory } from '../../utils/compression'
 
 export default eventHandler(async (event) => {
   const formData = await readMultipartFormData(event)
@@ -117,14 +118,42 @@ export default eventHandler(async (event) => {
     if (!report) {
       console.error('Report is undefined')
     } else {
-      // Check if it's a zip file
-      if (report.filename.endsWith('.zip')) {
-        // Extract zip file
+      // Check if it's a zstd compressed file
+      if (report.filename.endsWith('.zst')) {
+        // Extract zstd compressed archive
         const reportDirName = `run-${Date.now()}-report`
         const reportDir = join(projectPath, reportDirName)
         await mkdir(reportDir, { recursive: true })
 
-        // Use adm-zip to extract the archive
+        // Use zstd to decompress the archive
+        try {
+          await decompressDirectory(report.data, reportDir)
+
+          // Store relative path (without storage path prefix)
+          reportPath = join(`project-${project.id}`, reportDirName, 'index.html')
+          console.log(`Extracted HTML report to storage, relative path: ${reportPath}`)
+
+          // Calculate the decompressed report size
+          reportSize = await getDirectorySize(reportDir)
+          console.log(`Report size (decompressed): ${reportSize} bytes`)
+        } catch (error) {
+          console.error(`Failed to extract HTML report: ${error}`)
+          // Save as zst file if extraction fails
+          const reportFilename = `run-${Date.now()}-${report.filename}`
+          const fullPath = join(projectPath, reportFilename)
+          await writeFile(fullPath, report.data)
+          // Store relative path
+          reportPath = join(`project-${project.id}`, reportFilename)
+          // Store the zstd file size
+          reportSize = report.data.length
+        }
+      } else if (report.filename.endsWith('.zip')) {
+        // Legacy support for zip files - extract zip file
+        const reportDirName = `run-${Date.now()}-report`
+        const reportDir = join(projectPath, reportDirName)
+        await mkdir(reportDir, { recursive: true })
+
+        // Use adm-zip to extract the archive (legacy support)
         try {
           const AdmZip = (await import('adm-zip')).default
           const zip = new AdmZip(report.data)
@@ -132,7 +161,7 @@ export default eventHandler(async (event) => {
 
           // Store relative path (without storage path prefix)
           reportPath = join(`project-${project.id}`, reportDirName, 'index.html')
-          console.log(`Extracted HTML report to storage, relative path: ${reportPath}`)
+          console.log(`Extracted HTML report to storage (legacy zip), relative path: ${reportPath}`)
 
           // Calculate the unzipped report size
           reportSize = await getDirectorySize(reportDir)

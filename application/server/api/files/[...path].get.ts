@@ -39,6 +39,8 @@ export default eventHandler(async (event) => {
     let contentType = 'application/octet-stream'
     if (ext === '.html' || ext === '.htm') {
       contentType = 'text/html'
+    } else if (ext === '.zst') {
+      contentType = 'application/zstd'
     } else if (ext === '.zip') {
       contentType = 'application/zip'
     } else if (ext === '.json') {
