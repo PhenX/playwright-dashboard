@@ -58,7 +58,7 @@ function getPassRate(testCase: TestCaseWithStats) {
 function getTestCaseStatus(testCase: TestCaseWithStats) {
   // If flaky, show as warning
   if (testCase.flakyRuns > 0) {
-    return { status: 'flaky', color: 'warning' as const }
+    return { status: 'flaky', color: 'warning' }
   }
   // Otherwise use last status
   return { status: testCase.lastStatus || 'unknown', color: getStatusColor(testCase.lastStatus || 'unknown') }
