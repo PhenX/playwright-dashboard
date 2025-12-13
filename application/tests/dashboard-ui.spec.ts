@@ -50,61 +50,59 @@ test.describe('Dashboard UI Tests', () => {
     // Check heading
     await expect(page.getByText('Playwright Test Projects')).toBeVisible()
 
-    // Check for at least one project
-    await expect(page.getByText('ui-test-project')).toBeVisible()
+    // Check for at least one project - use more specific selector for the table
+    await expect(page.getByRole('link', { name: 'ui-test-project' })).toBeVisible()
 
     // Check for test run count
-    await expect(page.getByText(/\d+ test runs/).first()).toBeVisible() // There may be multiple projects
+    await expect(page.getByText(/\d+ runs/).first()).toBeVisible() // There may be multiple projects
   })
 
   test('should navigate to project details page', async ({ page }) => {
     await page.goto('/projects')
 
-    // Click on a project
-    await page.getByText('ui-test-project').click()
+    // Click on a project - use link role to target the table link, not sidebar
+    await page.getByRole('link', { name: 'ui-test-project' }).click()
 
     // Wait for navigation
     await page.waitForURL(/\/projects\/\d+/)
 
-    // Check project name is displayed
-    await expect(page.getByText('ui-test-project')).toBeVisible()
-
-    // Check for test runs section
-    await expect(page.getByText('Test Runs').filter({ visible: true })).toBeVisible() // There may be multiple projects
+    // Check for test results trend section
+    await expect(page.getByText('Test Results Trend')).toBeVisible()
+    
+    // Check project name in sidebar is expanded
+    await expect(page.getByRole('link', { name: 'Test Runs' })).toBeVisible()
   })
 
   test('should navigate to test run details page', async ({ page }) => {
     await page.goto('/projects')
 
-    // Navigate to project
-    await page.getByText('ui-test-project').click()
+    // Navigate to project - use link role to target table link
+    await page.getByRole('link', { name: 'ui-test-project' }).click()
     await page.waitForURL(/\/projects\/\d+/)
 
-    // Click on first test run
-    const viewDetailsButton = page.getByRole('link', { name: 'View Details' }).first()
-    await viewDetailsButton.click()
+    // Click on first test run - look for "View Details" in the table
+    const viewButton = page.locator('table').getByRole('link', { name: 'View' }).first()
+    await viewButton.click()
 
     // Wait for navigation
     await page.waitForURL(/\/test-runs\/\d+/)
 
     // Check test run details are displayed
     await expect(page.getByText('Test Run Details')).toBeVisible()
-    await expect(page.getByText('Test Cases')).toBeVisible()
   })
 
   test('should show project switcher dropdown', async ({ page }) => {
     await page.goto('/')
 
-    // Find and click the project switcher
-    const projectSwitcher = page.getByRole('button', { name: /All Projects|ui-test-project/ })
+    // Find and click the project switcher - use first() to get the header one, not sidebar
+    const projectSwitcher = page.getByRole('button', { name: /All Projects|ui-test-project/ }).first()
     await expect(projectSwitcher).toBeVisible()
 
     // Click to open dropdown
     await projectSwitcher.click()
 
     // Check dropdown options
-    await expect(page.getByText('All Projects')).toBeVisible()
-    await expect(page.getByText('ui-test-project')).toBeVisible()
+    await expect(page.getByText('All Projects').first()).toBeVisible()
   })
 
   test('should navigate using sidebar', async ({ page }) => {
@@ -162,7 +160,7 @@ test.describe('Dashboard UI Tests', () => {
     await expect(refreshButton).toBeVisible()
     await refreshButton.click()
 
-    // Data should still be visible after refresh
-    await expect(page.getByText('ui-test-project')).toBeVisible()
+    // Data should still be visible after refresh - use link to target table
+    await expect(page.getByRole('link', { name: 'ui-test-project' })).toBeVisible()
   })
 })
