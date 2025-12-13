@@ -3,6 +3,28 @@
 ## Project Overview
 This is a Playwright test results dashboard built with Nuxt 4, using the Nuxt UI dashboard template. It stores and displays Playwright test results organized by projects.
 
+## Prerequisites
+Before working on this project, ensure you have:
+- **Node.js**: Version 18 or higher (CI uses Node.js 22)
+- **npm**: Comes with Node.js, used for package management
+- **Git**: For version control
+
+## Quick Start
+To get the dashboard running locally:
+
+```bash
+# Navigate to the application directory
+cd application
+
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev
+```
+
+The dashboard will be available at `http://localhost:3000`. The SQLite database will be automatically initialized on the first API call.
+
 ## Repository Structure
 The repository is organized into three main parts:
 - **application/** - The Nuxt 4 dashboard application
@@ -81,6 +103,21 @@ The repository is organized into three main parts:
 - **TypeScript**: Fully typed with TypeScript
 - **Nuxt conventions**: Follow Nuxt 4 file-based routing and auto-imports
 - **UI Components**: Use Nuxt UI components (@nuxt/ui)
+
+## Environment Configuration
+The application uses minimal environment configuration:
+
+- **`.env.example`**: Template for environment variables (in `application/` directory)
+- **`NUXT_PUBLIC_SITE_URL`**: (Optional) Public URL for OG Image generation
+
+To configure:
+```bash
+cd application
+cp .env.example .env
+# Edit .env with your values (optional)
+```
+
+The application works without any environment variables set. Database and storage are automatically created in `application/.data/`.
 
 ## Development Commands
 
@@ -187,6 +224,28 @@ curl -X POST http://localhost:3000/api/test-runs/submit \
 - Modify `reporter/index.js` for reporter logic
 - Update `reporter/index.d.ts` for TypeScript types
 - Publish updated package or link locally for testing
+
+## Troubleshooting
+
+### Database Issues
+- **Database locked**: Ensure no other process is accessing `application/.data/playwright.db`
+- **Database not created**: Database is auto-initialized on first API call; try submitting a test result
+- **Corrupted database**: Delete `application/.data/` directory and restart the server
+
+### Development Server Issues
+- **Port 3000 already in use**: Change port with `PORT=3001 npm run dev` or stop other process
+- **Module not found errors**: Run `npm install` in `application/` directory
+- **TypeScript errors**: Run `npm run typecheck` to see all type issues
+
+### Test Issues
+- **Tests failing**: Ensure dev server is not running on port 3000 (tests start their own server)
+- **Trace files not found**: Ensure traces are enabled in Playwright config with `trace: 'retain-on-failure'` or `trace: 'on'`
+- **HTML report missing**: Check that Playwright is generating reports with HTML reporter: `reporter: [['html', { outputFolder: 'playwright-report' }]]`
+
+### Reporter Issues
+- **Reporter not found**: Run `npm link` in `reporter/` directory, then `npm link playwright-dashboard-reporter` in your test project
+- **Uploads failing**: Verify `serverUrl` in reporter config points to running dashboard
+- **Authentication errors**: This dashboard has no authentication; check network connectivity
 
 ## Important Notes
 - Database is auto-initialized on first API call
