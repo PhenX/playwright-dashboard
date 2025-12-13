@@ -32,7 +32,7 @@ const projectItems = computed(() => {
   }
 
   return projects.value.map(project => {
-    const isActive = currentProjectId.value === project.id
+    const isActive = currentProjectId.value !== null && currentProjectId.value === project.id
     return {
       label: project.name,
       icon: 'i-lucide-folder',
