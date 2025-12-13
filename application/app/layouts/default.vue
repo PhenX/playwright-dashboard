@@ -13,7 +13,10 @@ const toast = useToast()
 const open = ref(false)
 
 // Fetch projects for sidebar navigation
-const { data: projects } = await useFetch<Project[]>('/api/projects')
+const { data: projects } = await useFetch<Project[]>('/api/projects', {
+  lazy: true,
+  default: () => []
+})
 
 // Generate project navigation items with children
 const projectItems = computed(() => {
@@ -44,7 +47,7 @@ const projectItems = computed(() => {
           open.value = false
         }
       }
-    ] satisfies NavigationMenuChildItem[],
+    ],
     onSelect: () => {
       // Do nothing - allow children to be shown
     }
