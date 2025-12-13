@@ -1,5 +1,5 @@
 import { getDatabase } from '../database'
-import { projects, testRuns, type Project } from '../database/schema'
+import { projects, testRuns, testCases, type Project } from '../database/schema'
 import { eq, desc, sql } from 'drizzle-orm'
 
 export default eventHandler(async () => {
@@ -19,10 +19,15 @@ export default eventHandler(async () => {
         .from(testRuns)
         .where(eq(testRuns.projectId, project.id))
 
+      const totalTestCases = await db.select({ count: sql<number>`count(*)` })
+        .from(testCases)
+        .where(eq(testCases.projectId, project.id))
+
       return {
         ...project,
         latestRun: runs[0] || null,
-        totalRuns: totalRuns[0]?.count || 0
+        totalRuns: totalRuns[0]?.count || 0,
+        totalTestCases: totalTestCases[0]?.count || 0
       }
     })
   )
