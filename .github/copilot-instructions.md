@@ -239,8 +239,8 @@ curl -X POST http://localhost:3000/api/test-runs/submit \
 
 ### Test Issues
 - **Tests failing**: Ensure dev server is not running on port 3000 (tests start their own server)
-- **Trace files not found**: Ensure traces are enabled in Playwright config with `trace: 'retain-on-failure'`
-- **HTML report missing**: Check that Playwright is generating reports with `html` reporter
+- **Trace files not found**: Ensure traces are enabled in Playwright config with `trace: 'retain-on-failure'` or `trace: 'on'`
+- **HTML report missing**: Check that Playwright is generating reports with HTML reporter: `reporter: [['html', { outputFolder: 'playwright-report' }]]`
 
 ### Reporter Issues
 - **Reporter not found**: Run `npm link` in `reporter/` directory, then `npm link playwright-dashboard-reporter` in your test project
