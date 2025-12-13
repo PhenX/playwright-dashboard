@@ -5,6 +5,13 @@ interface Project {
   id: number
   name: string
   description?: string
+  totalRuns: number
+  totalTestCases: number
+  latestRun?: {
+    id: number
+    status: string
+    startTime: string
+  }
 }
 
 const route = useRoute()
@@ -22,7 +29,7 @@ const { data: projects } = await useFetch<Project[]>('/api/projects', {
 const currentProjectId = computed(() => {
   // Check if route path starts with /projects/:id
   const match = route.path.match(/^\/projects\/(\d+)/)
-  return match ? parseInt(match[1], 10) : null
+  return match && match[1] ? parseInt(match[1], 10) : null
 })
 
 // Generate project navigation items with children
@@ -33,9 +40,17 @@ const projectItems = computed(() => {
 
   return projects.value.map(project => {
     const isActive = currentProjectId.value !== null && currentProjectId.value === project.id
+    const status = project.latestRun?.status || 'unknown'
+    const statusIcon = status === 'passed' ? 'i-lucide-circle-check-big' : status === 'failed' ? 'i-lucide-circle-x' : 'i-lucide-circle'
+    const statusColor = status === 'passed' ? 'success' : status === 'failed' ? 'error' : 'neutral'
+    
     return {
       label: project.name,
       icon: 'i-lucide-folder',
+      badge: {
+        icon: statusIcon,
+        color: statusColor as 'success' | 'error' | 'neutral'
+      },
       value: `project-${project.id}`,
       type: 'trigger' as const,
       defaultOpen: isActive,
@@ -45,6 +60,7 @@ const projectItems = computed(() => {
           label: 'Test Runs',
           icon: 'i-lucide-play-circle',
           to: `/projects/${project.id}`,
+          badge: String(project.totalRuns || 0),
           onSelect: () => {
             open.value = false
           }
@@ -53,6 +69,7 @@ const projectItems = computed(() => {
           label: 'Test Cases',
           icon: 'i-lucide-list-checks',
           to: `/projects/${project.id}/test-cases`,
+          badge: String(project.totalTestCases || 0),
           onSelect: () => {
             open.value = false
           }
@@ -135,6 +152,7 @@ onMounted(async () => {
       v-model:open="open"
       collapsible
       resizable
+      width="20"
       class="bg-elevated/25"
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
