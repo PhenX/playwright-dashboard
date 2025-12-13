@@ -1,6 +1,8 @@
 name: ci
 
-on: push
+on:
+  push:
+  pull_request:
 
 defaults:
   run:
@@ -34,3 +36,9 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright Tests
+        run: npm test
