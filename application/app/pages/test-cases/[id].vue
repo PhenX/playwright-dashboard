@@ -3,21 +3,6 @@ const route = useRoute()
 const testCaseId = route.params.id
 
 const { data: testCase, refresh } = await useFetch(`/api/test-cases/${testCaseId}`)
-
-function formatDuration(ms?: number | null) {
-  if (!ms) return 'N/A'
-  return `${(ms / 1000).toFixed(2)}s`
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'passed': return 'success'
-    case 'failed': return 'error'
-    case 'timedout': return 'warning'
-    case 'skipped': return 'neutral'
-    default: return 'neutral'
-  }
-}
 </script>
 
 <template>

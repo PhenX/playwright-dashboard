@@ -30,26 +30,6 @@ const { data: project } = await useFetch<Project>(`/api/projects/${projectId}`)
 
 const UBadge = resolveComponent('UBadge')
 
-function formatDuration(ms?: number | null) {
-  if (!ms) return 'N/A'
-  return `${(ms / 1000).toFixed(2)}s`
-}
-
-function formatDate(timestamp?: number | null) {
-  if (!timestamp) return 'N/A'
-  return new Date(timestamp).toLocaleString()
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'passed': return 'success'
-    case 'failed': return 'error'
-    case 'timedout': return 'warning'
-    case 'skipped': return 'neutral'
-    default: return 'neutral'
-  }
-}
-
 function getPassRate(testCase: TestCaseWithStats) {
   if (testCase.totalRuns === 0) return 0
   return Math.round((testCase.passedRuns / testCase.totalRuns) * 100)
@@ -156,7 +136,7 @@ const testCasesColumns: TableColumn<TestCaseWithStats>[] = [
 
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold">
+            <h2>
               Test Cases
             </h2>
             <p class="text-sm text-gray-600 mt-1">

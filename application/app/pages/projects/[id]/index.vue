@@ -31,28 +31,6 @@ const { data: project, refresh } = await useFetch<Project>(`/api/projects/${proj
 
 const UBadge = resolveComponent('UBadge')
 
-function formatDate(date: string | Date) {
-  return new Date(date).toLocaleString()
-}
-
-function formatDuration(ms?: number | null) {
-  if (!ms) return 'N/A'
-  const seconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return minutes > 0 ? `${minutes}m ${remainingSeconds}s` : `${remainingSeconds}s`
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'passed': return 'success'
-    case 'failed': return 'error'
-    case 'timedout': return 'warning'
-    case 'interrupted': return 'warning'
-    default: return 'neutral'
-  }
-}
-
 const runsColumns: TableColumn<TestRun>[] = [
   {
     accessorKey: 'id',
@@ -146,6 +124,16 @@ const runsColumns: TableColumn<TestRun>[] = [
   <UDashboardPanel id="project-detail">
     <template #header>
       <UDashboardNavbar :title="project?.name || 'Project Details'">
+        <template #trailing>
+          <UButton
+            :to="`/projects/${projectId}/test-cases`"
+            icon="i-lucide-list-checks"
+            size="sm"
+            variant="outline"
+          >
+            View Test Cases
+          </UButton>
+        </template>
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -171,10 +159,14 @@ const runsColumns: TableColumn<TestRun>[] = [
           Back to Projects
         </UButton>
 
+        <p v-if="project?.description" class="text-gray-600 mt-2">
+          {{ project.description }}
+        </p>
+
         <!-- Test Runs Trend Chart -->
         <UCard v-if="project?.testRuns && project.testRuns.length > 0">
           <template #header>
-            <h2 class="text-xl font-semibold">
+            <h2>
               Test Results Trend
             </h2>
             <p class="text-sm text-gray-600 mt-1">
@@ -187,47 +179,25 @@ const runsColumns: TableColumn<TestRun>[] = [
 
         <UCard>
           <template #header>
-            <div class="flex justify-between items-center">
-              <h2 class="text-xl font-semibold">
-                {{ project?.name }}
-              </h2>
-              <UButton
-                :to="`/projects/${projectId}/test-cases`"
-                icon="i-lucide-list-checks"
-                size="sm"
-                variant="outline"
-              >
-                View Test Cases
-              </UButton>
-            </div>
-            <p v-if="project?.description" class="text-gray-600 mt-2">
-              {{ project.description }}
-            </p>
+            <h2>
+              Test Runs
+            </h2>
           </template>
+          <UTable
+            v-if="project?.testRuns && project.testRuns.length > 0"
+            :data="project.testRuns"
+            :columns="runsColumns"
+            :ui="{
+              base: 'table-fixed border-separate border-spacing-0',
+              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+              tbody: '[&>tr]:last:[&>td]:border-b-0',
+              th: 'first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+              td: 'border-b border-default'
+            }"
+          />
 
-          <div class="space-y-4">
-            <div>
-              <h3 class="text-lg font-medium mb-3">
-                Test Runs
-              </h3>
-
-              <UTable
-                v-if="project?.testRuns && project.testRuns.length > 0"
-                :data="project.testRuns"
-                :columns="runsColumns"
-                :ui="{
-                  base: 'table-fixed border-separate border-spacing-0',
-                  thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-                  tbody: '[&>tr]:last:[&>td]:border-b-0',
-                  th: 'first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-                  td: 'border-b border-default'
-                }"
-              />
-
-              <div v-else class="text-center py-8 text-gray-500">
-                No test runs yet for this project.
-              </div>
-            </div>
+          <div v-else class="text-center py-8 text-gray-500">
+            No test runs yet for this project.
           </div>
         </UCard>
       </div>

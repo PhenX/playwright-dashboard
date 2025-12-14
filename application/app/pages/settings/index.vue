@@ -54,22 +54,6 @@ function onFileClick() {
     :state="profile"
     @submit="onSubmit"
   >
-    <UPageCard
-      title="Profile"
-      description="These informations will be displayed publicly."
-      variant="naked"
-      orientation="horizontal"
-      class="mb-4"
-    >
-      <UButton
-        form="settings"
-        label="Save changes"
-        color="neutral"
-        type="submit"
-        class="w-fit lg:ms-auto"
-      />
-    </UPageCard>
-
     <UPageCard variant="subtle">
       <UFormField
         name="name"

@@ -38,21 +38,6 @@ const { data: testRun, refresh } = await useFetch<TestRun>(`/api/test-runs/${run
 
 const UBadge = resolveComponent('UBadge')
 
-function formatDuration(ms?: number | null) {
-  if (!ms) return 'N/A'
-  return `${(ms / 1000).toFixed(2)}s`
-}
-
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'passed': return 'success'
-    case 'failed': return 'error'
-    case 'timedout': return 'warning'
-    case 'skipped': return 'neutral'
-    default: return 'neutral'
-  }
-}
-
 const testCasesColumns: TableColumn<TestCase>[] = [
   {
     accessorKey: 'title',

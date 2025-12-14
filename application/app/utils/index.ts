@@ -16,6 +16,31 @@ export function formatBytes(bytes?: number | null): string {
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
 }
 
+export function formatDate(date: string | Date | number) {
+  if (!date) return 'N/A';
+  if (!isNaN(date as number))
+    date = Number(date) * 1000 // convert seconds to milliseconds
+  return new Date(date).toLocaleString()
+}
+
+export function formatDuration(ms?: number | null) {
+  if (!ms) return 'N/A'
+  const seconds = Math.floor(ms / 1000)
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  return minutes > 0 ? `${minutes}m ${remainingSeconds}s` : `${remainingSeconds}s`
+}
+
+export function getStatusColor(status: string) {
+  switch (status) {
+    case 'passed': return 'success'
+    case 'failed': return 'error'
+    case 'timedout': return 'warning'
+    case 'interrupted': return 'warning'
+    default: return 'neutral'
+  }
+}
+
 /**
  * Convert file path to API file path
  * Removes the storage path prefix if present to create a relative path for the API

@@ -47,9 +47,6 @@ test.describe('Dashboard UI Tests', () => {
   test('should display projects list page', async ({ page }) => {
     await page.goto('/projects')
 
-    // Check heading
-    await expect(page.getByText('Playwright Test Projects')).toBeVisible()
-
     // Check for at least one project - use more specific selector for the table
     await expect(page.getByRole('link', { name: 'ui-test-project' })).toBeVisible()
 
@@ -113,7 +110,6 @@ test.describe('Dashboard UI Tests', () => {
 
     // Check navigation
     await page.waitForURL('/projects')
-    await expect(page.getByText('Playwright Test Projects')).toBeVisible()
 
     // Click on Home in sidebar
     await page.getByRole('link', { name: 'Home' }).click()

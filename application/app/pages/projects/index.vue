@@ -18,21 +18,6 @@ const { data: projects, refresh } = await useFetch<Project[]>('/api/projects')
 
 const UBadge = resolveComponent('UBadge')
 
-function formatDate(date: string | Date | null) {
-  if (!date) return 'N/A'
-  return new Date(date).toLocaleString()
-}
-
-function getStatusColor(status?: string) {
-  switch (status) {
-    case 'passed': return 'success'
-    case 'failed': return 'error'
-    case 'timedout': return 'warning'
-    case 'interrupted': return 'warning'
-    default: return 'neutral'
-  }
-}
-
 const columns: TableColumn<Project>[] = [
   {
     accessorKey: 'name',
@@ -108,36 +93,26 @@ const columns: TableColumn<Project>[] = [
     </template>
 
     <template #body>
-      <div class="p-4">
-        <UCard>
-          <template #header>
-            <h2 class="text-xl font-semibold">
-              Playwright Test Projects
-            </h2>
-          </template>
+      <UTable
+        v-if="projects && projects.length > 0"
+        :data="projects"
+        :columns="columns"
+        :ui="{
+          base: 'table-fixed border-separate border-spacing-0',
+          thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+          tbody: '[&>tr]:last:[&>td]:border-b-0',
+          th: 'first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+          td: 'border-b border-default'
+        }"
+      />
 
-          <UTable
-            v-if="projects && projects.length > 0"
-            :data="projects"
-            :columns="columns"
-            :ui="{
-              base: 'table-fixed border-separate border-spacing-0',
-              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
-              tbody: '[&>tr]:last:[&>td]:border-b-0',
-              th: 'first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
-              td: 'border-b border-default'
-            }"
-          />
-
-          <div v-else class="text-center py-12 text-gray-500">
-            <p class="text-lg mb-2">
-              No projects yet
-            </p>
-            <p class="text-sm">
-              Submit test results via the API to create projects
-            </p>
-          </div>
-        </UCard>
+      <div v-else class="text-center py-12 text-gray-500">
+        <p class="text-lg mb-2">
+          No projects yet
+        </p>
+        <p class="text-sm">
+          Submit test results via the API to create projects
+        </p>
       </div>
     </template>
   </UDashboardPanel>

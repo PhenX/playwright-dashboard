@@ -93,8 +93,8 @@ const items = computed<DropdownMenuItem[][]>(() => ([[{
   }]
 }], [{
   label: 'GitHub repository',
-  icon: 'i-simple-icons-github',
-  to: 'https://github.com/nuxt-ui-templates/dashboard',
+  icon: 'i-lucide-github',
+  to: 'https://github.com/PhenX/playwright-dashboard',
   target: '_blank'
 }]]))
 </script>

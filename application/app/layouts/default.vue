@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
+import ProjectsMenu from "~/components/ProjectsMenu.vue";
 
 interface Project {
   id: number
@@ -112,7 +113,7 @@ const groups = computed(() => [{
   items: [{
     id: 'source',
     label: 'View page source',
-    icon: 'i-simple-icons-github',
+    icon: 'i-lucide-github',
     to: `https://github.com/nuxt-ui-templates/dashboard/blob/main/app/pages${route.path === '/' ? '/index' : route.path}.vue`,
     target: '_blank'
   }]
@@ -156,7 +157,7 @@ onMounted(async () => {
       :ui="{ footer: 'lg:border-t lg:border-default' }"
     >
       <template #header="{ collapsed }">
-        <TeamsMenu :collapsed="collapsed" />
+        <ProjectsMenu :collapsed="collapsed" />
       </template>
 
       <template #default="{ collapsed }">
