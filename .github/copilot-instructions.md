@@ -252,3 +252,4 @@ curl -X POST http://localhost:3000/api/test-runs/submit \
 - Projects are auto-created when first test results are submitted
 - All dates are stored as Unix timestamps in SQLite
 - Keep code simple and well-documented for easy AI modifications
+- Run typecheck, lint, and tests before the final commit
