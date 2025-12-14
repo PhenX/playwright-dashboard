@@ -140,28 +140,14 @@ function onCancel() {
                 :options="colorOptions"
                 value-attribute="value"
                 option-attribute="label"
-              >
-                <template #label>
-                  <div class="flex items-center gap-2">
-                    <div
-                      v-if="state.color"
-                      class="w-4 h-4 rounded"
-                      :style="{ backgroundColor: state.color }"
-                    />
-                    <span>{{ colorOptions.find(c => c.value === state.color)?.label || 'None' }}</span>
-                  </div>
-                </template>
-                <template #option="{ option }">
-                  <div class="flex items-center gap-2">
-                    <div
-                      v-if="option.value"
-                      class="w-4 h-4 rounded"
-                      :style="{ backgroundColor: option.value }"
-                    />
-                    <span>{{ option.label }}</span>
-                  </div>
-                </template>
-              </USelectMenu>
+              />
+              <div v-if="state.color" class="flex items-center gap-2 mt-2 text-sm">
+                <div
+                  class="w-4 h-4 rounded"
+                  :style="{ backgroundColor: state.color }"
+                />
+                <span>Selected: {{ colorOptions.find(c => c.value === state.color)?.label }}</span>
+              </div>
             </UFormField>
 
             <div class="flex gap-2 pt-4">

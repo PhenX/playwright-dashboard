@@ -38,7 +38,7 @@ export default eventHandler(async (event) => {
     throw createError({
       statusCode: 400,
       message: 'Invalid request body',
-      data: validation.error.errors
+      data: validation.error.issues
     })
   }
 
