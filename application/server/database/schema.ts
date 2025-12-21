@@ -26,7 +26,7 @@ export const testRuns = sqliteTable('test_runs', {
   reportSize: integer('report_size'), // in bytes (decompressed size)
   metadata: text('metadata', { mode: 'json' }), // Additional metadata as JSON
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
-}, (table) => ({
+}, table => ({
   projectIdIdx: index('idx_test_runs_project_id').on(table.projectId)
 }))
 
@@ -38,7 +38,7 @@ export const testCases = sqliteTable('test_cases', {
   title: text('title').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
-}, (table) => ({
+}, table => ({
   projectIdIdx: index('idx_test_cases_project_id').on(table.projectId),
   filePathTitleIdx: index('idx_test_cases_file_path_title').on(table.filePath, table.title)
 }))
@@ -55,7 +55,7 @@ export const testRunsCases = sqliteTable('test_runs_cases', {
   line: integer('line'), // line number in file
   column: integer('column'), // column number in file
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
-}, (table) => ({
+}, table => ({
   testRunIdIdx: index('idx_test_runs_cases_test_run_id').on(table.testRunId),
   testCaseIdIdx: index('idx_test_runs_cases_test_case_id').on(table.testCaseId)
 }))
@@ -66,7 +66,7 @@ export const traces = sqliteTable('traces', {
   testRunsCaseId: integer('test_runs_case_id').notNull().references(() => testRunsCases.id),
   filePath: text('file_path').notNull(),
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
-}, (table) => ({
+}, table => ({
   testRunsCaseIdIdx: index('idx_traces_test_runs_case_id').on(table.testRunsCaseId)
 }))
 
