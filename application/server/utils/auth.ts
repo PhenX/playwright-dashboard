@@ -3,20 +3,26 @@ import { getDatabase } from '../database'
 import { users } from '../database/schema'
 import { eq } from 'drizzle-orm'
 import type { User } from '../database/schema'
+import { scrypt, randomBytes, timingSafeEqual } from 'node:crypto'
+import { promisify } from 'node:util'
 
-// Simple password hashing using built-in crypto
+const scryptAsync = promisify(scrypt)
+
+// Password hashing using scrypt
 async function hashPassword(password: string): Promise<string> {
-  // Use Web Crypto API for password hashing
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  const salt = randomBytes(16).toString('hex')
+  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer
+  return `${salt}:${derivedKey.toString('hex')}`
 }
 
 async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  const passwordHash = await hashPassword(password)
-  return passwordHash === hash
+  const [salt, storedHash] = hash.split(':')
+  if (!salt || !storedHash) {
+    return false
+  }
+  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer
+  const storedHashBuffer = Buffer.from(storedHash, 'hex')
+  return timingSafeEqual(derivedKey, storedHashBuffer)
 }
 
 // Session management using encrypted cookies
