@@ -135,7 +135,7 @@ export function hasRole(user: User | null, requiredRoles: string[]): boolean {
 // Check if authentication is enabled
 export function isAuthEnabled(event?: H3Event): boolean {
   const config = event ? useRuntimeConfig(event) : useRuntimeConfig()
-  return config.authEnabled === true || config.authEnabled === 'true'
+  return config.authEnabled === true
 }
 
 // Require authentication - throw error if not authenticated

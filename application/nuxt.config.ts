@@ -14,7 +14,13 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     authEnabled: process.env.NUXT_AUTH_ENABLED === 'true',
-    authSecret: process.env.NUXT_AUTH_SECRET || 'default-secret-change-in-production-use-random-string',
+    authSecret: (() => {
+      if (process.env.NUXT_AUTH_ENABLED === 'true' && !process.env.NUXT_AUTH_SECRET) {
+        console.warn('[SECURITY WARNING] NUXT_AUTH_ENABLED is true but NUXT_AUTH_SECRET is not set. Using default secret for development only.')
+        console.warn('[SECURITY WARNING] Generate a secure secret with: openssl rand -hex 32')
+      }
+      return process.env.NUXT_AUTH_SECRET || 'default-secret-change-in-production-use-random-string'
+    })(),
     public: {
       authEnabled: process.env.NUXT_AUTH_ENABLED === 'true'
     }
