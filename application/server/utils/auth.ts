@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3'
+import { useSession, updateSession, clearSession as h3ClearSession } from 'h3'
 import { getDatabase } from '../database'
 import { users } from '../database/schema'
 import { eq } from 'drizzle-orm'
@@ -39,17 +40,17 @@ export async function getUserSession(event: H3Event): Promise<SessionData | null
     return null
   }
 
-  const sessionCookie = getCookie(event, 'session')
-  if (!sessionCookie) {
-    return null
-  }
-
   try {
-    // Decrypt session data
-    const sessionData = await unsealData<SessionData>(sessionCookie, {
-      password: config.authSecret
+    const session = await useSession<SessionData>(event, {
+      password: config.authSecret,
+      maxAge: 60 * 60 * 24 * 7 // 7 days
     })
-    return sessionData
+
+    if (!session.data || !session.data.userId) {
+      return null
+    }
+
+    return session.data
   } catch {
     // Invalid or expired session
     return null
@@ -59,24 +60,18 @@ export async function getUserSession(event: H3Event): Promise<SessionData | null
 // Set session in cookie
 export async function setUserSession(event: H3Event, sessionData: SessionData): Promise<void> {
   const config = useRuntimeConfig(event)
-  const sealed = await sealData(sessionData, {
-    password: config.authSecret,
-    ttl: 60 * 60 * 24 * 7 // 7 days
-  })
 
-  setCookie(event, 'session', sealed, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-    path: '/'
-  })
+  await updateSession<SessionData>(event, {
+    password: config.authSecret,
+    maxAge: 60 * 60 * 24 * 7 // 7 days
+  }, sessionData)
 }
 
 // Clear session cookie
-export function clearUserSession(event: H3Event): void {
-  deleteCookie(event, 'session', {
-    path: '/'
+export async function clearUserSession(event: H3Event): Promise<void> {
+  const config = useRuntimeConfig(event)
+  await h3ClearSession(event, {
+    password: config.authSecret
   })
 }
 
