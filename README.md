@@ -19,7 +19,7 @@ A modern dashboard for storing and visualizing Playwright test results, built wi
 - 🎨 **Modern UI** - Beautiful interface with light/dark mode support
 - 🚀 **Auto-create Projects** - Unknown projects are automatically created via API
 - 🔐 **Authentication** - Optional role-based access control (administrator, reporter, user)
-- 🐳 **Docker Support** - Pre-built container images (~202MB)
+- 🐳 **Docker Support** - Pre-built container images (~205MB)
 
 ## Quick Start
 
