@@ -158,45 +158,47 @@ function getRoleBadgeColor(role: string) {
       <!-- Users table -->
       <UCard v-if="users.length > 0">
         <template #header>
-          <h3 class="text-lg font-semibold">
-            Users ({{ users.length }})
-          </h3>
+          Users ({{ users.length }})
         </template>
 
         <UTable
-          :rows="users"
+          :data="users"
           :columns="[
-            { key: 'username', label: 'Username' },
-            { key: 'name', label: 'Name' },
-            { key: 'role', label: 'Role' },
-            { key: 'createdAt', label: 'Created' },
-            { key: 'actions', label: '' }
+            { id: 'username', header: 'Username' },
+            { id: 'name', header: 'Name' },
+            { id: 'role', header: 'Role' },
+            { id: 'createdAt', header: 'Created' },
+            { id: 'actions', header: '' }
           ]"
         >
-          <template #name-data="{ row }">
-            <span class="text-muted">{{ row.name || '-' }}</span>
+          <template #username-cell="{ row }">
+            {{ row.original.username }}
           </template>
 
-          <template #role-data="{ row }">
-            <UBadge :color="getRoleBadgeColor(row.role)" variant="subtle">
-              {{ row.role }}
+          <template #name-cell="{ row }">
+            <span class="text-muted">{{ row.original.name || '-' }}</span>
+          </template>
+
+          <template #role-cell="{ row }">
+            <UBadge :color="getRoleBadgeColor(row.original.role)" variant="subtle">
+              {{ row.original.role }}
             </UBadge>
           </template>
 
-          <template #createdAt-data="{ row }">
+          <template #createdAt-cell="{ row }">
             <span class="text-sm text-muted">
-              {{ new Date(row.createdAt).toLocaleDateString() }}
+              {{ new Date(row.original.createdAt).toLocaleDateString() }}
             </span>
           </template>
 
-          <template #actions-data="{ row }">
+          <template #actions-cell="{ row }">
             <UButton
               v-if="isAdmin"
               icon="i-lucide-trash-2"
               color="error"
               variant="ghost"
               size="sm"
-              @click="handleDeleteUser(row)"
+              @click="handleDeleteUser(row.original)"
             />
           </template>
         </UTable>
@@ -226,63 +228,55 @@ function getRoleBadgeColor(role: string) {
   </UDashboardPanel>
 
   <!-- Add User Modal -->
-  <Teleport to="body">
-    <UModal v-model="isAddUserModalOpen">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold">
-            Add New User
-          </h3>
-        </template>
+  <UModal v-model:open="isAddUserModalOpen" title="Add New User">
+    <template #body>
+      <UForm :schema="addUserSchema" :state="newUser">
+        <UFormField
+          label="Username"
+          name="username"
+          required
+          class="mb-4"
+        >
+          <UInput v-model="newUser.username" placeholder="Enter username" />
+        </UFormField>
 
-        <UForm :schema="addUserSchema" :state="newUser" @submit="handleAddUser">
-          <UFormField
-            label="Username"
-            name="username"
-            required
-            class="mb-4"
-          >
-            <UInput v-model="newUser.username" placeholder="Enter username" />
-          </UFormField>
+        <UFormField
+          label="Password"
+          name="password"
+          required
+          class="mb-4"
+        >
+          <UInput v-model="newUser.password" type="password" placeholder="Enter password" />
+        </UFormField>
 
-          <UFormField
-            label="Password"
-            name="password"
-            required
-            class="mb-4"
-          >
-            <UInput v-model="newUser.password" type="password" placeholder="Enter password" />
-          </UFormField>
+        <UFormField label="Display Name" name="name" class="mb-4">
+          <UInput v-model="newUser.name" placeholder="Enter display name (optional)" />
+        </UFormField>
 
-          <UFormField label="Display Name" name="name" class="mb-4">
-            <UInput v-model="newUser.name" placeholder="Enter display name (optional)" />
-          </UFormField>
+        <UFormField
+          label="Role"
+          name="role"
+          required
+        >
+          <USelect v-model="newUser.role" :items="roleOptions" />
+        </UFormField>
+      </UForm>
+    </template>
 
-          <UFormField
-            label="Role"
-            name="role"
-            required
-            class="mb-4"
-          >
-            <USelect v-model="newUser.role" :options="roleOptions" />
-          </UFormField>
-
-          <div class="flex justify-end gap-2">
-            <UButton
-              type="button"
-              color="neutral"
-              variant="ghost"
-              label="Cancel"
-              @click="isAddUserModalOpen = false"
-            />
-            <UButton
-              type="submit"
-              label="Create User"
-              icon="i-lucide-user-plus"
-            />
-          </div>
-        </UForm>
-      </UCard>
-    </UModal>
-  </Teleport>
+    <template #footer>
+      <UButton
+        type="button"
+        color="neutral"
+        variant="ghost"
+        label="Cancel"
+        @click="isAddUserModalOpen = false"
+      />
+      <UButton
+        type="submit"
+        label="Create User"
+        icon="i-lucide-user-plus"
+        @click="handleAddUser"
+      />
+    </template>
+  </UModal>
 </template>
