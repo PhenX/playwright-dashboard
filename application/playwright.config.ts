@@ -1,15 +1,16 @@
 import { defineConfig, devices, type ReporterDescription } from '@playwright/test'
 
-const reporters: ReporterDescription[] = [
-  ['html']
-]
+const reporters: ReporterDescription[] = []
 
 if (!process.env.CI) {
+  reporters.push(['html'])
   reporters.push(['../reporter', {
     serverUrl: 'http://localhost:3000',
     projectName: 'Playwright Dashboard',
     uploadReport: true
   }])
+} else {
+  reporters.push(['list'])
 }
 
 /**
