@@ -8,7 +8,7 @@ test.describe('User Management Page Tests', () => {
     await expect(page.getByRole('heading', { name: 'User Management' })).toBeVisible()
 
     // Check that Add User button is visible
-    await expect(page.getByRole('button', { name: 'Add User' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Add User' }).first()).toBeVisible()
 
     // Check info message about auth being disabled
     await expect(page.getByText('Authentication is disabled')).toBeVisible()
