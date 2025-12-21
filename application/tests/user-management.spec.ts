@@ -125,7 +125,7 @@ test.describe('User Management Page Tests', () => {
       // Create a test user first
       await page.getByRole('button', { name: 'Add User' }).first().click()
       await expect(page.getByRole('heading', { name: 'Add New User' })).toBeVisible({ timeout: 10000 })
-      
+
       await page.getByLabel('Username', { exact: true }).fill('deletetest')
       await page.getByLabel('Password', { exact: true }).fill('password123')
       await page.getByLabel('Role', { exact: true }).click()

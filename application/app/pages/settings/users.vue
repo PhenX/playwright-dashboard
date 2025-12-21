@@ -229,7 +229,7 @@ function getRoleBadgeColor(role: string) {
 
   <!-- Add User Modal -->
   <ClientOnly>
-    <UModal :open="isAddUserModalOpen" @update:open="isAddUserModalOpen = $event" title="Add New User">
+    <UModal :open="isAddUserModalOpen" title="Add New User" @update:open="isAddUserModalOpen = $event">
       <template #body>
         <UForm :schema="addUserSchema" :state="newUser">
           <UFormField
