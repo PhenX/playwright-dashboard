@@ -1,12 +1,15 @@
 import type { StorageAdapter, S3Config } from './types'
 
+// Type for AWS S3 client - using conditional type to avoid requiring @aws-sdk/client-s3
+type S3Client = any
+
 /**
  * AWS S3 storage adapter
  * Stores files in an S3 bucket
  */
 export class S3StorageAdapter implements StorageAdapter {
   private readonly config: S3Config
-  private s3Client: any // AWS S3Client instance
+  private s3Client: S3Client
 
   constructor(config: S3Config) {
     this.config = config
@@ -67,8 +70,11 @@ export class S3StorageAdapter implements StorageAdapter {
       
       // Convert stream to buffer
       const chunks: Buffer[] = []
-      for await (const chunk of response.Body as any) {
-        chunks.push(chunk)
+      // Response.Body is a readable stream from AWS SDK
+      // TypeScript doesn't know the exact type, but it's iterable
+      const body = response.Body as AsyncIterable<Uint8Array>
+      for await (const chunk of body) {
+        chunks.push(Buffer.from(chunk))
       }
       return Buffer.concat(chunks)
     } catch (error) {

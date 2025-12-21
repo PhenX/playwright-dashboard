@@ -6,8 +6,10 @@ import { getDirectorySize } from '../../utils/filesize'
 import { decompressDirectory } from '../../utils/compression'
 import { requireAuth } from '../../utils/auth'
 import { getStorage } from '../../storage'
+import { uploadDirectory } from '../../utils/storage-helpers'
 import { mkdirSync, existsSync } from 'fs'
 import { tmpdir } from 'os'
+import { rm } from 'fs/promises'
 
 export default eventHandler(async (event) => {
   // Require reporter or administrator role for uploading test results
@@ -140,7 +142,6 @@ export default eventHandler(async (event) => {
           console.log(`Extracted HTML report to temp, uploading to storage: ${reportPath}`)
 
           // Upload directory tree to storage
-          const { uploadDirectory } = await import('../../utils/storage-helpers')
           reportSize = await uploadDirectory(
             tempDir,
             join(`project-${project.id}`, reportDirName),
@@ -149,7 +150,6 @@ export default eventHandler(async (event) => {
           console.log(`Report size (uploaded): ${reportSize} bytes`)
           
           // Clean up temp directory
-          const { rm } = await import('fs/promises')
           await rm(tempDir, { recursive: true, force: true })
         } catch (error) {
           console.error(`Failed to extract HTML report: ${error}`)
@@ -182,7 +182,6 @@ export default eventHandler(async (event) => {
           console.log(`Extracted HTML report to temp (legacy zip), uploading to storage: ${reportPath}`)
 
           // Upload directory tree to storage
-          const { uploadDirectory } = await import('../../utils/storage-helpers')
           reportSize = await uploadDirectory(
             tempDir,
             join(`project-${project.id}`, reportDirName),
@@ -191,7 +190,6 @@ export default eventHandler(async (event) => {
           console.log(`Report size (uploaded): ${reportSize} bytes`)
           
           // Clean up temp directory
-          const { rm } = await import('fs/promises')
           await rm(tempDir, { recursive: true, force: true })
         } catch (error) {
           console.error(`Failed to extract HTML report: ${error}`)

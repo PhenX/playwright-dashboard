@@ -104,8 +104,10 @@ test.describe('Storage Abstraction Tests', () => {
 
     test('should throw error when S3 config is incomplete', () => {
       process.env.STORAGE_TYPE = 's3'
-      process.env.S3_BUCKET = undefined
-      process.env.S3_REGION = undefined
+      delete process.env.S3_BUCKET
+      delete process.env.S3_REGION
+      delete process.env.S3_ACCESS_KEY_ID
+      delete process.env.S3_SECRET_ACCESS_KEY
 
       expect(() => getStorage()).toThrow(/S3 storage requires/)
     })
