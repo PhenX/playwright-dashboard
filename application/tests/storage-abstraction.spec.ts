@@ -10,7 +10,7 @@ test.describe('Storage Abstraction Tests', () => {
   test.beforeEach(() => {
     // Reset storage instance for each test
     resetStorage()
-    
+
     // Create test storage directory
     if (!existsSync(testStorageDir)) {
       mkdirSync(testStorageDir, { recursive: true })
@@ -42,9 +42,9 @@ test.describe('Storage Abstraction Tests', () => {
       const testData = Buffer.from('Test content')
 
       expect(await storage.exists(testPath)).toBe(false)
-      
+
       await storage.writeFile(testPath, testData)
-      
+
       expect(await storage.exists(testPath)).toBe(true)
     })
 
@@ -53,7 +53,7 @@ test.describe('Storage Abstraction Tests', () => {
       const dirPath = 'nested/deep/directory'
 
       await storage.mkdir(dirPath)
-      
+
       const fullPath = storage.getFullPath(dirPath)
       expect(existsSync(fullPath)).toBe(true)
     })
@@ -97,7 +97,7 @@ test.describe('Storage Abstraction Tests', () => {
       const testData = Buffer.from('Environment test')
 
       await storage.writeFile(testPath, testData)
-      
+
       const fullPath = join(testStorageDir, testPath)
       expect(existsSync(fullPath)).toBe(true)
     })

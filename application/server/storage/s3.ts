@@ -1,15 +1,13 @@
 import type { StorageAdapter, S3Config } from './types'
 
-// Type for AWS S3 client - using conditional type to avoid requiring @aws-sdk/client-s3
-type S3Client = any
-
 /**
  * AWS S3 storage adapter
  * Stores files in an S3 bucket
  */
 export class S3StorageAdapter implements StorageAdapter {
   private readonly config: S3Config
-  private s3Client: S3Client
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private s3Client: any // AWS S3Client instance (type is dynamic)
 
   constructor(config: S3Config) {
     this.config = config
@@ -22,7 +20,7 @@ export class S3StorageAdapter implements StorageAdapter {
       // This will only load if S3 storage is actually used
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { S3Client } = require('@aws-sdk/client-s3')
-      
+
       this.s3Client = new S3Client({
         region: this.config.region,
         credentials: {
@@ -42,7 +40,7 @@ export class S3StorageAdapter implements StorageAdapter {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { PutObjectCommand } = require('@aws-sdk/client-s3')
-      
+
       const command = new PutObjectCommand({
         Bucket: this.config.bucket,
         Key: path,
@@ -60,14 +58,14 @@ export class S3StorageAdapter implements StorageAdapter {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { GetObjectCommand } = require('@aws-sdk/client-s3')
-      
+
       const command = new GetObjectCommand({
         Bucket: this.config.bucket,
         Key: path
       })
 
       const response = await this.s3Client.send(command)
-      
+
       // Convert stream to buffer
       const chunks: Buffer[] = []
       // Response.Body is a readable stream from AWS SDK
@@ -87,7 +85,7 @@ export class S3StorageAdapter implements StorageAdapter {
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { HeadObjectCommand } = require('@aws-sdk/client-s3')
-      
+
       const command = new HeadObjectCommand({
         Bucket: this.config.bucket,
         Key: path
@@ -95,6 +93,7 @@ export class S3StorageAdapter implements StorageAdapter {
 
       await this.s3Client.send(command)
       return true
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
         return false
@@ -104,7 +103,7 @@ export class S3StorageAdapter implements StorageAdapter {
     }
   }
 
-  async mkdir(path: string): Promise<void> {
+  async mkdir(_path: string): Promise<void> {
     // S3 doesn't require directory creation
     // Directories are implicit in S3 based on key prefixes
     return Promise.resolve()

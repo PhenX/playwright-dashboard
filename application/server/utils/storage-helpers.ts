@@ -1,4 +1,4 @@
-import { readdir, stat, readFile } from 'fs/promises'
+import { readdir, readFile } from 'fs/promises'
 import { join } from 'path'
 import type { StorageAdapter } from '../storage/types'
 

@@ -7,7 +7,7 @@ let storageInstance: StorageAdapter | null = null
 /**
  * Get the storage adapter instance
  * Uses environment variables to determine which storage backend to use
- * 
+ *
  * Environment variables:
  * - STORAGE_TYPE: 'local' (default) or 's3'
  * - STORAGE_PATH: Path for local storage (default: '.data/storage')

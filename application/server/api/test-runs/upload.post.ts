@@ -2,7 +2,6 @@ import { getDatabase } from '../../database'
 import { projects, testRuns, testCases, testRunsCases } from '../../database/schema'
 import { eq, and } from 'drizzle-orm'
 import { join } from 'path'
-import { getDirectorySize } from '../../utils/filesize'
 import { decompressDirectory } from '../../utils/compression'
 import { requireAuth } from '../../utils/auth'
 import { getStorage } from '../../storage'
@@ -127,7 +126,7 @@ export default eventHandler(async (event) => {
         // Extract zstd compressed archive to temp directory first
         const reportDirName = `run-${Date.now()}-report`
         const tempDir = join(tmpdir(), `playwright-report-${Date.now()}`)
-        
+
         // Create temp directory
         if (!existsSync(tempDir)) {
           mkdirSync(tempDir, { recursive: true })
@@ -148,7 +147,7 @@ export default eventHandler(async (event) => {
             storage
           )
           console.log(`Report size (uploaded): ${reportSize} bytes`)
-          
+
           // Clean up temp directory
           await rm(tempDir, { recursive: true, force: true })
         } catch (error) {
@@ -165,7 +164,7 @@ export default eventHandler(async (event) => {
         // Legacy support for zip files - extract zip file
         const reportDirName = `run-${Date.now()}-report`
         const tempDir = join(tmpdir(), `playwright-report-${Date.now()}`)
-        
+
         // Create temp directory
         if (!existsSync(tempDir)) {
           mkdirSync(tempDir, { recursive: true })
@@ -188,7 +187,7 @@ export default eventHandler(async (event) => {
             storage
           )
           console.log(`Report size (uploaded): ${reportSize} bytes`)
-          
+
           // Clean up temp directory
           await rm(tempDir, { recursive: true, force: true })
         } catch (error) {
