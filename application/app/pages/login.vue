@@ -27,8 +27,11 @@ async function handleLogin() {
       color: 'success'
     })
     router.push('/')
-  } catch (err: any) {
-    error.value = err.data?.message || 'Invalid username or password'
+  } catch (err: unknown) {
+    const errorMessage = err && typeof err === 'object' && 'data' in err
+      ? (err.data as { message?: string })?.message
+      : undefined
+    error.value = errorMessage || 'Invalid username or password'
     toast.add({
       title: 'Login failed',
       description: error.value,
@@ -56,7 +59,7 @@ definePageMeta({
         </div>
       </template>
 
-      <form @submit.prevent="handleLogin" class="space-y-4">
+      <form class="space-y-4" @submit.prevent="handleLogin">
         <UFormField label="Username" name="username" required>
           <UInput
             v-model="state.username"

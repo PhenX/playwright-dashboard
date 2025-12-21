@@ -12,17 +12,17 @@ export default defineNuxtConfig({
 
   css: ['~/assets/css/main.css'],
 
-  routeRules: {
-    '/api/**': {
-      cors: true
-    }
-  },
-
   runtimeConfig: {
     authEnabled: process.env.NUXT_AUTH_ENABLED === 'true',
     authSecret: process.env.NUXT_AUTH_SECRET || 'default-secret-change-in-production-use-random-string',
     public: {
       authEnabled: process.env.NUXT_AUTH_ENABLED === 'true'
+    }
+  },
+
+  routeRules: {
+    '/api/**': {
+      cors: true
     }
   },
 

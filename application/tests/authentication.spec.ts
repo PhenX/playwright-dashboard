@@ -5,7 +5,7 @@ test.describe('Authentication Tests', () => {
     // Test that API works without auth when NUXT_AUTH_ENABLED is false
     const response = await request.get('/api/auth/me')
     expect(response.ok()).toBeTruthy()
-    
+
     const data = await response.json()
     expect(data.authenticated).toBe(false)
     expect(data.user).toBeNull()
@@ -27,7 +27,7 @@ test.describe('Authentication Tests', () => {
       }
     })
     expect(createResponse.ok()).toBeTruthy()
-    
+
     const createData = await createResponse.json()
     const projectId = createData.projectId
 
@@ -39,7 +39,7 @@ test.describe('Authentication Tests', () => {
       }
     })
     expect(updateResponse.ok()).toBeTruthy()
-    
+
     const updateData = await updateResponse.json()
     expect(updateData.label).toBe('Updated Label')
     expect(updateData.description).toBe('Updated Description')
@@ -52,7 +52,7 @@ test.describe('Authentication Tests', () => {
         password: 'password'
       }
     })
-    
+
     expect(response.status()).toBe(400)
     const data = await response.json()
     expect(data.message).toContain('Authentication is not enabled')

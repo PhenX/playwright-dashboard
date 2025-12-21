@@ -15,7 +15,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Fetch user if not already loaded
   if (!authState.value.authenticated) {
     const result = await fetchUser()
-    
+
     if (!result.authenticated) {
       return navigateTo('/login')
     }
