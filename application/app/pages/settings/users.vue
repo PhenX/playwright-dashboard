@@ -228,55 +228,57 @@ function getRoleBadgeColor(role: string) {
   </UDashboardPanel>
 
   <!-- Add User Modal -->
-  <UModal v-model:open="isAddUserModalOpen" title="Add New User">
-    <template #body>
-      <UForm :schema="addUserSchema" :state="newUser">
-        <UFormField
-          label="Username"
-          name="username"
-          required
-          class="mb-4"
-        >
-          <UInput v-model="newUser.username" placeholder="Enter username" />
-        </UFormField>
+  <ClientOnly>
+    <UModal :open="isAddUserModalOpen" @update:open="isAddUserModalOpen = $event" title="Add New User">
+      <template #body>
+        <UForm :schema="addUserSchema" :state="newUser">
+          <UFormField
+            label="Username"
+            name="username"
+            required
+            class="mb-4"
+          >
+            <UInput v-model="newUser.username" placeholder="Enter username" />
+          </UFormField>
 
-        <UFormField
-          label="Password"
-          name="password"
-          required
-          class="mb-4"
-        >
-          <UInput v-model="newUser.password" type="password" placeholder="Enter password" />
-        </UFormField>
+          <UFormField
+            label="Password"
+            name="password"
+            required
+            class="mb-4"
+          >
+            <UInput v-model="newUser.password" type="password" placeholder="Enter password" />
+          </UFormField>
 
-        <UFormField label="Display Name" name="name" class="mb-4">
-          <UInput v-model="newUser.name" placeholder="Enter display name (optional)" />
-        </UFormField>
+          <UFormField label="Display Name" name="name" class="mb-4">
+            <UInput v-model="newUser.name" placeholder="Enter display name (optional)" />
+          </UFormField>
 
-        <UFormField
-          label="Role"
-          name="role"
-          required
-        >
-          <USelect v-model="newUser.role" :items="roleOptions" />
-        </UFormField>
-      </UForm>
-    </template>
+          <UFormField
+            label="Role"
+            name="role"
+            required
+          >
+            <USelect v-model="newUser.role" :items="roleOptions" />
+          </UFormField>
+        </UForm>
+      </template>
 
-    <template #footer>
-      <UButton
-        type="button"
-        color="neutral"
-        variant="ghost"
-        label="Cancel"
-        @click="isAddUserModalOpen = false"
-      />
-      <UButton
-        type="submit"
-        label="Create User"
-        icon="i-lucide-user-plus"
-        @click="handleAddUser"
-      />
-    </template>
-  </UModal>
+      <template #footer>
+        <UButton
+          type="button"
+          color="neutral"
+          variant="ghost"
+          label="Cancel"
+          @click="isAddUserModalOpen = false"
+        />
+        <UButton
+          type="submit"
+          label="Create User"
+          icon="i-lucide-user-plus"
+          @click="handleAddUser"
+        />
+      </template>
+    </UModal>
+  </ClientOnly>
 </template>
