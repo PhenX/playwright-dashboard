@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test'
 test.describe('User Management Page Tests', () => {
   test('should display user management page', async ({ page }) => {
     await page.goto('/settings/users')
+    await page.waitForTimeout(1000) // slight delay to ensure button is ready
 
     // Check page title
     await expect(page.getByRole('heading', { name: 'User Management' })).toBeVisible()
@@ -16,6 +17,7 @@ test.describe('User Management Page Tests', () => {
 
   test('should open modal when clicking Add User button', async ({ page }) => {
     await page.goto('/settings/users')
+    await page.waitForTimeout(1000) // slight delay to ensure button is ready
 
     // Modal should not be visible initially
     await expect(page.getByRole('heading', { name: 'Add New User' })).not.toBeVisible()
@@ -35,6 +37,7 @@ test.describe('User Management Page Tests', () => {
 
   test('should close modal when clicking Cancel', async ({ page }) => {
     await page.goto('/settings/users')
+    await page.waitForTimeout(1000) // slight delay to ensure button is ready
 
     // Open modal
     await page.getByRole('button', { name: 'Add User' }).first().click()
@@ -49,6 +52,7 @@ test.describe('User Management Page Tests', () => {
 
   test('should create a new user', async ({ page }) => {
     await page.goto('/settings/users')
+    await page.waitForTimeout(1000) // slight delay to ensure button is ready
 
     // Open modal
     await page.getByRole('button', { name: 'Add User' }).first().click()
@@ -66,14 +70,15 @@ test.describe('User Management Page Tests', () => {
     await page.getByRole('button', { name: 'Create User' }).click()
 
     // Check for success message (toast notification)
-    await expect(page.getByText('User created')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('User created', { exact: true })).toBeVisible({ timeout: 5000 })
 
     // Check that user appears in the table
-    await expect(page.getByText('testuser')).toBeVisible()
+    await expect(page.getByRole('cell', { name: 'testuser' })).toBeVisible()
   })
 
   test('should display user in table after creation', async ({ page }) => {
     await page.goto('/settings/users')
+    await page.waitForTimeout(1000) // slight delay to ensure button is ready
 
     // If there are users, the table should be visible
     const noUsersText = page.getByText('No users yet')
@@ -88,6 +93,7 @@ test.describe('User Management Page Tests', () => {
 
   test('should validate form fields', async ({ page }) => {
     await page.goto('/settings/users')
+    await page.waitForTimeout(1000) // slight delay to ensure button is ready
 
     // Open modal
     await page.getByRole('button', { name: 'Add User' }).first().click()
@@ -102,6 +108,7 @@ test.describe('User Management Page Tests', () => {
 
   test('should show delete confirmation for users', async ({ page }) => {
     await page.goto('/settings/users')
+    await page.waitForTimeout(1000) // slight delay to ensure button is ready
 
     // First create a user if none exist
     const noUsersText = await page.getByText('No users yet').isVisible().catch(() => false)
