@@ -18,6 +18,14 @@ export default defineNuxtConfig({
     }
   },
 
+  runtimeConfig: {
+    authEnabled: process.env.NUXT_AUTH_ENABLED === 'true',
+    authSecret: process.env.NUXT_AUTH_SECRET || 'default-secret-change-in-production-use-random-string',
+    public: {
+      authEnabled: process.env.NUXT_AUTH_ENABLED === 'true'
+    }
+  },
+
   compatibilityDate: '2024-07-11',
 
   eslint: {
