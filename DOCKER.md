@@ -41,8 +41,10 @@ This creates the `.output` directory with the production build.
 ```bash
 cd application
 npm install
+# Get the libsql version from package-lock.json
+LIBSQL_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/libsql'].version")
 # Install Alpine-specific native modules
-npm install --no-save --force @libsql/linux-x64-musl@0.4.7 @libsql/linux-arm64-musl@0.4.7
+npm install --no-save --force @libsql/linux-x64-musl@$LIBSQL_VERSION @libsql/linux-arm64-musl@$LIBSQL_VERSION
 npm run build
 # Copy native modules to output (Nitro doesn't auto-include cross-platform modules)
 mkdir -p .output/server/node_modules/@libsql/linux-x64-musl

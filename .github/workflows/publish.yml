@@ -31,8 +31,11 @@ jobs:
         working-directory: ./application
         run: |
           npm ci
+          # Get libsql version from package-lock.json
+          LIBSQL_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/libsql'].version")
+          echo "Installing Alpine (musl) native modules version: $LIBSQL_VERSION"
           # Explicitly install Alpine (musl) and ARM native modules for multi-platform support
-          npm install --no-save --force @libsql/linux-x64-musl@0.4.7 @libsql/linux-arm64-musl@0.4.7
+          npm install --no-save --force @libsql/linux-x64-musl@$LIBSQL_VERSION @libsql/linux-arm64-musl@$LIBSQL_VERSION
           npm run build
           # Manually copy platform-specific native modules to output (Nitro doesn't auto-include them)
           mkdir -p .output/server/node_modules/@libsql/linux-x64-musl
