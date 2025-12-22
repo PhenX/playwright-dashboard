@@ -24,6 +24,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.721.0",
     "@iconify-json/lucide": "^1.2.75",
+    "@libsql/client": "^0.14.0",
     "@mongodb-js/zstd": "^7.0.0",
     "@nuxt/hints": "1.0.0-alpha.3",
     "@nuxt/test-utils": "3.21.0",
@@ -31,7 +32,6 @@
     "@unovis/ts": "^1.6.2",
     "@unovis/vue": "^1.6.2",
     "@vueuse/nuxt": "^14.1.0",
-    "@libsql/client": "^0.14.0",
     "adm-zip": "^0.5.16",
     "date-fns": "^4.1.0",
     "drizzle-kit": "^0.31.8",
@@ -47,5 +47,8 @@
     "form-data": "^4.0.0",
     "typescript": "^5.9.3",
     "vue-tsc": "^3.1.5"
+  },
+  "optionalDependencies": {
+    "@libsql/linux-x64-musl": "^0.5.22"
   }
 }
