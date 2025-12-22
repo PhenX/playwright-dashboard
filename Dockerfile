@@ -3,9 +3,6 @@ FROM node:22-alpine
 
 WORKDIR /app
 
-# Install runtime dependencies for better-sqlite3
-RUN apk add --no-cache gcompat
-
 # Copy only the built output (pre-built outside Docker)
 COPY application/.output ./.output
 

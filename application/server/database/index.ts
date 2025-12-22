@@ -1,9 +1,9 @@
-import Database from 'better-sqlite3'
-import { drizzle } from 'drizzle-orm/better-sqlite3'
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
+import { drizzle } from 'drizzle-orm/libsql/sqlite3'
+import { migrate } from 'drizzle-orm/libsql/migrator'
 import * as schema from './schema'
 import { existsSync, mkdirSync } from 'fs'
 import { resolve } from 'path'
+import { pathToFileURL } from 'url'
 
 let db: ReturnType<typeof drizzle>
 
@@ -15,8 +15,10 @@ export function initDatabase() {
 
     // Use environment variable or default to .data/playwright.db
     const dbPath = process.env.DATABASE_PATH || '.data/playwright.db'
-    const sqlite = new Database(dbPath)
-    db = drizzle(sqlite, { schema })
+    // Convert to absolute path and create proper file URL for cross-platform compatibility
+    const absolutePath = resolve(dbPath)
+    const dbUrl = pathToFileURL(absolutePath).href
+    db = drizzle(dbUrl, { schema })
 
     // Run migrations
     try {
