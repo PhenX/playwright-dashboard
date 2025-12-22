@@ -18,33 +18,26 @@ The dashboard will be available at `http://localhost:3000`.
 ## Image Details
 
 - **Base Image**: `node:22-alpine` (minimal Alpine Linux with Node.js 22)
-- **Image Size**: ~205MB (includes gcompat for better-sqlite3 compatibility)
+- **Build Strategy**: Multi-stage build for optimal size and compatibility
+- **Image Size**: ~220MB (includes build and runtime dependencies)
 - **Architecture**: Multi-platform (linux/amd64, linux/arm64)
 - **Registry**: GitHub Container Registry (ghcr.io)
 
 ## Building the Image Locally
 
-The image is built outside of Docker for optimal size. Follow these steps:
+The image uses a multi-stage build process that compiles native modules inside Alpine Linux for maximum compatibility.
 
-### 1. Build the Application
-
-```bash
-cd application
-npm install
-npm run build
-```
-
-This creates the `.output` directory with the production build.
-
-**Note**: When building on non-Alpine systems (like Ubuntu/macOS), the native modules (better-sqlite3) are compiled for glibc. The Dockerfile includes `gcompat` to provide glibc compatibility on Alpine Linux.
-
-### 2. Build the Docker Image
+### Build the Docker Image
 
 ```bash
 docker build -t playwright-dashboard:local .
 ```
 
-### 3. Run the Container
+This command:
+1. Builds the application inside an Alpine container (ensuring native modules are compiled for musl)
+2. Copies only the built artifacts to the final minimal runtime image
+
+### Run the Container
 
 ```bash
 docker run -p 3000:3000 -v $(pwd)/.data:/app/.data playwright-dashboard:local
@@ -159,20 +152,24 @@ The container runs as a non-root user (`nodejs:nodejs` with UID/GID 1001) for en
 
 ## Image Optimization
 
-This image is optimized for size:
+This image is optimized for both size and compatibility:
 
-1. **External Build**: Application is built outside Docker to avoid including build dependencies
+1. **Multi-stage Build**: Separates build and runtime environments
 2. **Alpine Base**: Uses minimal Alpine Linux (~55MB base)
-3. **Minimal Layers**: Commands combined to reduce layer count
-4. **No Build Dependencies**: Only runtime dependencies included
-5. **Efficient Copying**: Only `.output` directory copied
-6. **Compatibility Layer**: Includes `gcompat` for native module support (adds ~5MB)
+3. **Native Module Compatibility**: Builds native modules (better-sqlite3) in Alpine to ensure musl libc compatibility
+4. **Minimal Layers**: Commands combined to reduce layer count
+5. **No Runtime Build Dependencies**: Build tools only in builder stage
+6. **Efficient Copying**: Only `.output` directory copied to final image
 
 ## Technical Notes
 
 ### Native Modules Compatibility
 
-The application uses `better-sqlite3`, a native Node.js module. When building the application on a non-Alpine system (Ubuntu, macOS, etc.), the module is compiled for glibc. To run on Alpine Linux (which uses musl), the Dockerfile includes `gcompat` to provide glibc compatibility. This adds approximately 5MB to the image size but ensures the native modules work correctly.
+The application uses `better-sqlite3`, a native Node.js module with C++ bindings. The multi-stage build ensures native modules are compiled in Alpine Linux with musl libc, eliminating compatibility issues that occur when building on other platforms (Ubuntu/glibc, macOS) and then running on Alpine.
+
+**Previous approach (deprecated)**: Building outside Docker and using `gcompat` for glibc compatibility caused symbol resolution issues (e.g., `fcntl64: symbol not found`).
+
+**Current approach**: Building inside Alpine ensures native modules are compiled for the target platform, eliminating the need for compatibility layers.
 
 ## Troubleshooting
 
@@ -202,7 +199,9 @@ The dashboard will be available at `http://localhost:8080`.
 
 ### Native Module Errors
 
-If you see errors related to `better-sqlite3` or shared libraries, ensure:
-1. The Docker image was built successfully with `gcompat` installed
-2. You're using the official image from ghcr.io
-3. The platform matches your system architecture
+If you see errors related to `better-sqlite3` or shared libraries:
+1. Ensure you're using the latest image from ghcr.io (built with multi-stage Alpine build)
+2. The platform matches your system architecture
+3. If building locally, Docker is using BuildKit (should be default on recent versions)
+
+**Common error (now fixed)**: `fcntl64: symbol not found` - This occurred when native modules were built on non-Alpine systems. The multi-stage build approach ensures all native modules are compiled in Alpine.

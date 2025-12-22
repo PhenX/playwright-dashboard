@@ -1,15 +1,32 @@
-# Minimal production image - build the app outside Docker first with: npm run build
+# Multi-stage build - compile native modules in Alpine for compatibility
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Install build dependencies for native modules (better-sqlite3)
+RUN apk update && apk add --no-cache python3 make g++
+
+# Copy package files
+COPY application/package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy application source
+COPY application/ ./
+
+# Build the application
+RUN npm run build
+
+# Production stage - minimal runtime image
 FROM node:22-alpine
 
 WORKDIR /app
 
-# Install runtime dependencies for better-sqlite3
-RUN apk add --no-cache gcompat
+# Copy only the built output from builder stage
+COPY --from=builder /app/.output ./.output
 
-# Copy only the built output (pre-built outside Docker)
-COPY application/.output ./.output
-
-# Create data directory and set environment in one layer
+# Create data directory and set up non-root user
 RUN mkdir -p /app/.data && \
     addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001 && \
