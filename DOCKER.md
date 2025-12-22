@@ -187,7 +187,7 @@ This image is optimized for size:
 
 ### SQLite Implementation
 
-The application uses Node.js's SQLite via the `libsql` package, which requires platform-specific native bindings. When building on non-Alpine systems (glibc), the Alpine-specific bindings (`@libsql/linux-x64-musl` for x64 and `@libsql/linux-arm64-musl` for ARM64) must be explicitly installed and copied to the build output for the Docker image to work on Alpine Linux.
+The application uses `@libsql/client` which internally depends on the `libsql` package for native SQLite bindings. The `libsql` package requires platform-specific native bindings. When building on non-Alpine systems (glibc), the Alpine-specific bindings (`@libsql/linux-x64-musl` for x64 and `@libsql/linux-arm64-musl` for ARM64) must be explicitly installed and copied to the build output for the Docker image to work on Alpine Linux.
 
 ### Native Module Cross-Platform Support
 
