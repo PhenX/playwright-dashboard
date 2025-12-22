@@ -36,6 +36,23 @@ npm run build
 
 This creates the `.output` directory with the production build.
 
+**Note for Multi-Platform Support**: When building for Docker on Alpine Linux (musl), you need to include platform-specific native modules:
+
+```bash
+cd application
+npm install
+# Get the libsql version from package-lock.json
+LIBSQL_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/libsql'].version")
+# Install Alpine-specific native modules
+npm install --no-save --force @libsql/linux-x64-musl@$LIBSQL_VERSION @libsql/linux-arm64-musl@$LIBSQL_VERSION
+npm run build
+# Copy native modules to output (Nitro doesn't auto-include cross-platform modules)
+mkdir -p .output/server/node_modules/@libsql/linux-x64-musl
+mkdir -p .output/server/node_modules/@libsql/linux-arm64-musl
+cp -r node_modules/@libsql/linux-x64-musl/* .output/server/node_modules/@libsql/linux-x64-musl/
+cp -r node_modules/@libsql/linux-arm64-musl/* .output/server/node_modules/@libsql/linux-arm64-musl/
+```
+
 ### 2. Build the Docker Image
 
 ```bash
@@ -164,13 +181,21 @@ This image is optimized for size:
 3. **Minimal Layers**: Commands combined to reduce layer count
 4. **No Build Dependencies**: Only runtime dependencies included
 5. **Efficient Copying**: Only `.output` directory copied
-6. **Native SQLite**: Uses Node.js 22's built-in SQLite module (no native compilation needed)
+6. **Native Modules**: Platform-specific SQLite bindings included for Alpine (musl) support
 
 ## Technical Notes
 
 ### SQLite Implementation
 
-The application uses Node.js 22's built-in SQLite module (`node:sqlite`) via the `@libsql/client` wrapper. This eliminates the need for native module compilation and reduces the Docker image size. The SQLite module is part of Node.js 22 and requires no additional dependencies.
+The application uses `@libsql/client` which internally depends on the `libsql` package for native SQLite bindings. The `libsql` package requires platform-specific native bindings. When building on non-Alpine systems (glibc), the Alpine-specific bindings (`@libsql/linux-x64-musl` for x64 and `@libsql/linux-arm64-musl` for ARM64) must be explicitly installed and copied to the build output for the Docker image to work on Alpine Linux.
+
+### Native Module Cross-Platform Support
+
+Nuxt's Nitro bundler only includes native modules for the current platform during build. For multi-platform Docker images (supporting both x64 and ARM64 on Alpine), the publish workflow explicitly:
+
+1. Installs Alpine-specific native modules with `--force` flag (to bypass platform checks)
+2. Copies these modules to the `.output/server/node_modules` directory after build
+3. Ensures the Docker image can run on both `linux/amd64` and `linux/arm64` platforms
 
 ## Troubleshooting
 
@@ -197,7 +222,3 @@ docker run -p 8080:3000 -v $(pwd)/.data:/app/.data ghcr.io/phenx/playwright-dash
 ```
 
 The dashboard will be available at `http://localhost:8080`.
-
-### Build Architecture
-
-When building the application with `npm run build`, it uses Node.js 22's built-in SQLite module which is available on all platforms. The Docker image uses the same Node.js 22 Alpine base, ensuring compatibility without requiring additional libraries.
