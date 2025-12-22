@@ -28,7 +28,7 @@ export default eventHandler(async (event) => {
 
   const { username, password, role, name } = validation.data
 
-  const db = getDatabase()
+  const db = await getDatabase()
 
   // Check if username already exists
   const existingUsers = await db.select().from(users).where(eq(users.username, username))

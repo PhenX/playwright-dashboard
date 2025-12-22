@@ -12,7 +12,7 @@ export default eventHandler(async (event) => {
     })
   }
 
-  const db = getDatabase()
+  const db = await getDatabase()
 
   // Get the test_runs_case record
   const testRunsCaseResults = await db.select().from(testRunsCases).where(eq(testRunsCases.id, id))

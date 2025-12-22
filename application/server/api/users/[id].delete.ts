@@ -16,7 +16,7 @@ export default eventHandler(async (event) => {
     })
   }
 
-  const db = getDatabase()
+  const db = await getDatabase()
 
   // Check if user exists
   const userResults = await db.select().from(users).where(eq(users.id, id))

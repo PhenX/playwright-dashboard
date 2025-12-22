@@ -17,7 +17,7 @@ export default eventHandler(async (event) => {
     })
   }
 
-  const db = getDatabase()
+  const db = await getDatabase()
 
   // Get or create project
   const existingProjects = await db.select().from(projects).where(eq(projects.name, body.projectName))

@@ -3,7 +3,7 @@ import { projects, testRuns, testCases, type Project } from '../database/schema'
 import { eq, desc, sql } from 'drizzle-orm'
 
 export default eventHandler(async () => {
-  const db = getDatabase()
+  const db = await getDatabase()
 
   // Get all projects with their latest test run info
   const allProjects = await db.select().from(projects).orderBy(desc(projects.updatedAt))
