@@ -3,6 +3,7 @@ import { migrate } from 'drizzle-orm/libsql/migrator'
 import * as schema from './schema'
 import { existsSync, mkdirSync } from 'fs'
 import { resolve } from 'path'
+import { pathToFileURL } from 'url'
 
 let db: ReturnType<typeof drizzle>
 
@@ -14,8 +15,9 @@ export function initDatabase() {
 
     // Use environment variable or default to .data/playwright.db
     const dbPath = process.env.DATABASE_PATH || '.data/playwright.db'
-    // Use file:// protocol for libsql
-    const dbUrl = `file:${dbPath}`
+    // Convert to absolute path and create proper file URL for cross-platform compatibility
+    const absolutePath = resolve(dbPath)
+    const dbUrl = pathToFileURL(absolutePath).href
     db = drizzle(dbUrl, { schema })
 
     // Run migrations
