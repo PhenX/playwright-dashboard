@@ -12,7 +12,7 @@ export default eventHandler(async (event) => {
     })
   }
 
-  const db = getDatabase()
+  const db = await getDatabase()
 
   const testRunResults = await db.select().from(testRuns).where(eq(testRuns.id, id))
   const testRun = testRunResults[0]

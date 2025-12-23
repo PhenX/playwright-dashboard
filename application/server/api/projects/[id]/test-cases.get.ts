@@ -12,7 +12,7 @@ export default eventHandler(async (event) => {
     })
   }
 
-  const db = getDatabase()
+  const db = await getDatabase()
 
   // Get all test cases for this project with aggregated stats
   const testCasesWithStats = await db.select({

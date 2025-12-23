@@ -1,4 +1,11 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { cpSync, existsSync, mkdirSync } from 'fs'
+import { resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
@@ -33,6 +40,21 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: '2024-07-11',
+
+  hooks: {
+    'nitro:build:public-assets': (nitro) => {
+      // Copy migrations folder to output during build
+      const sourceMigrations = resolve(__dirname, 'server/database/migrations')
+      const targetMigrations = resolve(nitro.options.output.serverDir, 'database/migrations')
+
+      if (existsSync(sourceMigrations)) {
+        console.log('[Build] Copying migrations to output...')
+        mkdirSync(dirname(targetMigrations), { recursive: true })
+        cpSync(sourceMigrations, targetMigrations, { recursive: true })
+        console.log('[Build] Migrations copied successfully')
+      }
+    }
+  },
 
   eslint: {
     config: {

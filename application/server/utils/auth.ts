@@ -82,14 +82,14 @@ export async function getCurrentUser(event: H3Event): Promise<User | null> {
     return null
   }
 
-  const db = getDatabase()
+  const db = await getDatabase()
   const userResults = await db.select().from(users).where(eq(users.id, session.userId))
   return userResults[0] || null
 }
 
 // Verify user credentials and return user
 export async function verifyUser(username: string, password: string): Promise<User | null> {
-  const db = getDatabase()
+  const db = await getDatabase()
   const userResults = await db.select().from(users).where(eq(users.username, username))
   const user = userResults[0]
 
@@ -107,7 +107,7 @@ export async function verifyUser(username: string, password: string): Promise<Us
 
 // Create a new user
 export async function createUser(username: string, password: string, role: string, name?: string): Promise<User> {
-  const db = getDatabase()
+  const db = await getDatabase()
   const hashedPassword = await hashPassword(password)
 
   const result = await db.insert(users).values({

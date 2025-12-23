@@ -3,7 +3,7 @@ import { users } from '../../database/schema'
 import { isAuthEnabled } from '../../utils/auth'
 
 export default eventHandler(async (event) => {
-  const db = getDatabase()
+  const db = await getDatabase()
 
   // Get all users (exclude password field)
   const allUsers = await db.select({

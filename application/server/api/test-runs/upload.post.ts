@@ -86,7 +86,7 @@ export default eventHandler(async (event) => {
     })
   }
 
-  const db = getDatabase()
+  const db = await getDatabase()
   const storage = getStorage()
 
   // Get or create project
