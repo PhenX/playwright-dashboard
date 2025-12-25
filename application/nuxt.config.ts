@@ -17,10 +17,6 @@ export default defineNuxtConfig({
     enabled: true
   },
 
-  experimental: {
-    buildCache: true
-  },
-
   css: ['~/assets/css/main.css'],
 
   runtimeConfig: {
@@ -41,6 +37,10 @@ export default defineNuxtConfig({
     '/api/**': {
       cors: true
     }
+  },
+
+  experimental: {
+    buildCache: true
   },
 
   compatibilityDate: '2024-07-11',
