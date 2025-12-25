@@ -34,7 +34,8 @@ docker run -p 3000:3000 -v $(pwd)/.data:/app/.data ghcr.io/phenx/playwright-dash
 
 Visit `http://localhost:3000` to access the dashboard.
 
-📖 See [DOCKER.md](DOCKER.md) for detailed Docker deployment instructions.
+📖 See [DOCKER.md](DOCKER.md) for detailed Docker deployment instructions.  
+🪟 **Windows users**: See [WINDOWS_BUILD_GUIDE.md](WINDOWS_BUILD_GUIDE.md) for Windows-specific instructions.
 
 ### Installation
 

@@ -27,21 +27,54 @@ The dashboard will be available at `http://localhost:3000`.
 
 The image uses a multi-stage build process that compiles native modules inside Alpine Linux for maximum compatibility.
 
+> **Note for Windows users**: See [WINDOWS_BUILD_GUIDE.md](WINDOWS_BUILD_GUIDE.md) for detailed Windows-specific instructions with PowerShell and Command Prompt examples.
+
 ### Build the Docker Image
 
+**Linux/macOS:**
 ```bash
 docker build -t playwright-dashboard:local .
+```
+
+**Windows PowerShell:**
+```powershell
+docker build -t playwright-dashboard:test .
 ```
 
 This command:
 1. Builds the application inside an Alpine container (ensuring native modules are compiled for musl)
 2. Copies only the built artifacts to the final minimal runtime image
+3. Takes 3-5 minutes on first build (cached afterwards)
 
 ### Run the Container
 
+**Linux/macOS:**
 ```bash
 docker run -p 3000:3000 -v $(pwd)/.data:/app/.data playwright-dashboard:local
 ```
+
+**Windows PowerShell:**
+```powershell
+docker run -d --name playwright-test -p 3000:3000 -v ${PWD}\.data:/app/.data playwright-dashboard:test
+```
+
+**Windows Command Prompt:**
+```cmd
+docker run -d --name playwright-test -p 3000:3000 -v %cd%\.data:/app/.data playwright-dashboard:test
+```
+
+### Test the Container
+
+Open your browser or use curl:
+
+```bash
+# Check if the API responds
+curl http://localhost:3000/api/projects
+
+# Expected response: {"projects":[]}
+```
+
+If you see this response without errors, the fix is working correctly!
 
 ## Configuration
 
