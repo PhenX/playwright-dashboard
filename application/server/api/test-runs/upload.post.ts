@@ -160,44 +160,6 @@ export default eventHandler(async (event) => {
           // Store the gzip file size
           reportSize = report.data.length
         }
-      } else if (report.filename.endsWith('.zst')) {
-        // Legacy support for zstd files - extract zstd file
-        const reportDirName = `run-${Date.now()}-report`
-        const tempDir = join(tmpdir(), `playwright-report-${Date.now()}`)
-
-        // Create temp directory
-        if (!existsSync(tempDir)) {
-          mkdirSync(tempDir, { recursive: true })
-        }
-
-        // Use zstd to decompress the archive to temp (legacy support)
-        try {
-          await decompressDirectory(report.data, tempDir)
-
-          // Store relative path (without storage path prefix)
-          reportPath = join(`project-${project.id}`, reportDirName, 'index.html')
-          console.log(`Extracted HTML report to temp (legacy zstd), uploading to storage: ${reportPath}`)
-
-          // Upload directory tree to storage
-          reportSize = await uploadDirectory(
-            tempDir,
-            join(`project-${project.id}`, reportDirName),
-            storage
-          )
-          console.log(`Report size (uploaded): ${reportSize} bytes`)
-
-          // Clean up temp directory
-          await rm(tempDir, { recursive: true, force: true })
-        } catch (error) {
-          console.error(`Failed to extract HTML report: ${error}`)
-          // Save as zst file if extraction fails
-          const reportFilename = `run-${Date.now()}-${report.filename}`
-          await storage.writeFile(join(`project-${project.id}`, reportFilename), report.data)
-          // Store relative path
-          reportPath = join(`project-${project.id}`, reportFilename)
-          // Store the zstd file size
-          reportSize = report.data.length
-        }
       } else if (report.filename.endsWith('.zip')) {
         // Legacy support for zip files - extract zip file
         const reportDirName = `run-${Date.now()}-report`
