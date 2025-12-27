@@ -1,20 +1,13 @@
 <script setup lang="ts">
 import { z } from 'zod'
-
-interface Project {
-  id: number
-  name: string
-  label?: string
-  description?: string
-  color?: string
-}
+import type { ProjectDetails } from '~~/types/api'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const projectId = route.params.id
 
-const { data: project } = await useFetch<Project>(`/api/projects/${projectId}`)
+const { data: project } = await useFetch<ProjectDetails>(`/api/projects/${projectId}`)
 
 const state = ref({
   label: project.value?.label || '',

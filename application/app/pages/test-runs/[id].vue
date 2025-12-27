@@ -1,44 +1,17 @@
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
+import type { TestRunDetails, TestCaseResult } from '~~/types/api'
 import { formatBytes, getFileApiPath } from '~/utils'
-
-interface TestCase {
-  id: number
-  title: string
-  status: string
-  duration?: number
-  location?: string
-  error?: string
-  retries?: number
-}
-
-interface TestRun {
-  id: number
-  status: string
-  startTime: string
-  duration?: number
-  totalTests: number
-  passedTests: number
-  failedTests: number
-  skippedTests: number
-  reportPath?: string
-  reportSize?: number
-  testCases?: TestCase[]
-  project?: {
-    id: number
-    name: string
-  }
-}
 
 const route = useRoute()
 const runId = route.params.id
 
-const { data: testRun, refresh } = await useFetch<TestRun>(`/api/test-runs/${runId}`)
+const { data: testRun, refresh } = await useFetch<TestRunDetails>(`/api/test-runs/${runId}`)
 
 const UBadge = resolveComponent('UBadge')
 
-const testCasesColumns: TableColumn<TestCase>[] = [
+const testCasesColumns: TableColumn<TestCaseResult>[] = [
   {
     accessorKey: 'title',
     header: 'Test Case',

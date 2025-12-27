@@ -1,19 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
-
-interface User {
-  id: number
-  username: string
-  role: string
-  name?: string | null
-  createdAt: Date
-  updatedAt: Date
-}
-
-interface UsersResponse {
-  users: User[]
-  authEnabled: boolean
-}
+import type { TableColumn } from '@nuxt/ui'
+import type { UserDetails, UsersResponse } from '~~/types/api'
 
 const { data: usersData, refresh } = await useFetch<UsersResponse>('/api/users')
 const toast = useToast()
@@ -28,6 +16,15 @@ const isAdmin = computed(() => {
   if (!config.public.authEnabled) return true
   return authState.value.user?.role === 'administrator'
 })
+
+// Define columns with proper typing
+const columns: TableColumn<UserDetails>[] = [
+  { accessorKey: 'username', header: 'Username' },
+  { accessorKey: 'name', header: 'Name' },
+  { accessorKey: 'role', header: 'Role' },
+  { accessorKey: 'createdAt', header: 'Created' },
+  { accessorKey: 'actions', header: '' }
+]
 
 // Add user modal
 const isAddUserModalOpen = ref(false)
@@ -85,7 +82,7 @@ async function handleAddUser() {
   }
 }
 
-async function handleDeleteUser(user: User) {
+async function handleDeleteUser(user: UserDetails) {
   if (!confirm(`Are you sure you want to delete user "${user.username}"?`)) {
     return
   }
@@ -163,13 +160,7 @@ function getRoleBadgeColor(role: string) {
 
         <UTable
           :data="users"
-          :columns="[
-            { id: 'username', header: 'Username' },
-            { id: 'name', header: 'Name' },
-            { id: 'role', header: 'Role' },
-            { id: 'createdAt', header: 'Created' },
-            { id: 'actions', header: '' }
-          ]"
+          :columns="columns"
         >
           <template #username-cell="{ row }">
             {{ row.original.username }}

@@ -1,14 +1,6 @@
-export interface AuthUser {
-  id: number
-  username: string
-  role: string
-  name?: string | null
-}
+import type { AuthUser, AuthState } from '~~/types/api'
 
-export interface AuthState {
-  authenticated: boolean
-  user: AuthUser | null
-}
+export { type AuthUser, type AuthState }
 
 export const useAuth = () => {
   const authState = useState<AuthState>('auth', () => ({

@@ -1,5 +1,7 @@
 <script setup lang="ts">
-const { data: projects } = await useFetch('/api/projects')
+import type { ProjectWithStats, TestRunForChart } from '~~/types/api'
+
+const { data: projects } = await useFetch<ProjectWithStats[]>('/api/projects')
 
 const stats = computed(() => {
   const totalProjects = projects.value?.length || 0
@@ -25,16 +27,7 @@ const recentProjects = computed(() => {
 const allTestRuns = computed(() => {
   if (!projects.value) return []
 
-  const runs: Array<{
-    id: number
-    status: string
-    startTime: string
-    passedTests: number
-    failedTests: number
-    skippedTests: number
-    flakyTests: number
-    totalTests: number
-  }> = []
+  const runs: TestRunForChart[] = []
   projects.value.forEach((project) => {
     if (project.latestRun) {
       runs.push({

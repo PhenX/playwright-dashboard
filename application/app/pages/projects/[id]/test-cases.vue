@@ -1,32 +1,13 @@
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
+import type { TestCaseWithStats, ProjectDetails } from '~~/types/api'
 
 const route = useRoute()
 const projectId = route.params.id
 
-interface TestCaseWithStats {
-  id: number
-  filePath: string
-  title: string
-  totalRuns: number
-  passedRuns: number
-  failedRuns: number
-  skippedRuns: number
-  timedOutRuns: number
-  flakyRuns: number
-  avgDuration: number
-  lastRun: number
-  lastStatus: string
-}
-
-interface Project {
-  id: number
-  name: string
-}
-
 const { data: testCases, refresh } = await useFetch<TestCaseWithStats[]>(`/api/projects/${projectId}/test-cases`)
-const { data: project } = await useFetch<Project>(`/api/projects/${projectId}`)
+const { data: project } = await useFetch<ProjectDetails>(`/api/projects/${projectId}`)
 
 const UBadge = resolveComponent('UBadge')
 
