@@ -1,20 +1,7 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
+import type { ProjectWithStats } from '~~/types/api'
 import ProjectsMenu from '~/components/ProjectsMenu.vue'
-
-interface Project {
-  id: number
-  name: string
-  label?: string
-  description?: string
-  totalRuns: number
-  totalTestCases: number
-  latestRun?: {
-    id: number
-    status: string
-    startTime: string
-  }
-}
 
 const route = useRoute()
 const toast = useToast()
@@ -22,7 +9,7 @@ const toast = useToast()
 const open = ref(false)
 
 // Fetch projects for sidebar navigation
-const { data: projects } = await useFetch<Project[]>('/api/projects', {
+const { data: projects } = await useFetch<ProjectWithStats[]>('/api/projects', {
   lazy: true,
   default: () => []
 })

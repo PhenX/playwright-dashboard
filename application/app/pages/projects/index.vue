@@ -1,30 +1,18 @@
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
+import type { ProjectWithStats } from '~~/types/api'
 
-interface Project {
-  id: number
-  name: string
-  label?: string
-  description?: string
-  totalRuns: number
-  latestRun?: {
-    id: number
-    status: string
-    startTime: string
-  }
-}
-
-const { data: projects, refresh } = await useFetch<Project[]>('/api/projects')
+const { data: projects, refresh } = await useFetch<ProjectWithStats[]>('/api/projects')
 
 const UBadge = resolveComponent('UBadge')
 
-const columns: TableColumn<Project>[] = [
+const columns: TableColumn<ProjectWithStats>[] = [
   {
     accessorKey: 'name',
     header: 'Project Name',
     cell: ({ row }) => {
-      const displayName = row.original.label || row.getValue('name')
+      const displayName = (row.original.label || row.getValue('name')) as string
 
       return h('div', { class: 'flex items-center gap-2' }, [
         h('a', {
@@ -47,7 +35,7 @@ const columns: TableColumn<Project>[] = [
     accessorKey: 'latestRun',
     header: 'Last Run',
     cell: ({ row }) => {
-      const latestRun = row.getValue('latestRun') as Project['latestRun']
+      const latestRun = row.getValue('latestRun') as ProjectWithStats['latestRun']
       return latestRun ? formatDate(latestRun.startTime) : 'N/A'
     }
   },

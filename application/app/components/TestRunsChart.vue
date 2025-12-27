@@ -1,20 +1,10 @@
 <script setup lang="ts">
 import { VisXYContainer, VisArea, VisAxis, VisTooltip, VisLine } from '@unovis/vue'
 import { CurveType } from '@unovis/ts'
-
-interface TestRun {
-  id: number
-  status: string
-  startTime: string | Date
-  passedTests: number
-  failedTests: number
-  skippedTests: number
-  flakyTests: number
-  totalTests: number
-}
+import type { TestRunForChart } from '~~/types/api'
 
 interface Props {
-  testRuns: TestRun[]
+  testRuns: TestRunForChart[]
   height?: number
 }
 
