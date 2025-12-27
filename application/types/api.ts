@@ -116,6 +116,7 @@ export interface TestRunDetails {
   flakyTests: number
   reportPath?: string | null
   reportSize?: number | null
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: any | null
   createdAt: Date
   project?: {
@@ -235,6 +236,7 @@ export interface TestRunSubmitBody {
   failedTests: number
   skippedTests: number
   flakyTests?: number
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   metadata?: any
   testCases?: Array<{
     title: string

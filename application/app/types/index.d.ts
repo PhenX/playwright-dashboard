@@ -3,9 +3,9 @@ export type { Period, Range } from '../../types/api'
 
 // Unused template types (kept for reference)
 // import type { AvatarProps } from '@nuxt/ui'
-// 
+//
 // export type UserStatus = 'subscribed' | 'unsubscribed' | 'bounced'
-// 
+//
 // export interface User {
 //   id: number
 //   name: string
@@ -14,14 +14,14 @@ export type { Period, Range } from '../../types/api'
 //   status: UserStatus
 //   location: string
 // }
-// 
+//
 // export interface Member {
 //   name: string
 //   username: string
 //   role: 'member' | 'owner'
 //   avatar: AvatarProps
 // }
-// 
+//
 // export interface Stat {
 //   title: string
 //   icon: string
