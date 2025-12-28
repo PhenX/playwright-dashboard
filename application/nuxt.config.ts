@@ -43,7 +43,36 @@ export default defineNuxtConfig({
     buildCache: true
   },
 
+  vite: {
+    // Optimize Vite build performance
+    build: {
+      // Disable source maps for production builds (faster, especially on Windows)
+      sourcemap: false,
+      // Reduce minification overhead
+      minify: 'esbuild',
+      // Optimize chunk size warnings
+      chunkSizeWarningLimit: 1000,
+      // Disable CSS code splitting for faster builds
+      cssCodeSplit: false
+    }
+  },
+
   compatibilityDate: '2024-07-11',
+
+  nitro: {
+    // Optimize Nitro build performance
+    minify: true,
+    sourceMap: false, // Disable source maps for faster builds (especially on Windows)
+    // Reduce bundle analysis overhead
+    timing: false,
+    // Optimize rollup for faster builds
+    rollupConfig: {
+      output: {
+        // Reduce overhead from chunk generation
+        manualChunks: undefined
+      }
+    }
+  },
 
   hooks: {
     'nitro:build:public-assets': (nitro) => {
