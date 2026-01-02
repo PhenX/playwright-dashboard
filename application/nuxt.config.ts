@@ -43,6 +43,8 @@ export default defineNuxtConfig({
     buildCache: true
   },
 
+  compatibilityDate: '2025-02-23',
+
   nitro: {
     experimental: {
       // Windows-only workaround to avoid Nitro build issues caused by ESM/CJS externals
@@ -53,8 +55,6 @@ export default defineNuxtConfig({
       legacyExternals: process.platform === 'win32'
     }
   },
-
-  compatibilityDate: '2025-02-23',
 
   hooks: {
     'nitro:build:public-assets': (nitro) => {
