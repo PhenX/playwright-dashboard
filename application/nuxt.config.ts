@@ -43,7 +43,18 @@ export default defineNuxtConfig({
     buildCache: true
   },
 
-  compatibilityDate: '2024-07-11',
+  compatibilityDate: '2025-02-23',
+
+  nitro: {
+    experimental: {
+      // Windows-only workaround to avoid Nitro build issues caused by ESM/CJS externals
+      // resolution on Windows. Enabling legacyExternals here keeps dependency resolution
+      // compatible with older behavior and prevents intermittent build timeouts / failures
+      // during Nitro server bundling on Windows.
+      // See: https://github.com/nuxt/nuxt/issues/31836
+      legacyExternals: process.platform === 'win32'
+    }
+  },
 
   hooks: {
     'nitro:build:public-assets': (nitro) => {
