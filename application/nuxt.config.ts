@@ -43,7 +43,14 @@ export default defineNuxtConfig({
     buildCache: true
   },
 
-  compatibilityDate: '2024-07-11',
+  nitro: {
+    experimental: {
+      // https://github.com/nuxt/nuxt/issues/31836
+      legacyExternals: process.platform === 'win32'
+    }
+  },
+
+  compatibilityDate: '2025-02-23',
 
   hooks: {
     'nitro:build:public-assets': (nitro) => {
