@@ -27,16 +27,24 @@ const user = computed(() => {
   }
 })
 
+// {
+//   label: 'Settings',
+//     icon: 'i-lucide-settings',
+//   to: '/settings'
+// },
+
 const items = computed<DropdownMenuItem[][]>(() => {
-  const baseItems: DropdownMenuItem[][] = [[{
-    label: 'Settings',
-    icon: 'i-lucide-settings',
-    to: '/settings'
-  }, {
-    label: 'Users',
-    icon: 'i-lucide-users',
-    to: '/settings/users'
-  }], [{
+  const configurationMenuItems: DropdownMenuItem[] = []
+
+  if (!config.public.authEnabled || (authState.value.authenticated && authState.value.user?.role === 'administrator')) {
+    configurationMenuItems.push({
+      label: 'Users',
+      icon: 'i-lucide-users',
+      to: '/settings/users'
+    })
+  }
+
+  const baseItems: DropdownMenuItem[][] = [configurationMenuItems, [{
     label: 'Theme',
     icon: 'i-lucide-palette',
     children: [{

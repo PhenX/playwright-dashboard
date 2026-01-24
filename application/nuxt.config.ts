@@ -52,7 +52,7 @@ export default defineNuxtConfig({
       // compatible with older behavior and prevents intermittent build timeouts / failures
       // during Nitro server bundling on Windows.
       // See: https://github.com/nuxt/nuxt/issues/31836
-      legacyExternals: process.platform === 'win32'
+      legacyExternals: process.platform === 'win32' && process.env.NODE_ENV === 'production'
     }
   },
 

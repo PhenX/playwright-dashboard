@@ -1,10 +1,4 @@
-export function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-export function randomFrom<T>(array: T[]): T {
-  return array[Math.floor(Math.random() * array.length)]!
-}
+import { formatDuration as formatDurationLib } from 'date-fns'
 
 export function formatBytes(bytes?: number | null): string {
   if (!bytes || bytes === 0) return '0 B'
@@ -24,11 +18,9 @@ export function formatDate(date: string | Date | number) {
 }
 
 export function formatDuration(ms?: number | null) {
-  if (!ms) return 'N/A'
-  const seconds = Math.floor(ms / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const remainingSeconds = seconds % 60
-  return minutes > 0 ? `${minutes}m ${remainingSeconds}s` : `${remainingSeconds}s`
+  if (ms === null || ms === undefined) return 'N/A'
+
+  return formatDurationLib({ seconds: ms / 1000 })
 }
 
 export function getStatusColor(status: string) {

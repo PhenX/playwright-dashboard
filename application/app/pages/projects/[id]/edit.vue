@@ -42,7 +42,7 @@ async function onSubmit() {
     })
 
     // Navigate back to project page
-    router.push(`/projects/${projectId}`)
+    await router.push(`/projects/${projectId}`)
   } catch (error) {
     console.error('Error updating project:', error)
     toast.add({
