@@ -135,27 +135,31 @@ class PlaywrightDashboardReporter {
   collectScmInfo() {
     const scm = {};
     try {
+      const execOptions = { encoding: 'utf8', timeout: 5000, maxBuffer: 1024 * 1024 };
+      
       // Get git commit hash
-      scm.commit = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+      scm.commit = execSync('git rev-parse HEAD', execOptions).trim();
       
       // Get git branch
-      scm.branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+      scm.branch = execSync('git rev-parse --abbrev-ref HEAD', execOptions).trim();
       
       // Get git author
-      scm.author = execSync('git log -1 --pretty=format:"%an"', { encoding: 'utf8' }).trim();
+      scm.author = execSync('git log -1 --pretty=format:"%an"', execOptions).trim();
       
       // Get git commit message
-      scm.commitMessage = execSync('git log -1 --pretty=format:"%s"', { encoding: 'utf8' }).trim();
+      scm.commitMessage = execSync('git log -1 --pretty=format:"%s"', execOptions).trim();
       
       // Get git remote URL (if available)
       try {
-        scm.remoteUrl = execSync('git config --get remote.origin.url', { encoding: 'utf8' }).trim();
+        scm.remoteUrl = execSync('git config --get remote.origin.url', execOptions).trim();
       } catch (e) {
         // Remote URL may not be available
       }
     } catch (error) {
       // Git not available or not a git repository
-      console.log('[Playwright Dashboard] Git info not available:', error.message);
+      if (this.options.verbose) {
+        console.log('[Playwright Dashboard] Git info not available:', error.message);
+      }
     }
     return Object.keys(scm).length > 0 ? scm : undefined;
   }
@@ -185,6 +189,7 @@ class PlaywrightDashboardReporter {
       ci.ref = env.GITHUB_REF;
       ci.sha = env.GITHUB_SHA;
       ci.serverUrl = env.GITHUB_SERVER_URL;
+      // Only construct build URL if all required parts are available
       if (ci.serverUrl && ci.repository && ci.runId) {
         ci.buildUrl = `${ci.serverUrl}/${ci.repository}/actions/runs/${ci.runId}`;
       }
@@ -222,7 +227,10 @@ class PlaywrightDashboardReporter {
       ci.provider = 'Azure Pipelines';
       ci.buildNumber = env.BUILD_BUILDNUMBER;
       ci.buildId = env.BUILD_BUILDID;
-      ci.buildUrl = `${env.SYSTEM_TEAMFOUNDATIONSERVERURI}${env.SYSTEM_TEAMPROJECT}/_build/results?buildId=${env.BUILD_BUILDID}`;
+      // Only construct build URL if all required parts are available
+      if (env.SYSTEM_TEAMFOUNDATIONSERVERURI && env.SYSTEM_TEAMPROJECT && env.BUILD_BUILDID) {
+        ci.buildUrl = `${env.SYSTEM_TEAMFOUNDATIONSERVERURI}${env.SYSTEM_TEAMPROJECT}/_build/results?buildId=${env.BUILD_BUILDID}`;
+      }
       ci.jobName = env.AGENT_JOBNAME;
     }
     

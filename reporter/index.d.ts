@@ -61,6 +61,12 @@ export interface DashboardReporterOptions {
    * @default true
    */
   collectCiInfo?: boolean;
+
+  /**
+   * Enable verbose logging
+   * @default false
+   */
+  verbose?: boolean;
 }
 
 /**

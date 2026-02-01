@@ -259,7 +259,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
                   <div class="space-y-1 text-sm">
                     <div v-if="testRun.metadata.scm.commit">
                       <span class="text-gray-500">Commit:</span>
-                      <code class="ml-2 text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{{ testRun.metadata.scm.commit.substring(0, 8) }}</code>
+                      <code class="ml-2 text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{{ testRun.metadata.scm.commit.length >= 8 ? testRun.metadata.scm.commit.substring(0, 8) : testRun.metadata.scm.commit }}</code>
                     </div>
                     <div v-if="testRun.metadata.scm.branch">
                       <span class="text-gray-500">Branch:</span>
