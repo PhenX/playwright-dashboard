@@ -91,7 +91,7 @@ test.describe('Metadata Tests', () => {
     // Now retrieve the test run
     const getResponse = await request.get(`${baseUrl}/api/test-runs/${testRunId}`)
     expect(getResponse.ok()).toBeTruthy()
-    
+
     const testRun = await getResponse.json()
     expect(testRun).toBeDefined()
     expect(testRun.metadata).toBeDefined()
@@ -147,12 +147,12 @@ test.describe('Metadata Tests', () => {
   test('reporter TypeScript definitions should include metadata options', async () => {
     const { readFileSync, existsSync } = await import('fs')
     const { join } = await import('path')
-    
+
     const typeDefsPath = join(process.cwd(), '..', 'reporter', 'index.d.ts')
     expect(existsSync(typeDefsPath)).toBe(true)
 
     const typeDefs = readFileSync(typeDefsPath, 'utf-8')
-    
+
     // Check that all metadata-related options are defined
     expect(typeDefs).toContain('projectDescription')
     expect(typeDefs).toContain('relatedIssue')

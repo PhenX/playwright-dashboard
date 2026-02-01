@@ -282,7 +282,12 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
                     Tags
                   </p>
                   <div class="flex flex-wrap gap-2">
-                    <UBadge v-for="tag in testRun.metadata.tags" :key="tag" color="gray" variant="soft">
+                    <UBadge
+                      v-for="tag in testRun.metadata.tags"
+                      :key="tag"
+                      color="gray"
+                      variant="soft"
+                    >
                       {{ tag }}
                     </UBadge>
                   </div>
