@@ -24,6 +24,43 @@ export interface DashboardReporterOptions {
    * @default true
    */
   uploadTraces?: boolean;
+
+  /**
+   * Project description
+   */
+  projectDescription?: string;
+
+  /**
+   * Related issue reference (e.g., JIRA ticket)
+   */
+  relatedIssue?: string;
+
+  /**
+   * CI job information (e.g., Jenkins job URL)
+   */
+  ciInfo?: string;
+
+  /**
+   * Tags to categorize the test run
+   */
+  tags?: string[];
+
+  /**
+   * Additional custom metadata
+   */
+  customData?: Record<string, any>;
+
+  /**
+   * Whether to automatically collect SCM info (git commit, branch, author)
+   * @default true
+   */
+  collectScmInfo?: boolean;
+
+  /**
+   * Whether to automatically collect CI environment info
+   * @default true
+   */
+  collectCiInfo?: boolean;
 }
 
 /**

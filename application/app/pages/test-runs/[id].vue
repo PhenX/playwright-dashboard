@@ -193,6 +193,112 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
                 <span class="ml-2 font-medium">{{ formatBytes(testRun.reportSize) }}</span>
               </div>
             </div>
+
+            <!-- Metadata Section -->
+            <div v-if="testRun?.metadata" class="pt-4 border-t">
+              <p class="text-sm text-gray-500 mb-3">
+                Metadata
+              </p>
+              <div class="space-y-3">
+                <!-- Project Description -->
+                <div v-if="testRun.metadata.projectDescription">
+                  <p class="text-xs text-gray-500 uppercase">
+                    Description
+                  </p>
+                  <p class="text-sm">
+                    {{ testRun.metadata.projectDescription }}
+                  </p>
+                </div>
+
+                <!-- Related Issue -->
+                <div v-if="testRun.metadata.relatedIssue">
+                  <p class="text-xs text-gray-500 uppercase">
+                    Related Issue
+                  </p>
+                  <p class="text-sm">
+                    {{ testRun.metadata.relatedIssue }}
+                  </p>
+                </div>
+
+                <!-- CI Info -->
+                <div v-if="testRun.metadata.ci" class="space-y-2">
+                  <p class="text-xs text-gray-500 uppercase">
+                    CI Information
+                  </p>
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div v-if="testRun.metadata.ci.provider">
+                      <span class="text-gray-500">Provider:</span>
+                      <span class="ml-2 font-medium">{{ testRun.metadata.ci.provider }}</span>
+                    </div>
+                    <div v-if="testRun.metadata.ci.buildNumber">
+                      <span class="text-gray-500">Build:</span>
+                      <span class="ml-2 font-medium">{{ testRun.metadata.ci.buildNumber }}</span>
+                    </div>
+                    <div v-if="testRun.metadata.ci.buildUrl" class="col-span-2">
+                      <a :href="testRun.metadata.ci.buildUrl" target="_blank" class="text-primary hover:underline flex items-center gap-1">
+                        <span>View Build</span>
+                        <UIcon name="i-lucide-external-link" class="w-3 h-3" />
+                      </a>
+                    </div>
+                    <div v-if="testRun.metadata.ci.jobName">
+                      <span class="text-gray-500">Job:</span>
+                      <span class="ml-2 font-medium">{{ testRun.metadata.ci.jobName }}</span>
+                    </div>
+                    <div v-if="testRun.metadata.ci.workflow">
+                      <span class="text-gray-500">Workflow:</span>
+                      <span class="ml-2 font-medium">{{ testRun.metadata.ci.workflow }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- SCM Info -->
+                <div v-if="testRun.metadata.scm" class="space-y-2">
+                  <p class="text-xs text-gray-500 uppercase">
+                    Source Control
+                  </p>
+                  <div class="space-y-1 text-sm">
+                    <div v-if="testRun.metadata.scm.commit">
+                      <span class="text-gray-500">Commit:</span>
+                      <code class="ml-2 text-xs bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{{ testRun.metadata.scm.commit.substring(0, 8) }}</code>
+                    </div>
+                    <div v-if="testRun.metadata.scm.branch">
+                      <span class="text-gray-500">Branch:</span>
+                      <span class="ml-2 font-medium">{{ testRun.metadata.scm.branch }}</span>
+                    </div>
+                    <div v-if="testRun.metadata.scm.author">
+                      <span class="text-gray-500">Author:</span>
+                      <span class="ml-2 font-medium">{{ testRun.metadata.scm.author }}</span>
+                    </div>
+                    <div v-if="testRun.metadata.scm.commitMessage">
+                      <span class="text-gray-500">Message:</span>
+                      <span class="ml-2">{{ testRun.metadata.scm.commitMessage }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Tags -->
+                <div v-if="testRun.metadata.tags && testRun.metadata.tags.length > 0">
+                  <p class="text-xs text-gray-500 uppercase mb-2">
+                    Tags
+                  </p>
+                  <div class="flex flex-wrap gap-2">
+                    <UBadge v-for="tag in testRun.metadata.tags" :key="tag" color="gray" variant="soft">
+                      {{ tag }}
+                    </UBadge>
+                  </div>
+                </div>
+
+                <!-- Custom Data -->
+                <div v-if="testRun.metadata.customData">
+                  <p class="text-xs text-gray-500 uppercase mb-2">
+                    Custom Data
+                  </p>
+                  <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded text-xs font-mono overflow-x-auto">
+                    <pre>{{ JSON.stringify(testRun.metadata.customData, null, 2) }}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </UCard>
 

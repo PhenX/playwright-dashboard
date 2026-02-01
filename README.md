@@ -162,6 +162,40 @@ export default defineConfig({
 - `projectName` (string): Project name in dashboard (default: `default-project`)
 - `uploadTraces` (boolean): Upload trace files (default: `true`)
 - `uploadReport` (boolean): Upload HTML report (default: `true`)
+- `projectDescription` (string): Project description (optional)
+- `relatedIssue` (string): Related issue reference, e.g., "JIRA-123" (optional)
+- `ciInfo` (string): CI job information (optional)
+- `tags` (string[]): Tags to categorize test runs (optional)
+- `customData` (object): Additional custom metadata (optional)
+- `collectScmInfo` (boolean): Auto-collect git info (default: `true`)
+- `collectCiInfo` (boolean): Auto-collect CI environment info (default: `true`)
+
+### Metadata Collection
+
+The reporter automatically collects and displays:
+- **SCM Info**: Git commit, branch, author, commit message (auto-collected)
+- **CI Info**: Build number, job name, build URL for Jenkins, GitHub Actions, GitLab CI, CircleCI, Travis CI, Azure Pipelines (auto-collected)
+- **Playwright Config**: Browser info, viewport, workers, timeout settings (auto-collected)
+- **Custom Data**: Any additional metadata you provide via options
+
+Example with metadata:
+```typescript
+export default defineConfig({
+  reporter: [
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'http://localhost:3000',
+      projectName: 'my-project',
+      projectDescription: 'E2E tests for the application',
+      relatedIssue: 'PROJ-123',
+      tags: ['regression', 'critical'],
+      customData: {
+        environment: 'staging',
+        version: '1.2.3'
+      }
+    }]
+  ],
+});
+```
 
 See [`reporter/README.md`](./reporter/README.md) for detailed documentation.
 
