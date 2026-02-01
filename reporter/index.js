@@ -3,6 +3,7 @@ const http = require('http');
 const { URL } = require('url');
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 const FormData = require('form-data');
 const { compressDirectory } = require('./compression');
 
@@ -17,6 +18,8 @@ class PlaywrightDashboardReporter {
       projectName: options.projectName || 'default-project',
       uploadTraces: options.uploadTraces !== false, // default true
       uploadReport: options.uploadReport !== false, // default true
+      collectScmInfo: options.collectScmInfo !== false, // default true
+      collectCiInfo: options.collectCiInfo !== false, // default true
       ...options
     };
 
@@ -28,11 +31,29 @@ class PlaywrightDashboardReporter {
     this.failedTests = 0;
     this.skippedTests = 0;
     this.timedOutTests = 0;
+    
+    /**
+     * Collected metadata including SCM, CI, and custom data
+     * @type {Object}
+     * @property {Object} [scm] - Source control information (commit, branch, author, etc.)
+     * @property {Object} [ci] - CI provider information (build number, URL, etc.)
+     * @property {string} [projectDescription] - Project description
+     * @property {string} [relatedIssue] - Related issue reference (e.g., JIRA ticket)
+     * @property {string[]} [tags] - Tags for categorization
+     * @property {Object} [customData] - Custom metadata key-value pairs
+     * @property {Object} [htmlReport] - Playwright HTML report metadata
+     * @property {Object} [playwrightConfig] - Playwright configuration metadata
+     * @property {Object} [playwrightProject] - Playwright project metadata
+     */
+    this.metadata = {};
   }
 
   onBegin(config, suite) {
     this.startTime = new Date().toISOString();
     console.log(`[Playwright Dashboard] Starting test run for project: ${this.options.projectName}`);
+    
+    // Collect metadata
+    this.metadata = this.collectMetadata(config, suite);
   }
 
   onTestEnd(test, result) {
@@ -68,6 +89,196 @@ class PlaywrightDashboardReporter {
     }
 
     this.testCases.push(testCase);
+  }
+
+  collectMetadata(config, suite) {
+    const metadata = {};
+
+    // Add user-provided metadata from options
+    if (this.options.projectDescription) {
+      metadata.projectDescription = this.options.projectDescription;
+    }
+    if (this.options.relatedIssue) {
+      metadata.relatedIssue = this.options.relatedIssue;
+    }
+    if (this.options.ciInfo) {
+      metadata.ciInfo = this.options.ciInfo;
+    }
+    if (this.options.tags && Array.isArray(this.options.tags)) {
+      metadata.tags = this.options.tags;
+    }
+    if (this.options.customData) {
+      metadata.customData = this.options.customData;
+    }
+
+    // Collect SCM info (git)
+    if (this.options.collectScmInfo) {
+      metadata.scm = this.collectScmInfo();
+    }
+
+    // Collect CI info from environment
+    if (this.options.collectCiInfo) {
+      metadata.ci = this.collectCiInfo();
+    }
+
+    // Extract metadata from Playwright HTML report if available
+    const htmlMetadata = this.extractHtmlReportMetadata(config);
+    if (htmlMetadata && Object.keys(htmlMetadata).length > 0) {
+      metadata.htmlReport = htmlMetadata;
+    }
+
+    // Extract metadata from Playwright config
+    if (config.metadata) {
+      metadata.playwrightConfig = config.metadata;
+    }
+
+    // Extract project metadata from suite
+    if (suite && suite.allTests && suite.allTests().length > 0) {
+      const firstTest = suite.allTests()[0];
+      if (firstTest && firstTest.parent && firstTest.parent.project) {
+        const project = firstTest.parent.project();
+        if (project && project.metadata) {
+          metadata.playwrightProject = project.metadata;
+        }
+      }
+    }
+
+    return metadata;
+  }
+
+  collectScmInfo() {
+    const scm = {};
+    try {
+      const execOptions = { encoding: 'utf8', timeout: 5000, maxBuffer: 1024 * 1024 };
+      
+      // Get git commit hash
+      scm.commit = execSync('git rev-parse HEAD', execOptions).trim();
+      
+      // Get git branch
+      scm.branch = execSync('git rev-parse --abbrev-ref HEAD', execOptions).trim();
+      
+      // Get git author
+      scm.author = execSync('git log -1 --pretty=format:"%an"', execOptions).trim();
+      
+      // Get git commit message
+      scm.commitMessage = execSync('git log -1 --pretty=format:"%s"', execOptions).trim();
+      
+      // Get git remote URL (if available)
+      try {
+        scm.remoteUrl = execSync('git config --get remote.origin.url', execOptions).trim();
+      } catch (e) {
+        // Remote URL may not be available
+      }
+    } catch (error) {
+      // Git not available or not a git repository
+      if (this.options.verbose) {
+        console.log('[Playwright Dashboard] Git info not available:', error.message);
+      }
+    }
+    return Object.keys(scm).length > 0 ? scm : undefined;
+  }
+
+  collectCiInfo() {
+    const ci = {};
+    const env = process.env;
+
+    // Detect and collect CI-specific information
+    
+    // Jenkins
+    if (env.JENKINS_URL) {
+      ci.provider = 'Jenkins';
+      ci.buildNumber = env.BUILD_NUMBER;
+      ci.buildUrl = env.BUILD_URL;
+      ci.jobName = env.JOB_NAME;
+    }
+    
+    // GitHub Actions
+    else if (env.GITHUB_ACTIONS) {
+      ci.provider = 'GitHub Actions';
+      ci.runId = env.GITHUB_RUN_ID;
+      ci.runNumber = env.GITHUB_RUN_NUMBER;
+      ci.workflow = env.GITHUB_WORKFLOW;
+      ci.actor = env.GITHUB_ACTOR;
+      ci.repository = env.GITHUB_REPOSITORY;
+      ci.ref = env.GITHUB_REF;
+      ci.sha = env.GITHUB_SHA;
+      ci.serverUrl = env.GITHUB_SERVER_URL;
+      // Only construct build URL if all required parts are available
+      if (ci.serverUrl && ci.repository && ci.runId) {
+        ci.buildUrl = `${ci.serverUrl}/${ci.repository}/actions/runs/${ci.runId}`;
+      }
+    }
+    
+    // GitLab CI
+    else if (env.GITLAB_CI) {
+      ci.provider = 'GitLab CI';
+      ci.pipelineId = env.CI_PIPELINE_ID;
+      ci.pipelineUrl = env.CI_PIPELINE_URL;
+      ci.jobId = env.CI_JOB_ID;
+      ci.jobUrl = env.CI_JOB_URL;
+      ci.jobName = env.CI_JOB_NAME;
+    }
+    
+    // CircleCI
+    else if (env.CIRCLECI) {
+      ci.provider = 'CircleCI';
+      ci.buildNumber = env.CIRCLE_BUILD_NUM;
+      ci.buildUrl = env.CIRCLE_BUILD_URL;
+      ci.jobName = env.CIRCLE_JOB;
+      ci.workflow = env.CIRCLE_WORKFLOW_ID;
+    }
+    
+    // Travis CI
+    else if (env.TRAVIS) {
+      ci.provider = 'Travis CI';
+      ci.buildNumber = env.TRAVIS_BUILD_NUMBER;
+      ci.buildUrl = env.TRAVIS_BUILD_WEB_URL;
+      ci.jobNumber = env.TRAVIS_JOB_NUMBER;
+    }
+    
+    // Azure Pipelines
+    else if (env.TF_BUILD) {
+      ci.provider = 'Azure Pipelines';
+      ci.buildNumber = env.BUILD_BUILDNUMBER;
+      ci.buildId = env.BUILD_BUILDID;
+      // Only construct build URL if all required parts are available
+      if (env.SYSTEM_TEAMFOUNDATIONSERVERURI && env.SYSTEM_TEAMPROJECT && env.BUILD_BUILDID) {
+        ci.buildUrl = `${env.SYSTEM_TEAMFOUNDATIONSERVERURI}${env.SYSTEM_TEAMPROJECT}/_build/results?buildId=${env.BUILD_BUILDID}`;
+      }
+      ci.jobName = env.AGENT_JOBNAME;
+    }
+    
+    // Generic CI detection
+    else if (env.CI) {
+      ci.provider = 'Unknown CI';
+      ci.detected = true;
+    }
+
+    return Object.keys(ci).length > 0 ? ci : undefined;
+  }
+
+  extractHtmlReportMetadata(config) {
+    const metadata = {};
+    
+    // Extract browser/project info from config
+    if (config.projects && config.projects.length > 0) {
+      metadata.projects = config.projects.map(p => ({
+        name: p.name,
+        testDir: p.testDir,
+        use: {
+          browserName: p.use?.browserName,
+          viewport: p.use?.viewport,
+          deviceScaleFactor: p.use?.deviceScaleFactor
+        }
+      }));
+    }
+    
+    // Add test configuration
+    metadata.workers = config.workers;
+    metadata.timeout = config.timeout;
+    metadata.fullyParallel = config.fullyParallel;
+    
+    return metadata;
   }
 
   async onEnd(result) {
@@ -113,6 +324,7 @@ class PlaywrightDashboardReporter {
   async uploadJSON(overallStatus, duration) {
     const payload = {
       projectName: this.options.projectName,
+      projectDescription: this.options.projectDescription,
       status: overallStatus,
       startTime: this.startTime,
       duration: duration,
@@ -120,6 +332,7 @@ class PlaywrightDashboardReporter {
       passedTests: this.passedTests,
       failedTests: this.failedTests,
       skippedTests: this.skippedTests,
+      metadata: this.metadata,
       testCases: this.testCases.map(tc => ({
         title: tc.title,
         location: tc.location,
@@ -197,7 +410,9 @@ class PlaywrightDashboardReporter {
       totalTests: this.totalTests,
       passedTests: this.passedTests,
       failedTests: this.failedTests,
-      skippedTests: this.skippedTests
+      skippedTests: this.skippedTests,
+      metadata: this.metadata,
+      projectDescription: this.options.projectDescription
     };
     form.append('testRun', JSON.stringify(testRunData));
 

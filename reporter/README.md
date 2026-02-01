@@ -53,6 +53,97 @@ export default defineConfig({
 | `projectName` | string | `'default-project'` | Name of the project to report results under |
 | `uploadTraces` | boolean | `true` | Whether to upload trace files to the dashboard |
 | `uploadReport` | boolean | `true` | Whether to upload the HTML report to the dashboard |
+| `projectDescription` | string | - | Description of the project |
+| `relatedIssue` | string | - | Related issue reference (e.g., JIRA ticket like "PROJ-123") |
+| `ciInfo` | string | - | CI job information (e.g., Jenkins job URL) |
+| `tags` | string[] | - | Tags to categorize the test run |
+| `customData` | object | - | Additional custom metadata as key-value pairs |
+| `collectScmInfo` | boolean | `true` | Whether to automatically collect SCM info (git commit, branch, author) |
+| `collectCiInfo` | boolean | `true` | Whether to automatically collect CI environment info |
+
+## Automatic Metadata Collection
+
+The reporter automatically collects metadata from various sources:
+
+### SCM Information (Git)
+When `collectScmInfo` is enabled (default), the reporter automatically collects:
+- Commit hash
+- Branch name
+- Author name
+- Commit message
+- Remote URL (if available)
+
+### CI Information
+When `collectCiInfo` is enabled (default), the reporter automatically detects and collects information from:
+- **Jenkins**: Build number, build URL, job name
+- **GitHub Actions**: Run ID, run number, workflow, actor, repository, ref, SHA
+- **GitLab CI**: Pipeline ID, pipeline URL, job ID, job URL, job name
+- **CircleCI**: Build number, build URL, job name, workflow
+- **Travis CI**: Build number, build URL, job number
+- **Azure Pipelines**: Build number, build ID, build URL, job name
+
+### Playwright Configuration
+The reporter also includes metadata from Playwright's configuration:
+- Project configurations (browser, viewport, etc.)
+- Worker count
+- Test timeout
+- Parallel execution settings
+
+## Usage Examples
+
+### Basic Configuration
+```typescript
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'http://localhost:3000',
+      projectName: 'my-test-project',
+      uploadTraces: true,
+      uploadReport: true
+    }]
+  ],
+  
+  use: {
+    trace: 'retain-on-failure',
+  },
+});
+```
+
+### With Custom Metadata
+```typescript
+export default defineConfig({
+  reporter: [
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'http://localhost:3000',
+      projectName: 'my-test-project',
+      projectDescription: 'End-to-end tests for the main application',
+      relatedIssue: 'PROJ-123',
+      tags: ['regression', 'critical'],
+      customData: {
+        environment: 'staging',
+        version: '1.2.3',
+        testSuite: 'smoke-tests'
+      }
+    }]
+  ],
+});
+```
+
+### Disable Automatic Collection
+```typescript
+export default defineConfig({
+  reporter: [
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'http://localhost:3000',
+      projectName: 'my-test-project',
+      collectScmInfo: false, // Don't collect git info
+      collectCiInfo: false   // Don't collect CI info
+    }]
+  ],
+});
+```
 
 ## Features
 
