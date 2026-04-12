@@ -5,9 +5,14 @@ import { existsSync, mkdirSync, rmSync } from 'fs'
 import { join } from 'path'
 
 test.describe('Storage Abstraction Tests', () => {
-  const testStorageDir = join(process.cwd(), '.test-storage')
+  // Use a unique directory per test to avoid conflicts when running in parallel
+  let testStorageDir: string
 
-  test.beforeEach(() => {
+  test.beforeEach(({}, testInfo) => {
+    // Create a unique directory per test using worker index and test title hash
+    const safeTitle = testInfo.title.replace(/[^a-z0-9]/gi, '-').toLowerCase().slice(0, 30)
+    testStorageDir = join(process.cwd(), `.test-storage-${testInfo.workerIndex}-${safeTitle}`)
+
     // Reset storage instance for each test
     resetStorage()
 
@@ -19,8 +24,12 @@ test.describe('Storage Abstraction Tests', () => {
 
   test.afterEach(() => {
     // Clean up test storage directory
-    if (existsSync(testStorageDir)) {
-      rmSync(testStorageDir, { recursive: true, force: true })
+    if (testStorageDir && existsSync(testStorageDir)) {
+      try {
+        rmSync(testStorageDir, { recursive: true, force: true })
+      } catch {
+        // Ignore cleanup errors on Windows (file locking issues)
+      }
     }
   })
 
