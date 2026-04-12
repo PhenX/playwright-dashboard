@@ -121,6 +121,14 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
           >
             View Test Cases
           </UButton>
+          <UButton
+            :to="`/projects/${projectId}/performance`"
+            icon="i-lucide-gauge"
+            size="sm"
+            variant="outline"
+          >
+            Performance
+          </UButton>
         </template>
         <template #leading>
           <UDashboardSidebarCollapse />

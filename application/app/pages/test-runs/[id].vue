@@ -48,6 +48,19 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
     cell: ({ row }) => formatDuration(row.getValue('duration'))
   },
   {
+    accessorKey: 'slowestStep',
+    header: 'Slowest Step',
+    cell: ({ row }) => {
+      const step = row.getValue('slowestStep') as string | null
+      const stepDuration = row.original.slowestStepDuration
+      if (!step) return ''
+      return h('div', { class: 'text-xs' }, [
+        h('span', { class: 'text-gray-600 dark:text-gray-400' }, step),
+        stepDuration ? h('span', { class: 'ml-1 text-orange-600 font-medium' }, `(${formatDuration(stepDuration)})`) : null
+      ].filter(Boolean))
+    }
+  },
+  {
     accessorKey: 'retries',
     header: 'Retries',
     cell: ({ row }) => {
@@ -161,6 +174,22 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
                 </p>
                 <p class="font-medium">
                   {{ formatDuration(testRun?.duration) }}
+                </p>
+              </div>
+              <div v-if="testRun?.avgTestDuration">
+                <p class="text-sm text-gray-500">
+                  Avg Test Duration
+                </p>
+                <p class="font-medium">
+                  {{ formatDuration(testRun.avgTestDuration) }}
+                </p>
+              </div>
+              <div v-if="testRun?.p90TestDuration">
+                <p class="text-sm text-gray-500">
+                  P90 Test Duration
+                </p>
+                <p class="font-medium text-orange-600">
+                  {{ formatDuration(testRun.p90TestDuration) }}
                 </p>
               </div>
               <div>
