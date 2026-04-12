@@ -11,8 +11,8 @@ test.describe('Storage Abstraction Tests', () => {
   test.beforeEach(({}, testInfo) => {
     // Create a unique directory per test using worker index, test id, and a readable title prefix
     const safeTitle = testInfo.title.replace(/[^a-z0-9]/gi, '-').toLowerCase().slice(0, 30)
-    const safeTestId = testInfo.testId.replace(/[^a-z0-9]/gi, '-').toLowerCase()
-    testStorageDir = join(process.cwd(), `.test-storage-${testInfo.workerIndex}-${safeTestId}-${safeTitle}`)
+    const sanitizedTestId = testInfo.testId.replace(/[^a-z0-9]/gi, '-').toLowerCase()
+    testStorageDir = join(process.cwd(), `.test-storage-${testInfo.workerIndex}-${sanitizedTestId}-${safeTitle}`)
 
     // Reset storage instance for each test
     resetStorage()
