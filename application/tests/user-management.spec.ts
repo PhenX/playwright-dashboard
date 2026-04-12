@@ -7,6 +7,17 @@ test.describe('User Management Page Tests', () => {
     await page.waitForTimeout(2000)
   }
 
+  // Clean up test users before running tests to ensure idempotency
+  test.beforeAll(async ({ request }) => {
+    const usersResponse = await request.get('/api/users')
+    const usersData = await usersResponse.json()
+    for (const user of (usersData.users || [])) {
+      if (['testuser', 'deletetest'].includes(user.username)) {
+        await request.delete(`/api/users/${user.id}`)
+      }
+    }
+  })
+
   test('should display user management page', async ({ page }) => {
     await page.goto('/settings/users')
     await waitForHydration(page)

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Project Edit Tests', () => {
+test.describe.serial('Project Edit Tests', () => {
   let projectId: number
 
   test.beforeAll(async ({ request }) => {
