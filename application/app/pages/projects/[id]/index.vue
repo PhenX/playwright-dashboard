@@ -64,9 +64,9 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
     cell: ({ row }) => {
       const size = row.getValue('reportSize') as number | undefined
       const reportPath = row.original.reportPath
-      if (!reportPath) return size ? formatBytes(size) : ''
+      if (!reportPath) return size != null ? formatBytes(size) : ''
       const UButton = resolveComponent('UButton')
-      const sizeLabel = size ? ` (${formatBytes(size)})` : ''
+      const sizeLabel = size != null ? ` (${formatBytes(size)})` : ''
       return h(UButton, {
         to: `/api/files/${getFileApiPath(reportPath)}`,
         target: '_blank',

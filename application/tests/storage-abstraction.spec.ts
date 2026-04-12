@@ -9,9 +9,10 @@ test.describe('Storage Abstraction Tests', () => {
   let testStorageDir: string
 
   test.beforeEach(({}, testInfo) => {
-    // Create a unique directory per test using worker index and test title hash
+    // Create a unique directory per test using worker index, test id, and a readable title prefix
     const safeTitle = testInfo.title.replace(/[^a-z0-9]/gi, '-').toLowerCase().slice(0, 30)
-    testStorageDir = join(process.cwd(), `.test-storage-${testInfo.workerIndex}-${safeTitle}`)
+    const safeTestId = testInfo.testId.replace(/[^a-z0-9]/gi, '-').toLowerCase()
+    testStorageDir = join(process.cwd(), `.test-storage-${testInfo.workerIndex}-${safeTestId}-${safeTitle}`)
 
     // Reset storage instance for each test
     resetStorage()
@@ -27,8 +28,12 @@ test.describe('Storage Abstraction Tests', () => {
     if (testStorageDir && existsSync(testStorageDir)) {
       try {
         rmSync(testStorageDir, { recursive: true, force: true })
-      } catch {
-        // Ignore cleanup errors on Windows (file locking issues)
+      } catch (error) {
+        if (process.platform === 'win32') {
+          // Ignore cleanup errors on Windows (file locking issues)
+          return
+        }
+        throw error
       }
     }
   })

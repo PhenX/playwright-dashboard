@@ -83,7 +83,7 @@ const columns: TableColumn<ProjectWithStats>[] = [
       const latestRun = row.original.latestRun
       if (!latestRun?.reportPath) return ''
       const UButton = resolveComponent('UButton')
-      const sizeLabel = latestRun.reportSize ? ` (${formatBytes(latestRun.reportSize)})` : ''
+      const sizeLabel = latestRun.reportSize != null ? ` (${formatBytes(latestRun.reportSize)})` : ''
       return h('div', { class: 'flex items-center gap-1' }, [
         h(UButton, {
           to: `/api/files/${getFileApiPath(latestRun.reportPath)}`,

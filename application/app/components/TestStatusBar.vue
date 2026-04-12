@@ -1,4 +1,4 @@
-﻿<script setup lang="ts">
+<script setup lang="ts">
 const props = defineProps<{
   passed: number
   failed: number
@@ -10,14 +10,22 @@ const props = defineProps<{
 const segments = computed(() => {
   if (!props.total) return []
 
-  const pct = (n: number) => ((n / props.total) * 100).toFixed(1)
+  // Flaky tests are counted as a subset of passed by the reporter, so subtract
+  // them to avoid double-counting in the bar.
+  const passedCount = props.passed - props.flaky
 
   return [
-    { key: 'passed', label: 'Passed', count: props.passed, pct: pct(props.passed), color: 'bg-green-500' },
-    { key: 'failed', label: 'Failed', count: props.failed, pct: pct(props.failed), color: 'bg-red-500' },
-    { key: 'flaky', label: 'Flaky', count: props.flaky, pct: pct(props.flaky), color: 'bg-purple-500' },
-    { key: 'skipped', label: 'Skipped', count: props.skipped, pct: pct(props.skipped), color: 'bg-gray-400' }
-  ].filter(s => s.count > 0)
+    { key: 'passed', label: 'Passed', count: passedCount, color: 'bg-green-500' },
+    { key: 'failed', label: 'Failed', count: props.failed, color: 'bg-red-500' },
+    { key: 'flaky', label: 'Flaky', count: props.flaky, color: 'bg-purple-500' },
+    { key: 'skipped', label: 'Skipped', count: props.skipped, color: 'bg-gray-400' }
+  ]
+    .filter(s => s.count > 0)
+    .map(s => ({
+      ...s,
+      widthPct: (s.count / props.total) * 100,
+      displayPct: ((s.count / props.total) * 100).toFixed(1)
+    }))
 })
 </script>
 
@@ -31,7 +39,7 @@ const segments = computed(() => {
         v-for="seg in segments"
         :key="seg.key"
         :class="[seg.color, 'h-full transition-all']"
-        :style="{ width: seg.pct + '%' }"
+        :style="{ width: seg.widthPct + '%' }"
       />
     </div>
     <div v-else class="text-xs text-gray-400 dark:text-gray-500 italic">
@@ -51,7 +59,7 @@ const segments = computed(() => {
           <span :class="[seg.color, 'inline-block h-2.5 w-2.5 shrink-0 rounded-sm']" />
           <span class="text-white">{{ seg.label }}</span>
           <span class="ml-4 tabular-nums font-medium text-white">{{ seg.count }}</span>
-          <span class="ml-auto tabular-nums text-gray-300 text-xs">{{ seg.pct }}%</span>
+          <span class="ml-auto tabular-nums text-gray-300 text-xs">{{ seg.displayPct }}%</span>
         </div>
       </div>
     </template>
