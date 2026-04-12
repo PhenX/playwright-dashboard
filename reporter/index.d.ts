@@ -63,6 +63,12 @@ export interface DashboardReporterOptions {
   collectCiInfo?: boolean;
 
   /**
+   * Whether to collect performance metrics from test steps (step timings, navigation durations, etc.)
+   * @default true
+   */
+  collectPerformanceMetrics?: boolean;
+
+  /**
    * Enable verbose logging
    * @default false
    */
