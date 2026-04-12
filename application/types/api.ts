@@ -47,6 +47,8 @@ export interface ProjectWithStats {
     skippedTests: number
     flakyTests: number
     totalTests: number
+    avgTestDuration?: number | null
+    p90TestDuration?: number | null
   } | null
   totalRuns: number
   totalTestCases: number

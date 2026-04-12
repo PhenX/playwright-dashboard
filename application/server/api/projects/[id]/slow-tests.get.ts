@@ -86,7 +86,7 @@ export default eventHandler(async (event) => {
 
   // Compute stats and sort by average duration desc (slowest first)
   const slowTests = Array.from(testCaseMap.values())
-    .map(entry => {
+    .map((entry) => {
       const sorted = [...entry.durations].sort((a, b) => a - b)
       const sum = sorted.reduce((a, b) => a + b, 0)
       const avgDuration = Math.round(sum / sorted.length)

@@ -27,7 +27,7 @@ export function getPerformanceHints(testCase: TestCaseData): PerformanceHint[] {
   const navigationSteps = steps.filter(s => s.category === 'navigation')
   const slowNavigations = navigationSteps.filter(s => s.duration > 3000)
   if (slowNavigations.length > 0) {
-    const slowest = slowNavigations.sort((a, b) => b.duration - a.duration)[0]
+    const slowest = slowNavigations.sort((a, b) => b.duration - a.duration)[0]!
     hints.push({
       type: 'warning',
       message: 'Slow navigation detected',
@@ -56,7 +56,7 @@ export function getPerformanceHints(testCase: TestCaseData): PerformanceHint[] {
   // Slow assertions
   const slowAssertions = steps.filter(s => s.category === 'assertion' && s.duration > 2000)
   if (slowAssertions.length > 0) {
-    const slowest = slowAssertions.sort((a, b) => b.duration - a.duration)[0]
+    const slowest = slowAssertions.sort((a, b) => b.duration - a.duration)[0]!
     hints.push({
       type: 'info',
       message: 'Slow assertions detected',

@@ -70,8 +70,8 @@ const runOptions = computed(() => {
   }))
 })
 
-const selectedRunA = ref<number | null>(null)
-const selectedRunB = ref<number | null>(null)
+const selectedRunA = ref<number | undefined>(undefined)
+const selectedRunB = ref<number | undefined>(undefined)
 
 const { data: runADetails } = useFetch<TestRunDetails>(() =>
   selectedRunA.value ? `/api/test-runs/${selectedRunA.value}` : '', {

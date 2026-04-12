@@ -16,7 +16,7 @@ const stats = computed(() => {
     (b.latestRun?.avgTestDuration || 0) - (a.latestRun?.avgTestDuration || 0)
   )[0]
 
-  const statItems = [
+  const statItems: { label: string, value: string | number, icon: string }[] = [
     { label: 'Total Projects', value: totalProjects, icon: 'i-lucide-folder' },
     { label: 'Total Test Runs', value: totalRuns, icon: 'i-lucide-play-circle' },
     { label: 'Active Projects', value: recentRuns, icon: 'i-lucide-activity' },
