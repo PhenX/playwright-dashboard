@@ -163,6 +163,53 @@ export interface PerformanceStep {
   category: string
 }
 
+/**
+ * A single network request recorded during test execution (via dashboard fixture)
+ */
+export interface NetworkRequest {
+  method: string
+  url: string
+  status: number
+  duration: number
+  resourceType: string
+  startTime?: number
+}
+
+/**
+ * Browser performance / web vitals recorded via dashboard fixture
+ */
+export interface WebVitals {
+  navigation?: {
+    url: string
+    ttfb: number
+    domInteractive: number
+    domContentLoaded: number
+    loadComplete: number
+    transferSize?: number
+    encodedBodySize?: number
+    decodedBodySize?: number
+  }
+  paint?: {
+    firstPaint?: number
+    firstContentfulPaint?: number
+  }
+}
+
+/**
+ * Grouped endpoint summary returned by GET /api/test-runs/[id]/network-requests
+ */
+export interface EndpointSummary {
+  method: string
+  route: string
+  count: number
+  avgDuration: number
+  maxDuration: number
+  minDuration: number
+  p90Duration: number
+  errorRate: number
+  testCases: string[]
+}
+
 // ============================================================================
 // Test Case types (API responses)
 // ============================================================================
@@ -181,6 +228,8 @@ export interface TestCaseResult {
   steps?: PerformanceStep[] | null
   slowestStep?: string | null
   slowestStepDuration?: number | null
+  networkRequests?: NetworkRequest[] | null
+  webVitals?: WebVitals | null
 }
 
 /**
@@ -275,6 +324,8 @@ export interface TestRunSubmitBody {
     steps?: PerformanceStep[]
     slowestStep?: string
     slowestStepDuration?: number
+    networkRequests?: NetworkRequest[]
+    webVitals?: WebVitals
   }>
 }
 

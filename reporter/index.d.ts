@@ -1,4 +1,5 @@
 import type { Reporter, TestCase, TestResult, FullConfig, Suite, FullResult } from '@playwright/test/reporter';
+import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions } from '@playwright/test';
 
 export interface DashboardReporterOptions {
   /**
@@ -64,6 +65,7 @@ export interface DashboardReporterOptions {
 
   /**
    * Whether to collect performance metrics from test steps (step timings, navigation durations, etc.)
+   * Also controls whether network request and web vitals attachments from the fixture are processed.
    * @default true
    */
   collectPerformanceMetrics?: boolean;
@@ -105,3 +107,24 @@ declare class PlaywrightDashboardReporter implements Reporter {
 }
 
 export default PlaywrightDashboardReporter;
+
+/**
+ * Fixtures for automatic network request and web vitals collection.
+ *
+ * Merge into your existing fixtures with `test.extend(dashboardFixtures)`.
+ *
+ * @example
+ * ```typescript
+ * // fixtures.ts
+ * import { test as base } from '@playwright/test';
+ * import { dashboardFixtures } from 'playwright-dashboard-reporter/fixtures';
+ *
+ * export const test = base.extend(dashboardFixtures);
+ * export { expect } from '@playwright/test';
+ * ```
+ */
+export declare const dashboardFixtures: Fixtures<
+  PlaywrightTestArgs & PlaywrightTestOptions,
+  PlaywrightWorkerArgs & PlaywrightWorkerOptions
+>;
+

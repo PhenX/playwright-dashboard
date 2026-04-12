@@ -79,6 +79,28 @@ class PlaywrightDashboardReporter {
       testCase.performanceMetrics = this.collectStepMetrics(result.steps);
     }
 
+    // Parse network requests from fixture attachment (reporter/fixtures.js)
+    if (this.options.collectPerformanceMetrics && result.attachments) {
+      const networkAttachment = result.attachments.find(a => a.name === 'playwright-dashboard-network');
+      if (networkAttachment && networkAttachment.body) {
+        try {
+          testCase.networkRequests = JSON.parse(networkAttachment.body.toString());
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
+      // Parse web vitals from fixture attachment
+      const webVitalsAttachment = result.attachments.find(a => a.name === 'playwright-dashboard-web-vitals');
+      if (webVitalsAttachment && webVitalsAttachment.body) {
+        try {
+          testCase.webVitals = JSON.parse(webVitalsAttachment.body.toString());
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    }
+
     // Track test status
     switch (result.status) {
       case 'passed':
@@ -501,7 +523,9 @@ class PlaywrightDashboardReporter {
         retries: tc.retries,
         steps: tc.performanceMetrics?.steps || null,
         slowestStep: tc.performanceMetrics?.slowestStep?.title || null,
-        slowestStepDuration: tc.performanceMetrics?.slowestStep?.duration || null
+        slowestStepDuration: tc.performanceMetrics?.slowestStep?.duration || null,
+        networkRequests: tc.networkRequests || null,
+        webVitals: tc.webVitals || null
       }))
     };
 
@@ -591,7 +615,9 @@ class PlaywrightDashboardReporter {
         retries: tc.retries,
         steps: tc.performanceMetrics?.steps || null,
         slowestStep: tc.performanceMetrics?.slowestStep?.title || null,
-        slowestStepDuration: tc.performanceMetrics?.slowestStep?.duration || null
+        slowestStepDuration: tc.performanceMetrics?.slowestStep?.duration || null,
+        networkRequests: tc.networkRequests || null,
+        webVitals: tc.webVitals || null
       };
     });
     form.append('testCases', JSON.stringify(testCasesData));

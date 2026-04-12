@@ -47,6 +47,8 @@ export default eventHandler(async (event) => {
     steps: testRunsCase.steps,
     slowestStep: testRunsCase.slowestStep,
     slowestStepDuration: testRunsCase.slowestStepDuration,
+    networkRequests: testRunsCase.networkRequests,
+    webVitals: testRunsCase.webVitals,
     testRun
   }
 })

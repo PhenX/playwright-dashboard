@@ -40,6 +40,8 @@ export default eventHandler(async (event) => {
     steps: testRunsCases.steps,
     slowestStep: testRunsCases.slowestStep,
     slowestStepDuration: testRunsCases.slowestStepDuration,
+    networkRequests: testRunsCases.networkRequests,
+    webVitals: testRunsCases.webVitals,
     title: testCases.title,
     filePath: testCases.filePath
   })
@@ -58,7 +60,9 @@ export default eventHandler(async (event) => {
     retries: tc.retries,
     steps: tc.steps,
     slowestStep: tc.slowestStep,
-    slowestStepDuration: tc.slowestStepDuration
+    slowestStepDuration: tc.slowestStepDuration,
+    networkRequests: tc.networkRequests,
+    webVitals: tc.webVitals
   }))
 
   return {

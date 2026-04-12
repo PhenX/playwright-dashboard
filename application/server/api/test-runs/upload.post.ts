@@ -265,7 +265,9 @@ export default eventHandler(async (event) => {
         column: column,
         steps: (testCase.steps as Array<{ title: string, duration: number, category: string }> | null | undefined) || null,
         slowestStep: (testCase.slowestStep as string | null | undefined) || null,
-        slowestStepDuration: (testCase.slowestStepDuration as number | null | undefined) || null
+        slowestStepDuration: (testCase.slowestStepDuration as number | null | undefined) || null,
+        networkRequests: (testCase.networkRequests as Array<{ method: string, url: string, status: number, duration: number, resourceType: string }> | null | undefined) || null,
+        webVitals: (testCase.webVitals as Record<string, unknown> | null | undefined) || null
       })
     }
   }

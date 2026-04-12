@@ -68,7 +68,12 @@ function formatRunLabel(run: PerformanceTrendPoint): string {
   return `Run #${run.id} — ${date}${commitSuffix}`
 }
 
-const runOptions = computed(() => {
+interface RunOption {
+  label: string
+  value: number
+}
+
+const runOptions = computed<RunOption[]>(() => {
   if (!performanceData.value) return []
   return [...performanceData.value].reverse().map(run => ({
     label: formatRunLabel(run),
@@ -76,19 +81,39 @@ const runOptions = computed(() => {
   }))
 })
 
-const selectedRunA = ref<number | undefined>(undefined)
-const selectedRunB = ref<number | undefined>(undefined)
+// Use full option objects — avoids USelectMenu value-key binding issues
+const selectedRunOptionA = ref<RunOption | undefined>(undefined)
+const selectedRunOptionB = ref<RunOption | undefined>(undefined)
 
-const { data: runADetails } = useFetch<TestRunDetails>(() =>
-  selectedRunA.value ? `/api/test-runs/${selectedRunA.value}` : '', {
-  immediate: false,
-  watch: [selectedRunA]
+const runADetails = ref<TestRunDetails | null>(null)
+const runBDetails = ref<TestRunDetails | null>(null)
+const loadingRunA = ref(false)
+const loadingRunB = ref(false)
+
+watch(selectedRunOptionA, async (opt) => {
+  runADetails.value = null
+  if (!opt?.value) return
+  loadingRunA.value = true
+  try {
+    runADetails.value = await $fetch<TestRunDetails>(`/api/test-runs/${opt.value}`)
+  } catch {
+    // ignore
+  } finally {
+    loadingRunA.value = false
+  }
 })
 
-const { data: runBDetails } = useFetch<TestRunDetails>(() =>
-  selectedRunB.value ? `/api/test-runs/${selectedRunB.value}` : '', {
-  immediate: false,
-  watch: [selectedRunB]
+watch(selectedRunOptionB, async (opt) => {
+  runBDetails.value = null
+  if (!opt?.value) return
+  loadingRunB.value = true
+  try {
+    runBDetails.value = await $fetch<TestRunDetails>(`/api/test-runs/${opt.value}`)
+  } catch {
+    // ignore
+  } finally {
+    loadingRunB.value = false
+  }
 })
 
 interface ComparisonRow {
@@ -129,7 +154,7 @@ const comparisonData = computed(() => {
     })
   }
 
-  // Add tests only in run A
+  // Add tests only in run A (removed in run B)
   for (const tcA of runADetails.value.testCases) {
     if (!rows.find(r => r.title === tcA.title)) {
       rows.push({
@@ -301,25 +326,29 @@ function refresh() {
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Run A (baseline)</label>
                 <USelectMenu
-                  v-model="selectedRunA"
+                  v-model="selectedRunOptionA"
                   :items="runOptions"
-                  value-key="value"
                   placeholder="Select run A..."
                 />
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Run B (comparison)</label>
                 <USelectMenu
-                  v-model="selectedRunB"
+                  v-model="selectedRunOptionB"
                   :items="runOptions"
-                  value-key="value"
                   placeholder="Select run B..."
                 />
               </div>
             </div>
 
+            <!-- Loading states -->
+            <div v-if="loadingRunA || loadingRunB" class="text-center py-4 text-gray-500">
+              <UIcon name="i-lucide-loader-2" class="animate-spin mr-2" />
+              Loading run data…
+            </div>
+
             <!-- Comparison Summary -->
-            <div v-if="selectedRunA && selectedRunB && comparisonData.length > 0" class="space-y-4">
+            <div v-else-if="selectedRunOptionA && selectedRunOptionB && comparisonData.length > 0" class="space-y-4">
               <div class="flex gap-4 text-sm">
                 <UBadge color="success" variant="soft" size="lg">
                   {{ comparisonSummary.improved }} improved
@@ -345,7 +374,7 @@ function refresh() {
               />
             </div>
 
-            <div v-else-if="!selectedRunA || !selectedRunB" class="text-center py-8 text-gray-500">
+            <div v-else-if="!selectedRunOptionA || !selectedRunOptionB" class="text-center py-8 text-gray-500">
               Select two runs to compare their performance.
             </div>
           </div>

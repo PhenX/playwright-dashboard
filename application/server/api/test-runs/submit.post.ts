@@ -134,7 +134,9 @@ export default eventHandler(async (event) => {
         column: column,
         steps: testCase.steps || null,
         slowestStep: testCase.slowestStep || null,
-        slowestStepDuration: testCase.slowestStepDuration || null
+        slowestStepDuration: testCase.slowestStepDuration || null,
+        networkRequests: testCase.networkRequests || null,
+        webVitals: testCase.webVitals || null
       })
     }
   }

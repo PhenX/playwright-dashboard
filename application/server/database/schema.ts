@@ -59,6 +59,8 @@ export const testRunsCases = sqliteTable('test_runs_cases', {
   steps: text('steps', { mode: 'json' }), // Array of { title, duration, category } step objects
   slowestStep: text('slowest_step'), // Title of the slowest step
   slowestStepDuration: integer('slowest_step_duration'), // Duration of the slowest step in ms
+  networkRequests: text('network_requests', { mode: 'json' }), // Array of { method, url, status, duration, resourceType }
+  webVitals: text('web_vitals', { mode: 'json' }), // { navigation: {...}, paint: {...} }
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
 }, table => ({
   testRunIdIdx: index('idx_test_runs_cases_test_run_id').on(table.testRunId),
