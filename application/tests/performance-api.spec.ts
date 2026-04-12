@@ -267,7 +267,52 @@ test.describe('Performance API Tests', () => {
     if (userEndpoint) {
       expect(userEndpoint.route).toContain(':id')
       expect(userEndpoint.route).not.toContain('/42')
+      // Route should be a pathname only (no protocol/host)
+      expect(userEndpoint.route).not.toMatch(/^https?:\/\//)
     }
+  })
+
+  test('should sanitize network request URLs (strip query string) before storing', async ({ request }) => {
+    const response = await request.post('/api/test-runs/submit', {
+      data: {
+        projectName: 'perf-test-project',
+        status: 'passed',
+        startTime: new Date(Date.now() + 200000).toISOString(),
+        duration: 5000,
+        totalTests: 1,
+        passedTests: 1,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: [
+          {
+            title: 'search page',
+            status: 'passed',
+            duration: 1000,
+            location: 'tests/search.spec.ts:1:1',
+            networkRequests: [
+              {
+                method: 'GET',
+                url: 'http://localhost:3000/api/search?q=secret&token=abc123',
+                status: 200,
+                duration: 60,
+                resourceType: 'fetch'
+              }
+            ]
+          }
+        ]
+      }
+    })
+    expect(response.ok()).toBeTruthy()
+    const data = await response.json()
+
+    // Fetch back the stored test case and verify the URL was sanitized
+    const runResponse = await request.get(`/api/test-runs/${data.testRunId}`)
+    const run = await runResponse.json()
+    const tc = run.testCases.find((t: { title: string }) => t.title === 'search page')
+    expect(tc).toBeDefined()
+    expect(tc.networkRequests[0].url).not.toContain('secret')
+    expect(tc.networkRequests[0].url).not.toContain('token')
+    expect(tc.networkRequests[0].url).toBe('http://localhost:3000/api/search')
   })
 
   test('should return 404 for network-requests on non-existent test run', async ({ request }) => {

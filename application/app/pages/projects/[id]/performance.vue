@@ -127,14 +127,18 @@ interface ComparisonRow {
 const comparisonData = computed(() => {
   if (!runADetails.value?.testCases || !runBDetails.value?.testCases) return []
 
+  // Key by "location::title" to avoid false matches when the same title appears in different files
+  const caseKey = (tc: TestCaseResult) =>
+    tc.location ? `${tc.location.split(':')[0]}::${tc.title}` : tc.title
+
   const mapA = new Map<string, TestCaseResult>()
   for (const tc of runADetails.value.testCases) {
-    mapA.set(tc.title, tc)
+    mapA.set(caseKey(tc), tc)
   }
 
   const rows: ComparisonRow[] = []
   for (const tcB of runBDetails.value.testCases) {
-    const tcA = mapA.get(tcB.title)
+    const tcA = mapA.get(caseKey(tcB))
     const durationA = tcA?.duration ?? null
     const durationB = tcB.duration ?? null
 
@@ -155,8 +159,9 @@ const comparisonData = computed(() => {
   }
 
   // Add tests only in run A (removed in run B)
+  const keyedRows = new Set(runBDetails.value.testCases.map(caseKey))
   for (const tcA of runADetails.value.testCases) {
-    if (!rows.find(r => r.title === tcA.title)) {
+    if (!keyedRows.has(caseKey(tcA))) {
       rows.push({
         title: tcA.title,
         durationA: tcA.duration ?? null,

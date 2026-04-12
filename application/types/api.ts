@@ -191,11 +191,11 @@ export interface WebVitals {
     transferSize?: number
     encodedBodySize?: number
     decodedBodySize?: number
-  }
+  } | null
   paint?: {
     firstPaint?: number
     firstContentfulPaint?: number
-  }
+  } | null
 }
 
 /**

@@ -3,6 +3,49 @@ import { projects, testRuns, testCases, testRunsCases } from '../../database/sch
 import { eq, and } from 'drizzle-orm'
 import { requireAuth } from '../../utils/auth'
 
+/**
+ * Strip query string and fragment from a URL, keeping only scheme + host + path.
+ * This prevents query parameters (tokens, session IDs, etc.) from being persisted.
+ */
+function sanitizeUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    return `${parsed.protocol}//${parsed.host}${parsed.pathname}`
+  } catch {
+    // Not a valid absolute URL — return as-is (relative paths, etc.)
+    return url
+  }
+}
+
+/**
+ * Sanitize an array of network request objects by stripping query params from each URL.
+ */
+function sanitizeNetworkRequests(
+  requests: Array<Record<string, unknown>> | null | undefined
+): Array<Record<string, unknown>> | null {
+  if (!requests || !Array.isArray(requests)) return null
+  return requests.map(req => ({
+    ...req,
+    url: typeof req.url === 'string' ? sanitizeUrl(req.url) : req.url
+  }))
+}
+
+/**
+ * Sanitize webVitals by stripping the query string from the navigation URL.
+ */
+function sanitizeWebVitals(vitals: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
+  if (!vitals || typeof vitals !== 'object') return null
+  const nav = vitals.navigation as Record<string, unknown> | null | undefined
+  if (!nav) return vitals
+  return {
+    ...vitals,
+    navigation: {
+      ...nav,
+      url: typeof nav.url === 'string' ? sanitizeUrl(nav.url) : nav.url
+    }
+  }
+}
+
 export default eventHandler(async (event) => {
   // Require reporter or administrator role for submitting test results
   await requireAuth(event, ['reporter', 'administrator'])
@@ -135,8 +178,8 @@ export default eventHandler(async (event) => {
         steps: testCase.steps || null,
         slowestStep: testCase.slowestStep || null,
         slowestStepDuration: testCase.slowestStepDuration || null,
-        networkRequests: testCase.networkRequests || null,
-        webVitals: testCase.webVitals || null
+        networkRequests: sanitizeNetworkRequests(testCase.networkRequests) || null,
+        webVitals: sanitizeWebVitals(testCase.webVitals) || null
       })
     }
   }
