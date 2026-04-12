@@ -1,0 +1,109 @@
+/**
+ * Shared test fixtures for the Playwright Dashboard test suite.
+ *
+ * Extends the base Playwright `test` with dashboard fixtures that mirror the
+ * behaviour of `playwright-dashboard-reporter/fixtures` — automatically
+ * capturing network request timing and browser performance (Web Vitals) for
+ * every page interaction so they appear in the dashboard.
+ *
+ * Usage in test files:
+ * ```ts
+ * import { test, expect } from './fixtures'
+ * ```
+ */
+import { test as base, expect, type Page, type TestInfo } from '@playwright/test'
+
+type NetworkRequest = {
+  method: string
+  url: string
+  status: number
+  duration: number
+  startTime: number
+  resourceType: string
+}
+
+async function collectNetworkAndVitals(page: Page, testInfo: TestInfo) {
+  const networkRequests: NetworkRequest[] = []
+
+  page.on('requestfinished', async (request) => {
+    try {
+      const url = request.url()
+      if (url.startsWith('data:') || url.startsWith('blob:')) return
+
+      const timing = request.timing()
+      const response = await request.response()
+      const duration = timing.responseEnd > 0
+        ? Math.round(timing.responseEnd - timing.requestStart)
+        : 0
+
+      networkRequests.push({
+        method: request.method(),
+        url,
+        status: response ? response.status() : 0,
+        duration,
+        startTime: timing.startTime,
+        resourceType: request.resourceType(),
+      })
+    } catch {
+      // ignore aborted requests
+    }
+  })
+
+  return async () => {
+    if (networkRequests.length > 0) {
+      await testInfo.attach('playwright-dashboard-network', {
+        contentType: 'application/json',
+        body: Buffer.from(JSON.stringify(networkRequests)),
+      })
+    }
+
+    try {
+      const webVitals = await page.evaluate(() => {
+        const navEntries = performance.getEntriesByType('navigation')
+        const paintEntries = performance.getEntriesByType('paint')
+        const nav = navEntries[0] as PerformanceNavigationTiming | undefined
+
+        const navigation = nav
+          ? {
+              url: nav.name,
+              ttfb: Math.round(nav.responseStart - nav.fetchStart),
+              domInteractive: Math.round(nav.domInteractive - nav.fetchStart),
+              domContentLoaded: Math.round(nav.domContentLoadedEventEnd - nav.fetchStart),
+              loadComplete: Math.round(nav.loadEventEnd - nav.fetchStart),
+              transferSize: nav.transferSize || 0,
+              encodedBodySize: nav.encodedBodySize || 0,
+              decodedBodySize: nav.decodedBodySize || 0,
+            }
+          : null
+
+        const paint: Record<string, number> = {}
+        for (const entry of paintEntries) {
+          const key = entry.name.replace(/-([a-z])/g, (_: string, letter: string) => letter.toUpperCase())
+          paint[key] = Math.round(entry.startTime)
+        }
+
+        if (!navigation && Object.keys(paint).length === 0) return null
+        return { navigation, paint }
+      })
+
+      if (webVitals) {
+        await testInfo.attach('playwright-dashboard-web-vitals', {
+          contentType: 'application/json',
+          body: Buffer.from(JSON.stringify(webVitals)),
+        })
+      }
+    } catch {
+      // page may already be closed or no navigation happened
+    }
+  }
+}
+
+export const test = base.extend<{ page: Page }>({
+  page: async ({ page }, use, testInfo) => {
+    const flush = await collectNetworkAndVitals(page, testInfo)
+    await use(page)
+    await flush()
+  },
+})
+
+export { expect }

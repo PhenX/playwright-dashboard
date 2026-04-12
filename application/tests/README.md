@@ -10,7 +10,7 @@ This directory contains functional tests for the Playwright Dashboard using Play
   - Test case details
   - Error handling
 
-- **`dashboard-ui.spec.ts`** - Tests for the dashboard UI
+- **`dashboard-ui.spec.ts`** - Tests for the dashboard UI (uses `dashboardFixtures`)
   - Home page rendering
   - Projects list and navigation
   - Project details page
@@ -18,12 +18,25 @@ This directory contains functional tests for the Playwright Dashboard using Play
   - Project switcher dropdown
   - Responsive design
 
+- **`performance-api.spec.ts`** - Tests for performance-related API endpoints
+  - Submit test results with step timings, network requests and web vitals
+  - Retrieve performance trend data
+  - Retrieve slow-tests data
+  - Network requests grouped by route endpoint
+  - Web vitals storage and retrieval
+
+- **`performance-ui.spec.ts`** - Tests for performance dashboard views (uses `dashboardFixtures`)
+  - Performance page navigation
+  - Slowest tests table
+  - Run comparison view
+  - Avg/P90 stats on test run detail page
+  - Steps and web vitals on test case detail page
+
 - **`reporter-integration.spec.ts`** - Tests for the Playwright reporter
   - Reporter module loading
   - Configuration options
-  - Test result collection
-  - Upload to server
   - TypeScript definitions
+  - `fixtures.js` exports and content
 
 - **`file-upload.spec.ts`** - Tests for file upload functionality
   - HTML report upload
@@ -31,6 +44,10 @@ This directory contains functional tests for the Playwright Dashboard using Play
   - File download
   - Security (path traversal prevention)
   - Error handling
+
+- **`fixtures.ts`** - Shared test fixture
+  - Extends `@playwright/test` with `dashboardFixtures` from the reporter package
+  - Imported by all UI test files that interact with a browser page
 
 ## Running Tests
 
@@ -96,11 +113,15 @@ test('should do something', async ({ request }) => {
 });
 ```
 
-### UI Tests
+### UI Tests (with dashboard fixture)
 ```typescript
+// Import from fixtures.ts so network requests and web vitals are captured
+import { test, expect } from './fixtures';
+
 test('should display element', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('Element')).toBeVisible();
+  // network requests & web vitals are automatically attached to the test report
 });
 ```
 
@@ -147,6 +168,7 @@ Tests are designed to run in CI environments:
 4. **Selectors**: Prefer role-based selectors over CSS
 5. **Waiting**: Use built-in auto-waiting, avoid manual waits
 6. **Data**: Create test data dynamically, don't rely on existing data
+7. **Fixtures**: Import `test` from `./fixtures` in all UI tests for automatic network and web vitals capture
 
 ## Troubleshooting
 
@@ -171,11 +193,3 @@ Tests use the same database as dev. If tests fail due to data conflicts, delete 
 ```bash
 rm -rf .data/playwright.db
 ```
-
-## Coverage
-
-To see what's covered by tests, review the test files. Future improvements:
-- Add code coverage reporting
-- Integration tests with real Playwright reporter
-- Performance testing
-- Load testing

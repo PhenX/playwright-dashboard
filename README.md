@@ -10,6 +10,10 @@ A modern dashboard for storing and visualizing Playwright test results, built wi
 - 📊 **Test Results Storage** - Store complete Playwright test run data
 - 🎯 **Project Organization** - Tests organized by projects with automatic project creation
 - 📈 **Dashboard Overview** - View test statistics and trends at a glance
+- ⚡ **Performance Tracking** - Step-level timing, avg/P90 duration trends, slowest tests analysis
+- 🌐 **Network Request Analysis** - Find slow API endpoints grouped by HTTP method and normalised route
+- 🔬 **Browser Web Vitals** - Capture TTFB, DOMContentLoaded, FCP and more via the Performance API
+- 📊 **Run Comparison** - Side-by-side delta view of two test runs with improved/regressed/unchanged summary
 - 🔍 **Detailed Views** - Drill down from projects → test runs → test cases → traces
 - 🔌 **REST API** - Simple JSON API for submitting test results
 - 📦 **Playwright Reporter** - Custom reporter for automatic result submission
@@ -108,7 +112,10 @@ curl -X POST http://localhost:3000/api/test-runs/upload \
 **Query:**
 - `GET /api/projects` - List all projects with statistics
 - `GET /api/projects/[id]` - Get project details with test runs
+- `GET /api/projects/[id]/performance` - Performance trend data (last N runs with avg/P90 durations)
+- `GET /api/projects/[id]/slow-tests` - Top 20 slowest tests with avg/max/min/trend
 - `GET /api/test-runs/[id]` - Get test run details with test cases
+- `GET /api/test-runs/[id]/network-requests` - Network requests grouped by HTTP method + normalised route
 - `GET /api/test-cases/[id]` - Get test case details with traces
 
 **Files:**
@@ -169,6 +176,31 @@ export default defineConfig({
 - `customData` (object): Additional custom metadata (optional)
 - `collectScmInfo` (boolean): Auto-collect git info (default: `true`)
 - `collectCiInfo` (boolean): Auto-collect CI environment info (default: `true`)
+- `collectPerformanceMetrics` (boolean): Collect step timings, network requests and web vitals (default: `true`)
+
+### Performance Metrics & Network Analysis
+
+Enable automatic collection of network request timing and browser Web Vitals by importing the dashboard fixture instead of `@playwright/test`:
+
+```typescript
+// fixtures.ts (or directly in your test file)
+import { test as base } from '@playwright/test'
+import { dashboardFixtures } from 'playwright-dashboard-reporter/fixtures'
+
+export const test = base.extend(dashboardFixtures)
+export { expect } from '@playwright/test'
+```
+
+Or use the drop-in replacement directly:
+
+```typescript
+// Import from the fixtures module instead of @playwright/test
+import { test, expect } from 'playwright-dashboard-reporter/fixtures'
+```
+
+When the fixture is active, the reporter automatically uploads per-test:
+- **Network requests** – method, URL, status code, duration, resource type; aggregated on the dashboard into a *Slow API Endpoints* table grouped by `METHOD + normalised route` (e.g. `/api/users/:id`)
+- **Browser Web Vitals** – TTFB, DOM Interactive, DOMContentLoaded, Load Complete, First Paint, First Contentful Paint – displayed with colour-coded thresholds
 
 ### Metadata Collection
 
@@ -471,10 +503,16 @@ DATABASE_PATH=/custom/path/database.db npm run dev
 ├── app/
 │   ├── pages/               # Dashboard pages
 │   │   ├── index.vue        # Home dashboard
-│   │   ├── projects.vue     # Projects list
-│   │   ├── projects/[id].vue    # Project details
-│   │   ├── test-runs/[id].vue   # Test run details
-│   │   └── test-cases/[id].vue  # Test case details
+│   │   ├── projects/        # Project pages
+│   │   │   ├── index.vue    # Projects list
+│   │   │   ├── [id].vue     # Project details with test runs
+│   │   │   ├── [id]/        # Sub-pages per project
+│   │   │   │   ├── performance.vue  # Performance trend + slowest tests + run comparison
+│   │   │   │   └── test-cases.vue   # All test cases for a project
+│   │   ├── test-runs/[id].vue   # Test run details + slow API endpoints table
+│   │   └── test-cases/[id].vue  # Test case details + steps, web vitals, network requests
+│   ├── components/
+│   │   └── PerformanceTrendChart.vue  # Line chart for duration trends
 │   └── layouts/
 │       └── default.vue      # Main layout with navigation
 ├── server/
@@ -482,7 +520,9 @@ DATABASE_PATH=/custom/path/database.db npm run dev
 │   │   ├── schema.ts        # Database schema (Drizzle ORM)
 │   │   ├── index.ts         # Database initialization
 │   │   └── migrations/      # Drizzle migration files
-│   │       ├── 0000_*.sql   # SQL migration files
+│   │       ├── 0000_*.sql   # Initial schema
+│   │       ├── 0001_*.sql   # Performance columns
+│   │       ├── 0002_*.sql   # Network requests & web vitals columns
 │   │       └── meta/         # Migration metadata
 │   ├── storage/             # Storage abstraction layer
 │   │   ├── index.ts         # Storage factory
@@ -490,26 +530,33 @@ DATABASE_PATH=/custom/path/database.db npm run dev
 │   │   ├── s3.ts            # S3 storage adapter
 │   │   └── types.ts         # Storage interfaces
 │   └── api/                 # API endpoints
-│       ├── projects.get.ts
-│       ├── projects/[id].get.ts
+│       ├── projects/
+│       │   ├── index.get.ts
+│       │   ├── [id].get.ts
+│       │   ├── [id]/performance.get.ts   # Performance trend data
+│       │   └── [id]/slow-tests.get.ts    # Slowest test cases
 │       ├── test-runs/
 │       │   ├── submit.post.ts
 │       │   ├── upload.post.ts
-│       │   └── [id].get.ts
+│       │   ├── [id].get.ts
+│       │   └── [id]/network-requests.get.ts  # Grouped network requests
 │       ├── test-cases/[id].get.ts
 │       └── files/[...path].get.ts
 ├── reporter/                # Playwright Reporter package
 │   ├── index.js            # Reporter implementation
+│   ├── fixtures.js         # Page fixture for network/web vitals capture
 │   ├── index.d.ts          # TypeScript definitions
 │   ├── package.json
 │   └── README.md           # Reporter documentation
-├── tests/
-│   └── functional/         # Functional tests
-│       ├── api-server.spec.ts
-│       ├── dashboard-ui.spec.ts
-│       ├── reporter-integration.spec.ts
-│       ├── file-upload.spec.ts
-│       └── README.md       # Test documentation
+├── tests/                  # Functional tests
+│   ├── api-server.spec.ts
+│   ├── dashboard-ui.spec.ts
+│   ├── performance-api.spec.ts
+│   ├── performance-ui.spec.ts
+│   ├── reporter-integration.spec.ts
+│   ├── file-upload.spec.ts
+│   ├── fixtures.ts         # Shared test fixture (uses dashboardFixtures)
+│   └── README.md           # Test documentation
 ├── playwright.config.ts    # Playwright test configuration
 ├── drizzle.config.ts       # Drizzle migration configuration
 └── .github/
@@ -535,21 +582,24 @@ npm run test:report
 
 ### Test Coverage
 
-- **API Server Tests**: REST API endpoints, error handling, data validation
-- **Dashboard UI Tests**: Page rendering, navigation, responsive design
-- **Reporter Integration Tests**: Reporter functionality, configuration, uploads
-- **File Upload Tests**: File uploads, downloads, security
+- **API Server Tests** (`api-server.spec.ts`): REST API endpoints, error handling, data validation
+- **Dashboard UI Tests** (`dashboard-ui.spec.ts`): Page rendering, navigation, responsive design (uses `dashboardFixtures`)
+- **Performance API Tests** (`performance-api.spec.ts`): Performance endpoints, network requests, web vitals storage
+- **Performance UI Tests** (`performance-ui.spec.ts`): Performance views, run comparison, web vitals display (uses `dashboardFixtures`)
+- **Reporter Integration Tests** (`reporter-integration.spec.ts`): Reporter functionality, configuration, fixtures exports
+- **File Upload Tests** (`file-upload.spec.ts`): File uploads, downloads, security
 
-See [`tests/functional/README.md`](./tests/functional/README.md) for detailed testing documentation.
+See [`tests/README.md`](./application/tests/README.md) for detailed testing documentation.
 
 ## Database Schema
 
 The dashboard uses SQLite with the following tables:
 
 - **projects** - Test projects
-- **test_runs** - Test execution runs
-- **test_cases** - Individual test cases
+- **test_runs** - Test execution runs (includes `avg_test_duration`, `p90_test_duration` for trend queries)
+- **test_runs_cases** - Individual test cases (includes `steps`, `slowest_step`, `network_requests`, `web_vitals` JSON columns)
 - **traces** - Playwright trace files
+- **users** - User accounts for authentication
 
 ## Production
 
