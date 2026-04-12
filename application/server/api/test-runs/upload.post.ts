@@ -9,41 +9,7 @@ import { uploadDirectory } from '../../utils/storage-helpers'
 import { mkdirSync, existsSync } from 'fs'
 import { tmpdir } from 'os'
 import { rm } from 'fs/promises'
-
-/**
- * Strip query string and fragment from a URL, keeping only scheme + host + path.
- */
-function sanitizeUrl(url: string): string {
-  try {
-    const parsed = new URL(url)
-    return `${parsed.protocol}//${parsed.host}${parsed.pathname}`
-  } catch {
-    return url
-  }
-}
-
-function sanitizeNetworkRequests(
-  requests: Array<Record<string, unknown>> | null | undefined
-): Array<Record<string, unknown>> | null {
-  if (!requests || !Array.isArray(requests)) return null
-  return requests.map(req => ({
-    ...req,
-    url: typeof req.url === 'string' ? sanitizeUrl(req.url) : req.url
-  }))
-}
-
-function sanitizeWebVitals(vitals: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
-  if (!vitals || typeof vitals !== 'object') return null
-  const nav = vitals.navigation as Record<string, unknown> | null | undefined
-  if (!nav) return vitals
-  return {
-    ...vitals,
-    navigation: {
-      ...nav,
-      url: typeof nav.url === 'string' ? sanitizeUrl(nav.url) : nav.url
-    }
-  }
-}
+import { sanitizeNetworkRequests, sanitizeWebVitals } from '../../utils/sanitize'
 
 export default eventHandler(async (event) => {
   // Require reporter or administrator role for uploading test results
