@@ -16,7 +16,7 @@ const UBadge = resolveComponent('UBadge')
 const slowTestsColumns: TableColumn<SlowTest>[] = [
   {
     accessorKey: 'title',
-    header: 'Test Case',
+    header: createSortHeader<SlowTest>('Test Case'),
     cell: ({ row }) => {
       return h('div', {}, [
         h('div', { class: 'font-medium' }, row.getValue('title')),
@@ -26,27 +26,27 @@ const slowTestsColumns: TableColumn<SlowTest>[] = [
   },
   {
     accessorKey: 'avgDuration',
-    header: 'Avg Duration',
+    header: createSortHeader<SlowTest>('Avg Duration'),
     cell: ({ row }) => formatDuration(row.getValue('avgDuration'))
   },
   {
     accessorKey: 'maxDuration',
-    header: 'Max',
+    header: createSortHeader<SlowTest>('Max'),
     cell: ({ row }) => formatDuration(row.getValue('maxDuration'))
   },
   {
     accessorKey: 'minDuration',
-    header: 'Min',
+    header: createSortHeader<SlowTest>('Min'),
     cell: ({ row }) => formatDuration(row.getValue('minDuration'))
   },
   {
     accessorKey: 'latestDuration',
-    header: 'Latest',
+    header: createSortHeader<SlowTest>('Latest'),
     cell: ({ row }) => formatDuration(row.getValue('latestDuration'))
   },
   {
     accessorKey: 'trend',
-    header: 'Trend',
+    header: createSortHeader<SlowTest>('Trend'),
     cell: ({ row }) => {
       const trend = row.getValue('trend') as string
       if (trend === 'slower') return h('span', { class: 'text-red-600 font-medium' }, '▲ Slower')
@@ -56,7 +56,7 @@ const slowTestsColumns: TableColumn<SlowTest>[] = [
   },
   {
     accessorKey: 'runCount',
-    header: 'Runs',
+    header: createSortHeader<SlowTest>('Runs'),
     cell: ({ row }) => row.getValue('runCount')
   }
 ]
@@ -189,12 +189,12 @@ const comparisonSummary = computed(() => {
 const comparisonColumns: TableColumn<ComparisonRow>[] = [
   {
     accessorKey: 'title',
-    header: 'Test Case',
+    header: createSortHeader<ComparisonRow>('Test Case'),
     cell: ({ row }) => h('span', { class: 'font-medium' }, row.getValue('title'))
   },
   {
     accessorKey: 'durationA',
-    header: 'Run A',
+    header: createSortHeader<ComparisonRow>('Run A'),
     cell: ({ row }) => {
       const val = row.getValue('durationA') as number | null
       return val !== null ? formatDuration(val) : h('span', { class: 'text-gray-400' }, '—')
@@ -202,7 +202,7 @@ const comparisonColumns: TableColumn<ComparisonRow>[] = [
   },
   {
     accessorKey: 'durationB',
-    header: 'Run B',
+    header: createSortHeader<ComparisonRow>('Run B'),
     cell: ({ row }) => {
       const val = row.getValue('durationB') as number | null
       return val !== null ? formatDuration(val) : h('span', { class: 'text-gray-400' }, '—')
@@ -210,7 +210,7 @@ const comparisonColumns: TableColumn<ComparisonRow>[] = [
   },
   {
     accessorKey: 'delta',
-    header: 'Delta',
+    header: createSortHeader<ComparisonRow>('Delta'),
     cell: ({ row }) => {
       const delta = row.getValue('delta') as number | null
       if (delta === null) return h('span', { class: 'text-gray-400' }, '—')
@@ -221,7 +221,7 @@ const comparisonColumns: TableColumn<ComparisonRow>[] = [
   },
   {
     accessorKey: 'percentChange',
-    header: 'Change',
+    header: createSortHeader<ComparisonRow>('Change'),
     cell: ({ row }) => {
       const pct = row.getValue('percentChange') as number | null
       if (pct === null) return h('span', { class: 'text-gray-400' }, '—')

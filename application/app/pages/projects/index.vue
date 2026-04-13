@@ -12,7 +12,7 @@ const TestStatusBar = resolveComponent('TestStatusBar')
 const columns: TableColumn<ProjectWithStats>[] = [
   {
     accessorKey: 'name',
-    header: 'Project Name',
+    header: createSortHeader<ProjectWithStats>('Project Name'),
     cell: ({ row }) => {
       const displayName = (row.original.label || row.getValue('name')) as string
 
@@ -30,12 +30,12 @@ const columns: TableColumn<ProjectWithStats>[] = [
   },
   {
     accessorKey: 'totalRuns',
-    header: 'Test Runs',
+    header: createSortHeader<ProjectWithStats>('Test Runs'),
     cell: ({ row }) => `${row.getValue('totalRuns')} runs`
   },
   {
     accessorKey: 'latestRun',
-    header: 'Last Run',
+    header: createSortHeader<ProjectWithStats>('Last Run'),
     cell: ({ row }) => {
       const latestRun = row.getValue('latestRun') as ProjectWithStats['latestRun']
       return latestRun ? formatDate(latestRun.startTime) : 'N/A'
@@ -43,7 +43,7 @@ const columns: TableColumn<ProjectWithStats>[] = [
   },
   {
     accessorKey: 'duration',
-    header: 'Duration',
+    header: createSortHeader<ProjectWithStats>('Duration'),
     cell: ({ row }) => {
       const latestRun = row.original.latestRun
       return latestRun?.duration != null ? formatDuration(latestRun.duration) : '—'
@@ -51,7 +51,7 @@ const columns: TableColumn<ProjectWithStats>[] = [
   },
   {
     accessorKey: 'status',
-    header: 'Status',
+    header: createSortHeader<ProjectWithStats>('Status'),
     cell: ({ row }) => {
       const latestRun = row.original.latestRun
       if (!latestRun) return ''

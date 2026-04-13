@@ -19,7 +19,7 @@ const UBadge = resolveComponent('UBadge')
 const testCasesColumns: TableColumn<TestCaseResult>[] = [
   {
     accessorKey: 'title',
-    header: 'Test Case',
+    header: createSortHeader<TestCaseResult>('Test Case'),
     cell: ({ row }) => {
       return h('a', {
         href: `/test-cases/${row.original.id}`,
@@ -33,7 +33,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
   },
   {
     accessorKey: 'status',
-    header: 'Status',
+    header: createSortHeader<TestCaseResult>('Status'),
     cell: ({ row }) => {
       const color = getStatusColor(row.getValue('status') as string)
       return h(UBadge, { color, class: 'capitalize' }, () => row.getValue('status'))
@@ -41,7 +41,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
   },
   {
     accessorKey: 'location',
-    header: 'Location',
+    header: createSortHeader<TestCaseResult>('Location'),
     cell: ({ row }) => {
       const location = row.getValue('location') as string | undefined
       return location ? h('code', { class: 'text-xs' }, location) : ''
@@ -49,12 +49,12 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
   },
   {
     accessorKey: 'duration',
-    header: 'Duration',
+    header: createSortHeader<TestCaseResult>('Duration'),
     cell: ({ row }) => formatDuration(row.getValue('duration'))
   },
   {
     accessorKey: 'slowestStep',
-    header: 'Slowest Step',
+    header: createSortHeader<TestCaseResult>('Slowest Step'),
     cell: ({ row }) => {
       const step = row.getValue('slowestStep') as string | null
       const stepDuration = row.original.slowestStepDuration
@@ -67,7 +67,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
   },
   {
     accessorKey: 'retries',
-    header: 'Retries',
+    header: createSortHeader<TestCaseResult>('Retries'),
     cell: ({ row }) => {
       const retries = row.getValue('retries') as number | undefined
       return retries && retries > 0 ? retries.toString() : ''
@@ -92,7 +92,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
 const endpointColumns: TableColumn<EndpointSummary>[] = [
   {
     accessorKey: 'method',
-    header: 'Method',
+    header: createSortHeader<EndpointSummary>('Method'),
     cell: ({ row }) => {
       const method = row.getValue('method') as string
       const color = method === 'GET' ? 'sky' : method === 'POST' ? 'green' : method === 'PUT' || method === 'PATCH' ? 'amber' : method === 'DELETE' ? 'red' : 'gray'
@@ -101,17 +101,17 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
   },
   {
     accessorKey: 'route',
-    header: 'Route',
+    header: createSortHeader<EndpointSummary>('Route'),
     cell: ({ row }) => h('code', { class: 'text-xs font-mono break-all' }, row.getValue('route'))
   },
   {
     accessorKey: 'count',
-    header: 'Calls',
+    header: createSortHeader<EndpointSummary>('Calls'),
     cell: ({ row }) => row.getValue('count')
   },
   {
     accessorKey: 'avgDuration',
-    header: 'Avg',
+    header: createSortHeader<EndpointSummary>('Avg'),
     cell: ({ row }) => {
       const val = row.getValue('avgDuration') as number
       const color = val > 1000 ? 'text-red-600 font-medium' : val > 500 ? 'text-orange-500 font-medium' : ''
@@ -120,7 +120,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
   },
   {
     accessorKey: 'p90Duration',
-    header: 'P90',
+    header: createSortHeader<EndpointSummary>('P90'),
     cell: ({ row }) => {
       const val = row.getValue('p90Duration') as number
       const color = val > 2000 ? 'text-red-600 font-medium' : val > 1000 ? 'text-orange-500' : ''
@@ -129,12 +129,12 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
   },
   {
     accessorKey: 'maxDuration',
-    header: 'Max',
+    header: createSortHeader<EndpointSummary>('Max'),
     cell: ({ row }) => formatDuration(row.getValue('maxDuration'))
   },
   {
     accessorKey: 'errorRate',
-    header: 'Errors',
+    header: createSortHeader<EndpointSummary>('Errors'),
     cell: ({ row }) => {
       const rate = row.getValue('errorRate') as number
       if (rate === 0) return h('span', { class: 'text-gray-400' }, '0%')

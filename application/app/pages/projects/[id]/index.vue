@@ -15,7 +15,7 @@ const TestStatusBar = resolveComponent('TestStatusBar')
 const runsColumns: TableColumn<TestRunSummary>[] = [
   {
     accessorKey: 'id',
-    header: 'Run',
+    header: createSortHeader<TestRunSummary>('Run'),
     cell: ({ row }) => {
       return h('a', {
         href: `/test-runs/${row.original.id}`,
@@ -29,7 +29,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
   },
   {
     accessorKey: 'status',
-    header: 'Status',
+    header: createSortHeader<TestRunSummary>('Status'),
     cell: ({ row }) => {
       const color = getStatusColor(row.getValue('status') as string)
       return h(UBadge, { color, class: 'capitalize' }, () => row.getValue('status'))
@@ -37,12 +37,12 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
   },
   {
     accessorKey: 'startTime',
-    header: 'Started',
+    header: createSortHeader<TestRunSummary>('Started'),
     cell: ({ row }) => formatDate(row.getValue('startTime'))
   },
   {
     accessorKey: 'duration',
-    header: 'Duration',
+    header: createSortHeader<TestRunSummary>('Duration'),
     cell: ({ row }) => formatDuration(row.getValue('duration'))
   },
   {

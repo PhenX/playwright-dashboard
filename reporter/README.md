@@ -47,20 +47,20 @@ export default defineConfig({
 
 ## Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `serverUrl` | string | `'http://localhost:3000'` | URL of the Playwright Dashboard server |
-| `projectName` | string | `'default-project'` | Name of the project to report results under |
-| `uploadTraces` | boolean | `true` | Whether to upload trace files to the dashboard |
-| `uploadReport` | boolean | `true` | Whether to upload the HTML report to the dashboard |
-| `projectDescription` | string | - | Description of the project |
-| `relatedIssue` | string | - | Related issue reference (e.g., JIRA ticket like "PROJ-123") |
-| `ciInfo` | string | - | CI job information (e.g., Jenkins job URL) |
-| `tags` | string[] | - | Tags to categorize the test run |
-| `customData` | object | - | Additional custom metadata as key-value pairs |
-| `collectScmInfo` | boolean | `true` | Whether to automatically collect SCM info (git commit, branch, author) |
-| `collectCiInfo` | boolean | `true` | Whether to automatically collect CI environment info |
-| `collectPerformanceMetrics` | boolean | `true` | Whether to collect step timings, network requests and web vitals from the fixture |
+| Option                      | Type     | Default                   | Description                                                                       |
+|-----------------------------|----------|---------------------------|-----------------------------------------------------------------------------------|
+| `serverUrl`                 | string   | `'http://localhost:3000'` | URL of the Playwright Dashboard server                                            |
+| `projectName`               | string   | `'default-project'`       | Name of the project to report results under                                       |
+| `uploadTraces`              | boolean  | `true`                    | Whether to upload trace files to the dashboard                                    |
+| `uploadReport`              | boolean  | `true`                    | Whether to upload the HTML report to the dashboard                                |
+| `projectDescription`        | string   | -                         | Description of the project                                                        |
+| `relatedIssue`              | string   | -                         | Related issue reference (e.g., JIRA ticket like "PROJ-123")                       |
+| `ciInfo`                    | string   | -                         | CI job information (e.g., Jenkins job URL)                                        |
+| `tags`                      | string[] | -                         | Tags to categorize the test run                                                   |
+| `customData`                | object   | -                         | Additional custom metadata as key-value pairs                                     |
+| `collectScmInfo`            | boolean  | `true`                    | Whether to automatically collect SCM info (git commit, branch, author)            |
+| `collectCiInfo`             | boolean  | `true`                    | Whether to automatically collect CI environment info                              |
+| `collectPerformanceMetrics` | boolean  | `true`                    | Whether to collect step timings, network requests and web vitals from the fixture |
 
 ## Performance Metrics & Fixture
 

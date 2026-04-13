@@ -1,4 +1,29 @@
+import { h } from 'vue'
+import { UIcon } from '#components'
+import type { Column } from '@tanstack/vue-table'
 import { formatDuration as formatDurationLib } from 'date-fns'
+
+/**
+ * Creates a sortable column header render function.
+ * Use as: { header: createSortHeader('My Column'), ... }
+ */
+export function createSortHeader<T = unknown>(label: string) {
+  return ({ column }: { column: Column<T, unknown> }) => {
+    const sorted = column.getIsSorted()
+    const iconName = sorted === 'asc'
+      ? 'i-lucide-chevron-up'
+      : sorted === 'desc'
+        ? 'i-lucide-chevron-down'
+        : 'i-lucide-chevrons-up-down'
+    return h('button', {
+      class: 'flex items-center gap-1 font-semibold select-none cursor-pointer hover:text-highlighted transition-colors',
+      onClick: () => column.toggleSorting()
+    }, [
+      label,
+      h(UIcon, { name: iconName, class: ['shrink-0 size-3.5', !sorted && 'opacity-40'] })
+    ])
+  }
+}
 
 export function formatBytes(bytes?: number | null): string {
   if (!bytes || bytes === 0) return '0 B'
