@@ -1,6 +1,6 @@
 import { getDatabase } from '../../../database'
 import { projects, testRuns } from '../../../database/schema'
-import { eq, asc } from 'drizzle-orm'
+import { eq, desc } from 'drizzle-orm'
 
 export default eventHandler(async (event) => {
   const id = parseInt(getRouterParam(event, 'id') || '0')
@@ -28,7 +28,7 @@ export default eventHandler(async (event) => {
     })
   }
 
-  // Get recent test runs with performance data, ordered by startTime ASC for chart
+  // Fetch the most recent N runs (desc), then reverse in-memory so chart plots in chronological order
   const runs = await db.select({
     id: testRuns.id,
     startTime: testRuns.startTime,
@@ -41,8 +41,11 @@ export default eventHandler(async (event) => {
   })
     .from(testRuns)
     .where(eq(testRuns.projectId, id))
-    .orderBy(asc(testRuns.startTime))
+    .orderBy(desc(testRuns.startTime))
     .limit(limit)
+
+  // Reverse so oldest → newest for the trend chart
+  runs.reverse()
 
   // Extract SCM info from metadata for each run
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

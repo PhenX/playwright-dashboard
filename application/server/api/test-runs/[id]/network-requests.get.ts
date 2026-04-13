@@ -25,9 +25,10 @@ interface EndpointSummary {
 
 /**
  * Normalise a URL to a route pattern by:
- * 1. Stripping the query string
+ * 1. Stripping the query string and fragment
  * 2. Replacing numeric path segments with :id
  * 3. Replacing UUID path segments with :uuid
+ * 4. Returning only the pathname (to avoid splitting identical endpoints across hosts/environments)
  */
 function normalizeRoute(url: string): string {
   try {
@@ -40,9 +41,8 @@ function normalizeRoute(url: string): string {
     )
     // Replace pure numeric segments
     pathname = pathname.replace(/\/\d+(?=\/|$)/g, '/:id')
-    // Include hostname only for external requests (different host)
-    const baseUrl = `${parsed.protocol}//${parsed.host}`
-    return `${baseUrl}${pathname}`
+    // Return only the pathname — avoids splitting identical routes across environments/hosts
+    return pathname
   } catch {
     return url
   }

@@ -9,9 +9,10 @@ const runId = route.params.id
 
 const { data: testRun, refresh } = await useFetch<TestRunDetails>(`/api/test-runs/${runId}`)
 
-// Load network requests data lazily
+// Load network requests data lazily (not during SSR) to avoid blocking page load
 const { data: networkEndpoints, pending: loadingEndpoints } = await useFetch<EndpointSummary[]>(
-  `/api/test-runs/${runId}/network-requests`
+  `/api/test-runs/${runId}/network-requests`,
+  { lazy: true, server: false }
 )
 
 const UBadge = resolveComponent('UBadge')

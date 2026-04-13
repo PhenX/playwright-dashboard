@@ -9,6 +9,7 @@ import { uploadDirectory } from '../../utils/storage-helpers'
 import { mkdirSync, existsSync } from 'fs'
 import { tmpdir } from 'os'
 import { rm } from 'fs/promises'
+import { sanitizeNetworkRequests, sanitizeWebVitals } from '../../utils/sanitize'
 
 export default eventHandler(async (event) => {
   // Require reporter or administrator role for uploading test results
@@ -266,17 +267,22 @@ export default eventHandler(async (event) => {
         steps: (testCase.steps as Array<{ title: string, duration: number, category: string }> | null | undefined) || null,
         slowestStep: (testCase.slowestStep as string | null | undefined) || null,
         slowestStepDuration: (testCase.slowestStepDuration as number | null | undefined) || null,
-        networkRequests: (testCase.networkRequests as Array<{ method: string, url: string, status: number, duration: number, resourceType: string }> | null | undefined) || null,
-        webVitals: (testCase.webVitals as Record<string, unknown> | null | undefined) || null
+        networkRequests: sanitizeNetworkRequests(testCase.networkRequests as Array<Record<string, unknown>> | null | undefined) || null,
+        webVitals: sanitizeWebVitals(testCase.webVitals as Record<string, unknown> | null | undefined) || null
       })
     }
   }
 
-  // Compute and store performance summary (avgTestDuration, p90TestDuration)
+  // Compute and store performance summary (avgTestDuration, p90TestDuration) + flaky count
   if (testCasesData && testCasesData.length > 0) {
     const durations = testCasesData
       .filter((tc: Record<string, unknown>) => tc.duration !== null && tc.duration !== undefined)
       .map((tc: Record<string, unknown>) => tc.duration as number)
+
+    // Flaky count is independent of whether duration data is present
+    const flakyTestCount = testCasesData.filter((tc: Record<string, unknown>) =>
+      tc.status === 'passed' && ((tc.retries as number) || 0) > 0
+    ).length
 
     if (durations.length > 0) {
       const sum = durations.reduce((a: number, b: number) => a + b, 0)
@@ -285,13 +291,13 @@ export default eventHandler(async (event) => {
       const p90Index = Math.max(0, Math.ceil((90 / 100) * sortedDurations.length) - 1)
       const p90TestDuration = sortedDurations[p90Index]
 
-      // Also update flaky test count
-      const flakyTestCount = testCasesData.filter((tc: Record<string, unknown>) =>
-        tc.status === 'passed' && ((tc.retries as number) || 0) > 0
-      ).length
-
       await db.update(testRuns)
         .set({ avgTestDuration, p90TestDuration, flakyTests: flakyTestCount })
+        .where(eq(testRuns.id, testRun.id))
+    } else if (flakyTestCount > 0) {
+      // No duration data, but still persist flaky count
+      await db.update(testRuns)
+        .set({ flakyTests: flakyTestCount })
         .where(eq(testRuns.id, testRun.id))
     }
   }

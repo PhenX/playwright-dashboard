@@ -2,6 +2,7 @@ import { getDatabase } from '../../database'
 import { projects, testRuns, testCases, testRunsCases } from '../../database/schema'
 import { eq, and } from 'drizzle-orm'
 import { requireAuth } from '../../utils/auth'
+import { sanitizeNetworkRequests, sanitizeWebVitals } from '../../utils/sanitize'
 
 export default eventHandler(async (event) => {
   // Require reporter or administrator role for submitting test results
@@ -135,8 +136,8 @@ export default eventHandler(async (event) => {
         steps: testCase.steps || null,
         slowestStep: testCase.slowestStep || null,
         slowestStepDuration: testCase.slowestStepDuration || null,
-        networkRequests: testCase.networkRequests || null,
-        webVitals: testCase.webVitals || null
+        networkRequests: sanitizeNetworkRequests(testCase.networkRequests) || null,
+        webVitals: sanitizeWebVitals(testCase.webVitals) || null
       })
     }
   }
