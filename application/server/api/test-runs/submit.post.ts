@@ -2,6 +2,7 @@ import { getDatabase } from '../../database'
 import { projects, testRuns, testCases, testRunsCases } from '../../database/schema'
 import { eq, and } from 'drizzle-orm'
 import { requireAuth } from '../../utils/auth'
+import { sanitizeNetworkRequests, sanitizeWebVitals } from '../../utils/sanitize'
 
 export default eventHandler(async (event) => {
   // Require reporter or administrator role for submitting test results
@@ -131,7 +132,12 @@ export default eventHandler(async (event) => {
         error: testCase.error || null,
         retries: testCase.retries || 0,
         line: line,
-        column: column
+        column: column,
+        steps: testCase.steps || null,
+        slowestStep: testCase.slowestStep || null,
+        slowestStepDuration: testCase.slowestStepDuration || null,
+        networkRequests: sanitizeNetworkRequests(testCase.networkRequests) || null,
+        webVitals: sanitizeWebVitals(testCase.webVitals) || null
       })
     }
   }
@@ -141,6 +147,25 @@ export default eventHandler(async (event) => {
     await db.update(testRuns)
       .set({ flakyTests: flakyTestCount })
       .where(eq(testRuns.id, testRun.id))
+  }
+
+  // Compute and store performance summary (avgTestDuration, p90TestDuration)
+  if (body.testCases && Array.isArray(body.testCases) && body.testCases.length > 0) {
+    const durations = body.testCases
+      .filter((tc: { duration?: number }) => tc.duration !== null && tc.duration !== undefined)
+      .map((tc: { duration: number }) => tc.duration)
+
+    if (durations.length > 0) {
+      const sum = durations.reduce((a: number, b: number) => a + b, 0)
+      const avgTestDuration = Math.round(sum / durations.length)
+      const sortedDurations = [...durations].sort((a: number, b: number) => a - b)
+      const p90Index = Math.max(0, Math.ceil((90 / 100) * sortedDurations.length) - 1)
+      const p90TestDuration = sortedDurations[p90Index]
+
+      await db.update(testRuns)
+        .set({ avgTestDuration, p90TestDuration })
+        .where(eq(testRuns.id, testRun.id))
+    }
   }
 
   return {

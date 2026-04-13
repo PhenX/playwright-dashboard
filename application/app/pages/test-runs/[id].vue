@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import type { TestRunDetails, TestCaseResult } from '~~/types/api'
+import type { TestRunDetails, TestCaseResult, EndpointSummary } from '~~/types/api'
 import { formatBytes, getFileApiPath } from '~/utils'
 
 const route = useRoute()
@@ -9,12 +9,18 @@ const runId = route.params.id
 
 const { data: testRun, refresh } = await useFetch<TestRunDetails>(`/api/test-runs/${runId}`)
 
+// Load network requests data lazily (not during SSR) to avoid blocking page load
+const { data: networkEndpoints, pending: loadingEndpoints } = await useFetch<EndpointSummary[]>(
+  `/api/test-runs/${runId}/network-requests`,
+  { lazy: true, server: false }
+)
+
 const UBadge = resolveComponent('UBadge')
 
 const testCasesColumns: TableColumn<TestCaseResult>[] = [
   {
     accessorKey: 'title',
-    header: 'Test Case',
+    header: createSortHeader<TestCaseResult>('Test Case'),
     cell: ({ row }) => {
       return h('a', {
         href: `/test-cases/${row.original.id}`,
@@ -28,7 +34,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
   },
   {
     accessorKey: 'status',
-    header: 'Status',
+    header: createSortHeader<TestCaseResult>('Status'),
     cell: ({ row }) => {
       const color = getStatusColor(row.getValue('status') as string)
       return h(UBadge, { color, class: 'capitalize' }, () => row.getValue('status'))
@@ -36,7 +42,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
   },
   {
     accessorKey: 'location',
-    header: 'Location',
+    header: createSortHeader<TestCaseResult>('Location'),
     cell: ({ row }) => {
       const location = row.getValue('location') as string | undefined
       return location ? h('code', { class: 'text-xs' }, location) : ''
@@ -44,12 +50,25 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
   },
   {
     accessorKey: 'duration',
-    header: 'Duration',
+    header: createSortHeader<TestCaseResult>('Duration'),
     cell: ({ row }) => formatDuration(row.getValue('duration'))
   },
   {
+    accessorKey: 'slowestStep',
+    header: createSortHeader<TestCaseResult>('Slowest Step'),
+    cell: ({ row }) => {
+      const step = row.getValue('slowestStep') as string | null
+      const stepDuration = row.original.slowestStepDuration
+      if (!step) return ''
+      return h('div', { class: 'text-xs' }, [
+        h('span', { class: 'text-gray-600 dark:text-gray-400' }, step),
+        stepDuration ? h('span', { class: 'ml-1 text-orange-600 font-medium' }, `(${formatDuration(stepDuration)})`) : null
+      ].filter(Boolean))
+    }
+  },
+  {
     accessorKey: 'retries',
-    header: 'Retries',
+    header: createSortHeader<TestCaseResult>('Retries'),
     cell: ({ row }) => {
       const retries = row.getValue('retries') as number | undefined
       return retries && retries > 0 ? retries.toString() : ''
@@ -67,6 +86,60 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
           variant: 'outline'
         }, () => 'View Details')
       )
+    }
+  }
+]
+
+const endpointColumns: TableColumn<EndpointSummary>[] = [
+  {
+    accessorKey: 'method',
+    header: createSortHeader<EndpointSummary>('Method'),
+    cell: ({ row }) => {
+      const method = row.getValue('method') as string
+      const color = method === 'GET' ? 'sky' : method === 'POST' ? 'green' : method === 'PUT' || method === 'PATCH' ? 'amber' : method === 'DELETE' ? 'red' : 'gray'
+      return h(UBadge, { color, variant: 'soft', class: 'font-mono text-xs' }, () => method)
+    }
+  },
+  {
+    accessorKey: 'route',
+    header: createSortHeader<EndpointSummary>('Route'),
+    cell: ({ row }) => h('code', { class: 'text-xs font-mono break-all' }, row.getValue('route'))
+  },
+  {
+    accessorKey: 'count',
+    header: createSortHeader<EndpointSummary>('Calls'),
+    cell: ({ row }) => row.getValue('count')
+  },
+  {
+    accessorKey: 'avgDuration',
+    header: createSortHeader<EndpointSummary>('Avg'),
+    cell: ({ row }) => {
+      const val = row.getValue('avgDuration') as number
+      const color = val > 1000 ? 'text-red-600 font-medium' : val > 500 ? 'text-orange-500 font-medium' : ''
+      return h('span', { class: color }, formatDuration(val))
+    }
+  },
+  {
+    accessorKey: 'p90Duration',
+    header: createSortHeader<EndpointSummary>('P90'),
+    cell: ({ row }) => {
+      const val = row.getValue('p90Duration') as number
+      const color = val > 2000 ? 'text-red-600 font-medium' : val > 1000 ? 'text-orange-500' : ''
+      return h('span', { class: color }, formatDuration(val))
+    }
+  },
+  {
+    accessorKey: 'maxDuration',
+    header: createSortHeader<EndpointSummary>('Max'),
+    cell: ({ row }) => formatDuration(row.getValue('maxDuration'))
+  },
+  {
+    accessorKey: 'errorRate',
+    header: createSortHeader<EndpointSummary>('Errors'),
+    cell: ({ row }) => {
+      const rate = row.getValue('errorRate') as number
+      if (rate === 0) return h('span', { class: 'text-gray-400' }, '0%')
+      return h('span', { class: 'text-red-600 font-medium' }, `${rate}%`)
     }
   }
 ]
@@ -161,6 +234,22 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
                 </p>
                 <p class="font-medium">
                   {{ formatDuration(testRun?.duration) }}
+                </p>
+              </div>
+              <div v-if="testRun?.avgTestDuration">
+                <p class="text-sm text-gray-500">
+                  Avg Test Duration
+                </p>
+                <p class="font-medium">
+                  {{ formatDuration(testRun.avgTestDuration) }}
+                </p>
+              </div>
+              <div v-if="testRun?.p90TestDuration">
+                <p class="text-sm text-gray-500">
+                  P90 Test Duration
+                </p>
+                <p class="font-medium text-orange-600">
+                  {{ formatDuration(testRun.p90TestDuration) }}
                 </p>
               </div>
               <div>
@@ -329,6 +418,48 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
 
           <div v-else class="text-center py-8 text-gray-500">
             No test cases recorded for this run.
+          </div>
+        </UCard>
+
+        <!-- Slow API Endpoints -->
+        <UCard>
+          <template #header>
+            <div class="flex items-center gap-2">
+              <UIcon name="i-lucide-network" class="w-5 h-5 text-primary" />
+              <div>
+                <h3 class="text-lg font-medium">
+                  Slow API Endpoints
+                </h3>
+                <p class="text-sm text-gray-500 mt-0.5">
+                  Network requests grouped by route and HTTP method — requires
+                  <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">playwright-dashboard-reporter/fixtures</code>
+                </p>
+              </div>
+            </div>
+          </template>
+
+          <div v-if="loadingEndpoints" class="text-center py-8 text-gray-500">
+            <UIcon name="i-lucide-loader-2" class="animate-spin mr-2" />
+            Loading…
+          </div>
+
+          <UTable
+            v-else-if="networkEndpoints && networkEndpoints.length > 0"
+            :data="networkEndpoints"
+            :columns="endpointColumns"
+            :ui="{
+              base: 'table-fixed border-separate border-spacing-0',
+              thead: '[&>tr]:bg-elevated/50 [&>tr]:after:content-none',
+              tbody: '[&>tr]:last:[&>td]:border-b-0',
+              th: 'first:rounded-l-lg last:rounded-r-lg border-y border-default first:border-l last:border-r',
+              td: 'border-b border-default'
+            }"
+          />
+
+          <div v-else class="text-center py-8 text-gray-500">
+            No network request data. Add the
+            <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">playwright-dashboard-reporter/fixtures</code>
+            to your Playwright config to start collecting endpoint timing.
           </div>
         </UCard>
       </div>

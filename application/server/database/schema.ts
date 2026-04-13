@@ -22,6 +22,8 @@ export const testRuns = sqliteTable('test_runs', {
   failedTests: integer('failed_tests').notNull().default(0),
   skippedTests: integer('skipped_tests').notNull().default(0),
   flakyTests: integer('flaky_tests').notNull().default(0),
+  avgTestDuration: integer('avg_test_duration'), // average test case duration in ms
+  p90TestDuration: integer('p90_test_duration'), // 90th percentile test duration in ms
   reportPath: text('report_path'),
   reportSize: integer('report_size'), // in bytes (decompressed size)
   metadata: text('metadata', { mode: 'json' }), // Additional metadata as JSON
@@ -54,6 +56,11 @@ export const testRunsCases = sqliteTable('test_runs_cases', {
   retries: integer('retries').default(0),
   line: integer('line'), // line number in file
   column: integer('column'), // column number in file
+  steps: text('steps', { mode: 'json' }), // Array of { title, duration, category } step objects
+  slowestStep: text('slowest_step'), // Title of the slowest step
+  slowestStepDuration: integer('slowest_step_duration'), // Duration of the slowest step in ms
+  networkRequests: text('network_requests', { mode: 'json' }), // Array of { method, url, status, duration, resourceType }
+  webVitals: text('web_vitals', { mode: 'json' }), // { navigation: {...}, paint: {...} }
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
 }, table => ({
   testRunIdIdx: index('idx_test_runs_cases_test_run_id').on(table.testRunId),

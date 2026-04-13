@@ -50,6 +50,8 @@ export interface ProjectWithStats {
     totalTests: number
     reportPath?: string | null
     reportSize?: number | null
+    avgTestDuration?: number | null
+    p90TestDuration?: number | null
   } | null
   totalRuns: number
   totalTestCases: number
@@ -98,6 +100,8 @@ export interface TestRunSummary {
   failedTests: number
   skippedTests: number
   flakyTests: number
+  avgTestDuration?: number | null
+  p90TestDuration?: number | null
   reportPath?: string | null
   reportSize?: number | null
   createdAt: Date
@@ -117,6 +121,8 @@ export interface TestRunDetails {
   failedTests: number
   skippedTests: number
   flakyTests: number
+  avgTestDuration?: number | null
+  p90TestDuration?: number | null
   reportPath?: string | null
   reportSize?: number | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -142,6 +148,69 @@ export interface TestRunForChart {
   skippedTests: number
   flakyTests: number
   totalTests: number
+  duration?: number | null
+  avgTestDuration?: number | null
+  p90TestDuration?: number | null
+}
+
+// ============================================================================
+// Performance types
+// ============================================================================
+
+/**
+ * A single step recorded during test execution
+ */
+export interface PerformanceStep {
+  title: string
+  duration: number
+  category: string
+}
+
+/**
+ * A single network request recorded during test execution (via dashboard fixture)
+ */
+export interface NetworkRequest {
+  method: string
+  url: string
+  status: number
+  duration: number
+  resourceType: string
+  startTime?: number
+}
+
+/**
+ * Browser performance / web vitals recorded via dashboard fixture
+ */
+export interface WebVitals {
+  navigation?: {
+    url: string
+    ttfb: number
+    domInteractive: number
+    domContentLoaded: number
+    loadComplete: number
+    transferSize?: number
+    encodedBodySize?: number
+    decodedBodySize?: number
+  } | null
+  paint?: {
+    firstPaint?: number
+    firstContentfulPaint?: number
+  } | null
+}
+
+/**
+ * Grouped endpoint summary returned by GET /api/test-runs/[id]/network-requests
+ */
+export interface EndpointSummary {
+  method: string
+  route: string
+  count: number
+  avgDuration: number
+  maxDuration: number
+  minDuration: number
+  p90Duration: number
+  errorRate: number
+  testCases: string[]
 }
 
 // ============================================================================
@@ -159,6 +228,11 @@ export interface TestCaseResult {
   location?: string
   error?: string | null
   retries?: number | null
+  steps?: PerformanceStep[] | null
+  slowestStep?: string | null
+  slowestStepDuration?: number | null
+  networkRequests?: NetworkRequest[] | null
+  webVitals?: WebVitals | null
 }
 
 /**
@@ -250,5 +324,44 @@ export interface TestRunSubmitBody {
     retries?: number
     line?: number
     column?: number
+    steps?: PerformanceStep[]
+    slowestStep?: string
+    slowestStepDuration?: number
+    networkRequests?: NetworkRequest[]
+    webVitals?: WebVitals
   }>
+}
+
+// ============================================================================
+// Performance API response types
+// ============================================================================
+
+/**
+ * Performance trend data point - returned by GET /api/projects/[id]/performance
+ */
+export interface PerformanceTrendPoint {
+  id: number
+  startTime: string | Date
+  duration?: number | null
+  avgTestDuration?: number | null
+  p90TestDuration?: number | null
+  status: string
+  totalTests: number
+  commit?: string | null
+  branch?: string | null
+}
+
+/**
+ * Slow test entry - returned by GET /api/projects/[id]/slow-tests
+ */
+export interface SlowTest {
+  id: number
+  title: string
+  filePath: string
+  avgDuration: number
+  maxDuration: number
+  minDuration: number
+  runCount: number
+  trend: 'faster' | 'slower' | 'stable'
+  latestDuration: number
 }

@@ -47,19 +47,58 @@ export default defineConfig({
 
 ## Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `serverUrl` | string | `'http://localhost:3000'` | URL of the Playwright Dashboard server |
-| `projectName` | string | `'default-project'` | Name of the project to report results under |
-| `uploadTraces` | boolean | `true` | Whether to upload trace files to the dashboard |
-| `uploadReport` | boolean | `true` | Whether to upload the HTML report to the dashboard |
-| `projectDescription` | string | - | Description of the project |
-| `relatedIssue` | string | - | Related issue reference (e.g., JIRA ticket like "PROJ-123") |
-| `ciInfo` | string | - | CI job information (e.g., Jenkins job URL) |
-| `tags` | string[] | - | Tags to categorize the test run |
-| `customData` | object | - | Additional custom metadata as key-value pairs |
-| `collectScmInfo` | boolean | `true` | Whether to automatically collect SCM info (git commit, branch, author) |
-| `collectCiInfo` | boolean | `true` | Whether to automatically collect CI environment info |
+| Option                      | Type     | Default                   | Description                                                                       |
+|-----------------------------|----------|---------------------------|-----------------------------------------------------------------------------------|
+| `serverUrl`                 | string   | `'http://localhost:3000'` | URL of the Playwright Dashboard server                                            |
+| `projectName`               | string   | `'default-project'`       | Name of the project to report results under                                       |
+| `uploadTraces`              | boolean  | `true`                    | Whether to upload trace files to the dashboard                                    |
+| `uploadReport`              | boolean  | `true`                    | Whether to upload the HTML report to the dashboard                                |
+| `projectDescription`        | string   | -                         | Description of the project                                                        |
+| `relatedIssue`              | string   | -                         | Related issue reference (e.g., JIRA ticket like "PROJ-123")                       |
+| `ciInfo`                    | string   | -                         | CI job information (e.g., Jenkins job URL)                                        |
+| `tags`                      | string[] | -                         | Tags to categorize the test run                                                   |
+| `customData`                | object   | -                         | Additional custom metadata as key-value pairs                                     |
+| `collectScmInfo`            | boolean  | `true`                    | Whether to automatically collect SCM info (git commit, branch, author)            |
+| `collectCiInfo`             | boolean  | `true`                    | Whether to automatically collect CI environment info                              |
+| `collectPerformanceMetrics` | boolean  | `true`                    | Whether to collect step timings, network requests and web vitals from the fixture |
+
+## Performance Metrics & Fixture
+
+### Network Requests and Web Vitals
+
+To automatically capture network request timing and browser Web Vitals, use the `dashboardFixtures` in your test setup:
+
+**Option A – extend your existing fixtures:**
+
+```typescript
+// fixtures.ts
+import { test as base, expect } from '@playwright/test';
+import { dashboardFixtures } from 'playwright-dashboard-reporter/fixtures';
+
+export const test = base.extend(dashboardFixtures);
+export { expect };
+```
+
+Then import `test` from your fixture file in every test:
+
+```typescript
+import { test, expect } from './fixtures';
+```
+
+**Option B – drop-in replacement for `@playwright/test`:**
+
+```typescript
+import { test, expect } from 'playwright-dashboard-reporter/fixtures';
+```
+
+### What gets captured
+
+With the fixture active, per-test attachments are automatically added for the reporter to pick up:
+
+- **`playwright-dashboard-network`** – Array of `{ method, url, status, duration, startTime, resourceType }` for every finished request. The dashboard aggregates these into a *Slow API Endpoints* table, grouping by `METHOD + normalised route` (numeric IDs → `:id`, UUIDs → `:uuid`).
+- **`playwright-dashboard-web-vitals`** – Browser performance metrics from the last navigated page: TTFB, DOM Interactive, DOMContentLoaded, Load Complete (from `PerformanceNavigationTiming`), plus First Paint and First Contentful Paint (from `PerformancePaintTiming`).
+
+Both are only collected when `collectPerformanceMetrics` is `true` (the default).
 
 ## Automatic Metadata Collection
 
@@ -111,6 +150,40 @@ export default defineConfig({
 });
 ```
 
+### With Performance Metrics Fixture
+```typescript
+// playwright.config.ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: [
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'http://localhost:3000',
+      projectName: 'my-test-project'
+    }]
+  ],
+  use: {
+    trace: 'retain-on-failure',
+  },
+});
+
+// tests/fixtures.ts  ← create this file
+import { test as base, expect } from '@playwright/test';
+import { dashboardFixtures } from 'playwright-dashboard-reporter/fixtures';
+
+export const test = base.extend(dashboardFixtures);
+export { expect };
+
+// tests/home.spec.ts  ← use the fixture file
+import { test, expect } from './fixtures';
+
+test('homepage loads', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading')).toBeVisible();
+  // network requests & web vitals are captured automatically
+});
+```
+
 ### With Custom Metadata
 ```typescript
 export default defineConfig({
@@ -138,8 +211,9 @@ export default defineConfig({
     ['playwright-dashboard-reporter', {
       serverUrl: 'http://localhost:3000',
       projectName: 'my-test-project',
-      collectScmInfo: false, // Don't collect git info
-      collectCiInfo: false   // Don't collect CI info
+      collectScmInfo: false,              // Don't collect git info
+      collectCiInfo: false,               // Don't collect CI info
+      collectPerformanceMetrics: false    // Don't collect step/network/vitals data
     }]
   ],
 });
@@ -150,6 +224,9 @@ export default defineConfig({
 - **Automatic Upload**: Automatically uploads test results after test run completion
 - **Complete HTML Reports**: Compresses and uploads entire HTML report directory with all assets (CSS, JS, images, fonts) using gzip compression
 - **Trace Files**: Uploads trace files from test attachments (configure with `trace: 'on'` or `trace: 'retain-on-failure'` in Playwright config)
+- **Performance Metrics**: Collects step-level timing, avg/P90 durations, and top slowest tests
+- **Network Analysis**: Captures and groups network requests by route for finding slow API endpoints
+- **Browser Web Vitals**: Captures TTFB, FCP, DOMContentLoaded and more via the Performance API
 - **Fallback**: Falls back to JSON-only upload if file upload fails
 - **Status Tracking**: Tracks passed, failed, skipped, and timed-out tests
 - **Project Management**: Automatically creates projects if they don't exist
@@ -160,8 +237,9 @@ export default defineConfig({
 2. After all tests complete, it uploads results to the dashboard
 3. If `uploadReport` is enabled, it compresses the entire `playwright-report` directory using gzip and uploads it
 4. If `uploadTraces` is enabled, it finds and uploads all trace files
-5. The server decompresses the report and makes it available for viewing
-6. Results are visible in the Playwright Dashboard web interface with fully functional HTML reports
+5. If the `dashboardFixtures` are used, network request and web vitals attachments are included per test case
+6. The server decompresses the report and makes it available for viewing
+7. Results are visible in the Playwright Dashboard web interface with fully functional HTML reports
 
 ## Example Output
 
@@ -181,7 +259,7 @@ export default defineConfig({
 
 ## Requirements
 
-- Node.js 14 or higher
+- Node.js 18 or higher
 - Playwright Test 1.40 or higher
 - Running Playwright Dashboard server
 
@@ -193,6 +271,13 @@ Make sure:
 1. HTML report is generated (add `html` reporter to your config)
 2. Traces are enabled in your Playwright config
 3. The dashboard server is running and accessible
+
+### Network/Web Vitals not appearing
+
+Make sure:
+1. You are importing `test` from `playwright-dashboard-reporter/fixtures` (or extending with `dashboardFixtures`)
+2. The `collectPerformanceMetrics` option is not set to `false`
+3. Your tests navigate to at least one page (`await page.goto(...)`)
 
 ### Connection errors
 

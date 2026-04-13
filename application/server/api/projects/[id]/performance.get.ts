@@ -1,0 +1,70 @@
+import { getDatabase } from '../../../database'
+import { projects, testRuns } from '../../../database/schema'
+import { eq, desc } from 'drizzle-orm'
+
+export default eventHandler(async (event) => {
+  const id = parseInt(getRouterParam(event, 'id') || '0')
+
+  if (!id) {
+    throw createError({
+      statusCode: 400,
+      message: 'Invalid project ID'
+    })
+  }
+
+  const query = getQuery(event)
+  const limit = Math.min(parseInt(query.limit as string) || 50, 200)
+
+  const db = await getDatabase()
+
+  // Verify project exists
+  const projectResults = await db.select().from(projects).where(eq(projects.id, id))
+  const project = projectResults[0]
+
+  if (!project) {
+    throw createError({
+      statusCode: 404,
+      message: 'Project not found'
+    })
+  }
+
+  // Fetch the most recent N runs (desc), then reverse in-memory so chart plots in chronological order
+  const runs = await db.select({
+    id: testRuns.id,
+    startTime: testRuns.startTime,
+    duration: testRuns.duration,
+    avgTestDuration: testRuns.avgTestDuration,
+    p90TestDuration: testRuns.p90TestDuration,
+    status: testRuns.status,
+    totalTests: testRuns.totalTests,
+    metadata: testRuns.metadata
+  })
+    .from(testRuns)
+    .where(eq(testRuns.projectId, id))
+    .orderBy(desc(testRuns.startTime))
+    .limit(limit)
+
+  // Reverse so oldest → newest for the trend chart
+  runs.reverse()
+
+  // Extract SCM info from metadata for each run
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const trendData = runs.map((run: any) => {
+    const metadata = run.metadata as Record<string, unknown> | null
+    const scm = metadata?.scm as Record<string, unknown> | undefined
+
+    return {
+      id: run.id,
+      startTime: run.startTime,
+      duration: run.duration,
+      avgTestDuration: run.avgTestDuration,
+      p90TestDuration: run.p90TestDuration,
+      status: run.status,
+      totalTests: run.totalTests,
+      commit: scm?.commit as string | null || null,
+      branch: scm?.branch as string | null || null
+    }
+  })
+
+  return trendData
+})

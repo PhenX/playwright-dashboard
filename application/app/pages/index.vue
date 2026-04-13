@@ -10,13 +10,29 @@ const stats = computed(() => {
   const passedRuns = projects.value?.filter(p => p.latestRun?.status === 'passed').length || 0
   const totalFlakyTests = projects.value?.reduce((sum, p) => sum + (p.latestRun?.flakyTests || 0), 0) || 0
 
-  return [
+  // Find slowest project by avg test duration in latest run
+  const projectsWithPerf = projects.value?.filter(p => p.latestRun?.avgTestDuration) || []
+  const slowestProject = projectsWithPerf.sort((a, b) =>
+    (b.latestRun?.avgTestDuration || 0) - (a.latestRun?.avgTestDuration || 0)
+  )[0]
+
+  const statItems: { label: string, value: string | number, icon: string }[] = [
     { label: 'Total Projects', value: totalProjects, icon: 'i-lucide-folder' },
     { label: 'Total Test Runs', value: totalRuns, icon: 'i-lucide-play-circle' },
     { label: 'Active Projects', value: recentRuns, icon: 'i-lucide-activity' },
     { label: 'Passing Projects', value: passedRuns, icon: 'i-lucide-check-circle' },
     { label: 'Flaky Tests', value: totalFlakyTests, icon: 'i-lucide-alert-triangle' }
   ]
+
+  if (slowestProject) {
+    statItems.push({
+      label: 'Slowest Project',
+      value: slowestProject.label || slowestProject.name,
+      icon: 'i-lucide-gauge'
+    })
+  }
+
+  return statItems
 })
 
 const recentProjects = computed(() => {
@@ -60,7 +76,7 @@ const allTestRuns = computed(() => {
     <template #body>
       <div class="p-4 space-y-6">
         <!-- Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <UCard v-for="stat in stats" :key="stat.label">
             <div class="flex items-center gap-4">
               <div class="p-3 bg-primary/10 rounded-full">

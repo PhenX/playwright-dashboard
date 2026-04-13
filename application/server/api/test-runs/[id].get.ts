@@ -37,6 +37,11 @@ export default eventHandler(async (event) => {
     retries: testRunsCases.retries,
     line: testRunsCases.line,
     column: testRunsCases.column,
+    steps: testRunsCases.steps,
+    slowestStep: testRunsCases.slowestStep,
+    slowestStepDuration: testRunsCases.slowestStepDuration,
+    networkRequests: testRunsCases.networkRequests,
+    webVitals: testRunsCases.webVitals,
     title: testCases.title,
     filePath: testCases.filePath
   })
@@ -52,7 +57,12 @@ export default eventHandler(async (event) => {
     duration: tc.duration,
     location: tc.line && tc.column ? `${tc.filePath}:${tc.line}:${tc.column}` : tc.filePath,
     error: tc.error,
-    retries: tc.retries
+    retries: tc.retries,
+    steps: tc.steps,
+    slowestStep: tc.slowestStep,
+    slowestStepDuration: tc.slowestStepDuration,
+    networkRequests: tc.networkRequests,
+    webVitals: tc.webVitals
   }))
 
   return {

@@ -63,6 +63,14 @@ const projectItems = computed(() => {
           onSelect: () => {
             open.value = false
           }
+        },
+        {
+          label: 'Performance',
+          icon: 'i-lucide-gauge',
+          to: `/projects/${project.id}/performance`,
+          onSelect: () => {
+            open.value = false
+          }
         }
       ],
       onSelect: () => {

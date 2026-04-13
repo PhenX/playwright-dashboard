@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 test.describe('Dashboard UI Tests', () => {
   test.beforeEach(async ({ request }) => {

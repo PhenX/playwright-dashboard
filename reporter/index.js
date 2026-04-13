@@ -20,6 +20,7 @@ class PlaywrightDashboardReporter {
       uploadReport: options.uploadReport !== false, // default true
       collectScmInfo: options.collectScmInfo !== false, // default true
       collectCiInfo: options.collectCiInfo !== false, // default true
+      collectPerformanceMetrics: options.collectPerformanceMetrics !== false, // default true
       ...options
     };
 
@@ -44,6 +45,7 @@ class PlaywrightDashboardReporter {
      * @property {Object} [htmlReport] - Playwright HTML report metadata
      * @property {Object} [playwrightConfig] - Playwright configuration metadata
      * @property {Object} [playwrightProject] - Playwright project metadata
+     * @property {Object} [performance] - Performance summary metrics
      */
     this.metadata = {};
   }
@@ -72,6 +74,33 @@ class PlaywrightDashboardReporter {
       attachments: result.attachments || []
     };
 
+    // Collect performance metrics from steps if enabled
+    if (this.options.collectPerformanceMetrics && result.steps && result.steps.length > 0) {
+      testCase.performanceMetrics = this.collectStepMetrics(result.steps);
+    }
+
+    // Parse network requests from fixture attachment (reporter/fixtures.js)
+    if (this.options.collectPerformanceMetrics && result.attachments) {
+      const networkAttachment = result.attachments.find(a => a.name === 'playwright-dashboard-network');
+      if (networkAttachment && networkAttachment.body) {
+        try {
+          testCase.networkRequests = JSON.parse(networkAttachment.body.toString());
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
+      // Parse web vitals from fixture attachment
+      const webVitalsAttachment = result.attachments.find(a => a.name === 'playwright-dashboard-web-vitals');
+      if (webVitalsAttachment && webVitalsAttachment.body) {
+        try {
+          testCase.webVitals = JSON.parse(webVitalsAttachment.body.toString());
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    }
+
     // Track test status
     switch (result.status) {
       case 'passed':
@@ -89,6 +118,88 @@ class PlaywrightDashboardReporter {
     }
 
     this.testCases.push(testCase);
+  }
+
+  /**
+   * Categorize a step based on its title
+   * @param {string} title - The step title
+   * @returns {string} The category
+   */
+  categorizeStep(title) {
+    if (!title) return 'other';
+    const lower = title.toLowerCase();
+    if (lower.startsWith('page.goto') || lower.startsWith('page.reload') || lower.startsWith('page.goback') || lower.startsWith('page.goforward')) {
+      return 'navigation';
+    }
+    if (lower.startsWith('locator.click') || lower.startsWith('locator.dblclick') || lower.startsWith('locator.check') || lower.startsWith('locator.uncheck') || lower.startsWith('locator.selectoption') || lower.startsWith('locator.tap')) {
+      return 'action';
+    }
+    if (lower.startsWith('locator.fill') || lower.startsWith('locator.type') || lower.startsWith('locator.press') || lower.startsWith('locator.clear') || lower.startsWith('locator.setinputfiles')) {
+      return 'input';
+    }
+    if (lower.startsWith('expect') || lower.startsWith('locator.expect') || lower.startsWith('page.expect')) {
+      return 'assertion';
+    }
+    if (lower.startsWith('locator.waitfor') || lower.startsWith('page.waitfor') || lower.startsWith('page.waitforloadstate') || lower.startsWith('page.waitforurl')) {
+      return 'wait';
+    }
+    if (lower.startsWith('apirequestcontext') || lower.startsWith('apiresponse')) {
+      return 'api';
+    }
+    return 'other';
+  }
+
+  /**
+   * Flatten nested steps into a single array
+   * @param {Array} steps - Array of step objects (may contain nested steps)
+   * @returns {Array} Flattened array of { title, duration, category }
+   */
+  flattenSteps(steps) {
+    const result = [];
+    for (const step of steps) {
+      result.push({
+        title: step.title,
+        duration: step.duration,
+        category: this.categorizeStep(step.title)
+      });
+      if (step.steps && step.steps.length > 0) {
+        result.push(...this.flattenSteps(step.steps));
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Collect performance metrics from test steps
+   * @param {Array} steps - Playwright TestResult.steps array
+   * @returns {Object} Performance metrics
+   */
+  collectStepMetrics(steps) {
+    const flatSteps = this.flattenSteps(steps);
+
+    // Compute total duration from top-level steps only
+    const totalStepDuration = steps.reduce((sum, s) => sum + (s.duration || 0), 0);
+
+    // Find slowest step
+    let slowestStep = null;
+    for (const step of flatSteps) {
+      if (!slowestStep || step.duration > slowestStep.duration) {
+        slowestStep = { title: step.title, duration: step.duration };
+      }
+    }
+
+    // Navigation metrics
+    const navigationSteps = flatSteps.filter(s => s.category === 'navigation');
+    const navigationCount = navigationSteps.length;
+    const navigationTotalDuration = navigationSteps.reduce((sum, s) => sum + (s.duration || 0), 0);
+
+    return {
+      steps: flatSteps,
+      totalStepDuration,
+      slowestStep,
+      navigationCount,
+      navigationTotalDuration
+    };
   }
 
   collectMetadata(config, suite) {
@@ -306,6 +417,11 @@ class PlaywrightDashboardReporter {
     console.log(`[Playwright Dashboard] Test run completed. Status: ${overallStatus} (Playwright result.status: ${result?.status || 'undefined'})`);
     console.log(`[Playwright Dashboard] Total: ${this.totalTests}, Passed: ${this.passedTests}, Failed: ${this.failedTests}, Skipped: ${this.skippedTests}, TimedOut: ${this.timedOutTests}`);
 
+    // Compute performance summary if enabled
+    if (this.options.collectPerformanceMetrics) {
+      this.metadata.performance = this.computePerformanceSummary();
+    }
+
     // Try to upload with files if available
     if (this.options.uploadTraces || this.options.uploadReport) {
       try {
@@ -319,6 +435,71 @@ class PlaywrightDashboardReporter {
 
     // Fallback to JSON-only upload
     await this.uploadJSON(overallStatus, duration);
+  }
+
+  /**
+   * Compute percentile value from a sorted array
+   * @param {number[]} sortedArr - Sorted array of numbers
+   * @param {number} p - Percentile (0-100)
+   * @returns {number} The percentile value
+   */
+  percentile(sortedArr, p) {
+    if (sortedArr.length === 0) return 0;
+    const index = Math.ceil((p / 100) * sortedArr.length) - 1;
+    return sortedArr[Math.max(0, index)];
+  }
+
+  /**
+   * Compute run-level performance summary from all test cases
+   * @returns {Object} Performance summary
+   */
+  computePerformanceSummary() {
+    const durations = this.testCases
+      .filter(tc => tc.duration !== null && tc.duration !== undefined)
+      .map(tc => tc.duration);
+
+    if (durations.length === 0) {
+      return {};
+    }
+
+    const sortedDurations = [...durations].sort((a, b) => a - b);
+    const sum = durations.reduce((a, b) => a + b, 0);
+
+    const avgTestDuration = Math.round(sum / durations.length);
+    const p50TestDuration = this.percentile(sortedDurations, 50);
+    const p90TestDuration = this.percentile(sortedDurations, 90);
+    const p95TestDuration = this.percentile(sortedDurations, 95);
+
+    // Top 5 slowest tests
+    const slowestTests = [...this.testCases]
+      .filter(tc => tc.duration !== null && tc.duration !== undefined)
+      .sort((a, b) => b.duration - a.duration)
+      .slice(0, 5)
+      .map(tc => ({ title: tc.title, duration: tc.duration }));
+
+    // Aggregate navigation metrics
+    let totalNavigationDuration = 0;
+    let totalNavigationCount = 0;
+    for (const tc of this.testCases) {
+      if (tc.performanceMetrics) {
+        totalNavigationDuration += tc.performanceMetrics.navigationTotalDuration || 0;
+        totalNavigationCount += tc.performanceMetrics.navigationCount || 0;
+      }
+    }
+
+    const avgNavigationDuration = totalNavigationCount > 0
+      ? Math.round(totalNavigationDuration / totalNavigationCount)
+      : 0;
+
+    return {
+      avgTestDuration,
+      p50TestDuration,
+      p90TestDuration,
+      p95TestDuration,
+      slowestTests,
+      totalNavigationDuration,
+      avgNavigationDuration
+    };
   }
 
   async uploadJSON(overallStatus, duration) {
@@ -339,7 +520,12 @@ class PlaywrightDashboardReporter {
         status: tc.status,
         duration: tc.duration,
         error: tc.error,
-        retries: tc.retries
+        retries: tc.retries,
+        steps: tc.performanceMetrics?.steps || null,
+        slowestStep: tc.performanceMetrics?.slowestStep?.title || null,
+        slowestStepDuration: tc.performanceMetrics?.slowestStep?.duration || null,
+        networkRequests: tc.networkRequests || null,
+        webVitals: tc.webVitals || null
       }))
     };
 
@@ -426,7 +612,12 @@ class PlaywrightDashboardReporter {
         status: tc.status,
         duration: tc.duration,
         error: tc.error,
-        retries: tc.retries
+        retries: tc.retries,
+        steps: tc.performanceMetrics?.steps || null,
+        slowestStep: tc.performanceMetrics?.slowestStep?.title || null,
+        slowestStepDuration: tc.performanceMetrics?.slowestStep?.duration || null,
+        networkRequests: tc.networkRequests || null,
+        webVitals: tc.webVitals || null
       };
     });
     form.append('testCases', JSON.stringify(testCasesData));

@@ -19,10 +19,10 @@ const isAdmin = computed(() => {
 
 // Define columns with proper typing
 const columns: TableColumn<UserDetails>[] = [
-  { accessorKey: 'username', header: 'Username' },
-  { accessorKey: 'name', header: 'Name' },
-  { accessorKey: 'role', header: 'Role' },
-  { accessorKey: 'createdAt', header: 'Created' },
+  { accessorKey: 'username', header: createSortHeader<UserDetails>('Username') },
+  { accessorKey: 'name', header: createSortHeader<UserDetails>('Name') },
+  { accessorKey: 'role', header: createSortHeader<UserDetails>('Role') },
+  { accessorKey: 'createdAt', header: createSortHeader<UserDetails>('Created') },
   { accessorKey: 'actions', header: '' }
 ]
 
