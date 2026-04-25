@@ -15,32 +15,6 @@ const isAdmin = computed(() => {
   return authState.value.user?.role === 'administrator'
 })
 
-const TAG_COLORS = [
-  { label: 'Neutral', value: 'neutral' },
-  { label: 'Red', value: 'red' },
-  { label: 'Orange', value: 'orange' },
-  { label: 'Amber', value: 'amber' },
-  { label: 'Yellow', value: 'yellow' },
-  { label: 'Lime', value: 'lime' },
-  { label: 'Green', value: 'green' },
-  { label: 'Emerald', value: 'emerald' },
-  { label: 'Teal', value: 'teal' },
-  { label: 'Cyan', value: 'cyan' },
-  { label: 'Sky', value: 'sky' },
-  { label: 'Blue', value: 'blue' },
-  { label: 'Indigo', value: 'indigo' },
-  { label: 'Violet', value: 'violet' },
-  { label: 'Purple', value: 'purple' },
-  { label: 'Fuchsia', value: 'fuchsia' },
-  { label: 'Pink', value: 'pink' },
-  { label: 'Rose', value: 'rose' },
-  { label: 'Primary', value: 'primary' },
-  { label: 'Info', value: 'info' },
-  { label: 'Success', value: 'success' },
-  { label: 'Warning', value: 'warning' },
-  { label: 'Error', value: 'error' }
-]
-
 const columns: TableColumn<TagInfo>[] = [
   { accessorKey: 'text', header: 'Tag' },
   { accessorKey: 'color', header: 'Color' },
@@ -58,7 +32,7 @@ type AddTagSchema = z.output<typeof addTagSchema>
 
 const newTag = reactive<Partial<AddTagSchema>>({
   text: '',
-  color: 'neutral'
+  color: '#6366f1'
 })
 
 // Edit tag modal
@@ -66,7 +40,7 @@ const isEditTagModalOpen = ref(false)
 const editingTag = ref<TagInfo | null>(null)
 const editTagState = reactive<Partial<AddTagSchema>>({
   text: '',
-  color: 'neutral'
+  color: '#6366f1'
 })
 
 function openEditTag(tag: TagInfo) {
@@ -91,7 +65,7 @@ async function handleAddTag() {
 
     isAddTagModalOpen.value = false
     newTag.text = ''
-    newTag.color = 'neutral'
+    newTag.color = '#6366f1'
 
     await refresh()
   } catch (error: unknown) {
@@ -194,15 +168,17 @@ async function handleDeleteTag(tag: TagInfo) {
           :columns="columns"
         >
           <template #text-cell="{ row }">
-            <UBadge :color="(row.original.color as any)" variant="subtle">
-              {{ row.original.text }}
-            </UBadge>
+            <TagBadge :text="row.original.text" :color="row.original.color" />
           </template>
 
           <template #color-cell="{ row }">
-            <UBadge :color="(row.original.color as any)" variant="solid" class="capitalize">
-              {{ row.original.color }}
-            </UBadge>
+            <div class="flex items-center gap-2">
+              <span
+                class="inline-block w-4 h-4 rounded-full border border-black/10"
+                :style="{ backgroundColor: row.original.color }"
+              />
+              <span class="text-sm font-mono text-muted">{{ row.original.color }}</span>
+            </div>
           </template>
 
           <template #createdAt-cell="{ row }">
@@ -277,14 +253,20 @@ async function handleDeleteTag(tag: TagInfo) {
             required
             class="mb-4"
           >
-            <USelect v-model="newTag.color" :items="TAG_COLORS" />
+            <div class="flex items-center gap-3">
+              <input
+                v-model="newTag.color"
+                type="color"
+                class="w-10 h-10 rounded cursor-pointer border border-default"
+                aria-label="Pick tag color"
+              >
+              <UInput v-model="newTag.color" class="flex-1 font-mono" placeholder="#6366f1" />
+            </div>
           </UFormField>
 
           <div v-if="newTag.text" class="mt-2">
             <span class="text-sm text-muted mr-2">Preview:</span>
-            <UBadge :color="(newTag.color as any)" variant="subtle">
-              {{ newTag.text }}
-            </UBadge>
+            <TagBadge :text="newTag.text" :color="newTag.color || '#6366f1'" />
           </div>
         </UForm>
       </template>
@@ -325,14 +307,20 @@ async function handleDeleteTag(tag: TagInfo) {
             required
             class="mb-4"
           >
-            <USelect v-model="editTagState.color" :items="TAG_COLORS" />
+            <div class="flex items-center gap-3">
+              <input
+                v-model="editTagState.color"
+                type="color"
+                class="w-10 h-10 rounded cursor-pointer border border-default"
+                aria-label="Pick tag color"
+              >
+              <UInput v-model="editTagState.color" class="flex-1 font-mono" placeholder="#6366f1" />
+            </div>
           </UFormField>
 
           <div v-if="editTagState.text" class="mt-2">
             <span class="text-sm text-muted mr-2">Preview:</span>
-            <UBadge :color="(editTagState.color as any)" variant="subtle">
-              {{ editTagState.text }}
-            </UBadge>
+            <TagBadge :text="editTagState.text" :color="editTagState.color || '#6366f1'" />
           </div>
         </UForm>
       </template>
@@ -355,3 +343,4 @@ async function handleDeleteTag(tag: TagInfo) {
     </UModal>
   </ClientOnly>
 </template>
+

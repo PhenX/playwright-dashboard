@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { ProjectDetails, TagsResponse } from '~~/types/api'
+import type { ProjectDetails, TagsResponse, TagInfo } from '~~/types/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -8,19 +8,74 @@ const toast = useToast()
 const projectId = route.params.id
 
 const { data: project } = await useFetch<ProjectDetails>(`/api/projects/${projectId}`)
-const { data: tagsData } = await useFetch<TagsResponse>('/api/tags')
+const { data: tagsData, refresh: refreshTags } = await useFetch<TagsResponse>('/api/tags')
 
 const allTags = computed(() => tagsData.value?.tags || [])
-
-const tagOptions = computed(() =>
-  allTags.value.map(t => ({ label: t.text, value: t.id, color: t.color }))
-)
 
 const state = ref({
   label: project.value?.label || '',
   description: project.value?.description || '',
-  tagIds: (project.value?.tags || []).map(t => t.id)
+  tagIds: (project.value?.tags || []).map((t: TagInfo) => t.id)
 })
+
+// Inline new tag creation
+const newTagText = ref('')
+const creatingTag = ref(false)
+
+function randomHexColor(): string {
+  const hue = Math.floor(Math.random() * 360)
+  // Convert HSL to hex with decent saturation/lightness
+  const s = 65, l = 50
+  const c = (1 - Math.abs(2 * l / 100 - 1)) * s / 100
+  const x = c * (1 - Math.abs((hue / 60) % 2 - 1))
+  const m = l / 100 - c / 2
+  let r = 0, g = 0, b = 0
+  if (hue < 60) { r = c; g = x }
+  else if (hue < 120) { r = x; g = c }
+  else if (hue < 180) { g = c; b = x }
+  else if (hue < 240) { g = x; b = c }
+  else if (hue < 300) { r = x; b = c }
+  else { r = c; b = x }
+  const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+async function handleAddNewTag() {
+  const text = newTagText.value.trim()
+  if (!text) return
+
+  // If tag already exists, just toggle it
+  const existing = allTags.value.find(t => t.text.toLowerCase() === text.toLowerCase())
+  if (existing) {
+    if (!state.value.tagIds.includes(existing.id)) {
+      state.value.tagIds.push(existing.id)
+    }
+    newTagText.value = ''
+    return
+  }
+
+  try {
+    creatingTag.value = true
+    const result = await $fetch<{ tag: TagInfo }>('/api/tags', {
+      method: 'POST',
+      body: { text, color: randomHexColor() }
+    })
+    await refreshTags()
+    state.value.tagIds.push(result.tag.id)
+    newTagText.value = ''
+  } catch (error: unknown) {
+    const errorMessage = error && typeof error === 'object' && 'data' in error
+      ? (error.data as { message?: string })?.message
+      : undefined
+    toast.add({
+      title: 'Failed to create tag',
+      description: errorMessage || 'An error occurred',
+      color: 'error'
+    })
+  } finally {
+    creatingTag.value = false
+  }
+}
 
 const schema = z.object({
   label: z.string().optional(),
@@ -131,27 +186,50 @@ function toggleTag(tagId: number) {
               <UTextarea v-model="state.description" placeholder="Enter project description" :rows="3" />
             </UFormField>
 
-            <UFormField label="Tags" name="tagIds" description="Assign tags to this project for filtering">
-              <div v-if="allTags.length > 0" class="flex flex-wrap gap-2 mt-1">
-                <button
-                  v-for="tag in allTags"
-                  :key="tag.id"
-                  type="button"
-                  class="cursor-pointer focus:outline-none"
-                  @click="toggleTag(tag.id)"
-                >
-                  <UBadge
-                    :color="(tag.color as any)"
-                    :variant="isTagSelected(tag.id) ? 'solid' : 'outline'"
-                    class="transition-all"
+            <UFormField label="Tags" name="tagIds" description="Click a tag to toggle it on/off. Type a new name and press Enter to create a tag with a random color.">
+              <div class="space-y-2 mt-1">
+                <!-- Existing tags toggle -->
+                <div v-if="allTags.length > 0" class="flex flex-wrap gap-2">
+                  <button
+                    v-for="tag in allTags"
+                    :key="tag.id"
+                    type="button"
+                    class="cursor-pointer focus:outline-none"
+                    @click="toggleTag(tag.id)"
                   >
-                    {{ tag.text }}
-                  </UBadge>
-                </button>
+                    <TagBadge
+                      :text="tag.text"
+                      :color="tag.color"
+                      :variant="isTagSelected(tag.id) ? 'solid' : 'outline'"
+                      class="transition-all"
+                    />
+                  </button>
+                </div>
+
+                <!-- Inline new tag creation -->
+                <div class="flex items-center gap-2">
+                  <UInput
+                    v-model="newTagText"
+                    placeholder="Type a new tag name and press Enter..."
+                    size="sm"
+                    class="flex-1"
+                    @keydown.enter.prevent="handleAddNewTag"
+                  />
+                  <UButton
+                    size="sm"
+                    variant="outline"
+                    icon="i-lucide-plus"
+                    :loading="creatingTag"
+                    :disabled="!newTagText.trim()"
+                    @click="handleAddNewTag"
+                  >
+                    Add Tag
+                  </UButton>
+                </div>
+                <p class="text-xs text-muted">
+                  New tags are created with a random color. You can change the color later in <NuxtLink to="/settings/tags" class="text-primary hover:underline">Settings → Tags</NuxtLink>.
+                </p>
               </div>
-              <p v-else class="text-sm text-muted mt-1">
-                No tags available. <NuxtLink to="/settings/tags" class="text-primary hover:underline">Create tags</NuxtLink> first.
-              </p>
             </UFormField>
 
             <div class="flex gap-2 pt-4">
