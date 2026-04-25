@@ -2,7 +2,6 @@
 import { h, resolveComponent, computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { TestRunDetails, TestCaseResult, EndpointSummary, ReportInfo } from '~~/types/api'
-import { getFileApiPath } from '~/utils'
 
 const route = useRoute()
 const runId = route.params.id

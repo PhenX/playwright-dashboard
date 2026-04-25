@@ -43,9 +43,9 @@ test.describe('Reporter Integration Tests', () => {
 
     // Verify the new multi-report option is documented
     expect(typeDefs).toContain('reports')
-    expect(typeDefs).toContain("type: string")
-    expect(typeDefs).toContain("dir?: string")
-    expect(typeDefs).toContain("label?: string")
+    expect(typeDefs).toContain('type: string')
+    expect(typeDefs).toContain('dir?: string')
+    expect(typeDefs).toContain('label?: string')
   })
 
   test('reporter fixtures.js should exist', async () => {
@@ -122,12 +122,11 @@ test.describe('Reporter Integration Tests', () => {
     const filesPath = join(process.cwd(), '..', 'reporter', 'lib', 'files.js')
     const source = readFileSync(filesPath, 'utf-8')
 
-    expect(source).toContain("monocart")
-    expect(source).toContain("allure")
-    expect(source).toContain("blob")
+    expect(source).toContain('monocart')
+    expect(source).toContain('allure')
+    expect(source).toContain('blob')
     // allure default dir must be the generated HTML report, NOT the raw results
-    expect(source).toContain("allure: 'allure-report'")
-    expect(source).not.toContain("allure: 'allure-results'")
+    expect(source).toContain('allure: \'allure-report\'')
+    expect(source).not.toContain('allure: \'allure-results\'')
   })
 })
-
