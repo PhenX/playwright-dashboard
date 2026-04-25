@@ -36,6 +36,7 @@ export default eventHandler(async (event) => {
   const caseIds = runsCases.map(c => c.id)
 
   // Delete traces from DB and storage
+  // Note: trace.filePath may be a file or directory; deleteDirectory handles both via recursive rm
   const storage = getStorage()
   for (const caseId of caseIds) {
     const traceRows = await db.select().from(traces).where(eq(traces.testRunsCaseId, caseId))

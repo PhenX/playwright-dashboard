@@ -129,8 +129,11 @@ export class S3StorageAdapter implements StorageAdapter {
           ContinuationToken: continuationToken
         })
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const listResult: any = await this.s3Client.send(listCommand)
+        const listResult: {
+          Contents?: Array<{ Key: string }>
+          IsTruncated?: boolean
+          NextContinuationToken?: string
+        } = await this.s3Client.send(listCommand)
 
         if (listResult.Contents && listResult.Contents.length > 0) {
           const deleteCommand = new DeleteObjectsCommand({

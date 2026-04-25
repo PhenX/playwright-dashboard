@@ -12,6 +12,8 @@ export default eventHandler(async (event) => {
   // olderThanDays: number — delete runs whose startTime is older than this many days
   const olderThanDays = parseInt(body?.olderThanDays ?? '0', 10)
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000
+
   if (!olderThanDays || olderThanDays < 1) {
     throw createError({
       statusCode: 400,
@@ -19,7 +21,7 @@ export default eventHandler(async (event) => {
     })
   }
 
-  const cutoffDate = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000)
+  const cutoffDate = new Date(Date.now() - olderThanDays * MS_PER_DAY)
 
   const db = await getDatabase()
   const storage = getStorage()
