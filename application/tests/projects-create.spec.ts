@@ -1,6 +1,6 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
-async function waitForHydration(page) {
+async function waitForHydration(page: Page) {
   await page.waitForLoadState('networkidle')
   await page.waitForTimeout(1500)
 }

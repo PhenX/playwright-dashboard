@@ -61,6 +61,11 @@ export function getStatusColor(status: string) {
 /**
  * Generate a random vibrant hex color.
  * Uses HSL with fixed saturation/lightness for visually appealing results.
+ *
+ * Conversion uses the standard HSL → RGB chroma method:
+ *   c = chroma, x = intermediate value per 60° sector, m = brightness offset
+ *   The (r,g,b) triple is selected from one of six 60°-wide hue sectors,
+ *   then shifted by m and scaled to [0,255].
  */
 export function randomHexColor(): string {
   const hue = Math.floor(Math.random() * 360)
