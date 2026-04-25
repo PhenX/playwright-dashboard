@@ -6,6 +6,14 @@ const links = [[{
   icon: 'i-lucide-user',
   to: '/settings',
   exact: true
+}, {
+  label: 'Users',
+  icon: 'i-lucide-users',
+  to: '/settings/users'
+}, {
+  label: 'Tags',
+  icon: 'i-lucide-tags',
+  to: '/settings/tags'
 }], [{
   label: 'Documentation',
   icon: 'i-lucide-book-open',

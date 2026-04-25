@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, index, primaryKey } from 'drizzle-orm/sqlite-core'
 
 // Projects table
 export const projects = sqliteTable('projects', {
@@ -90,6 +90,25 @@ export const traces = sqliteTable('traces', {
   testRunsCaseIdIdx: index('idx_traces_test_runs_case_id').on(table.testRunsCaseId)
 }))
 
+// Tags table - for labeling projects
+export const tags = sqliteTable('tags', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  text: text('text').notNull().unique(),
+  color: text('color').notNull().default('neutral'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
+})
+
+// Project tags junction table
+export const projectTags = sqliteTable('project_tags', {
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  tagId: integer('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' })
+}, table => ({
+  pk: primaryKey({ columns: [table.projectId, table.tagId] }),
+  projectIdIdx: index('idx_project_tags_project_id').on(table.projectId),
+  tagIdIdx: index('idx_project_tags_tag_id').on(table.tagId)
+}))
+
 // Users table - for authentication
 export const users = sqliteTable('users', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -116,3 +135,7 @@ export type Report = typeof reports.$inferSelect
 export type NewReport = typeof reports.$inferInsert
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
+export type Tag = typeof tags.$inferSelect
+export type NewTag = typeof tags.$inferInsert
+export type ProjectTag = typeof projectTags.$inferSelect
+export type NewProjectTag = typeof projectTags.$inferInsert

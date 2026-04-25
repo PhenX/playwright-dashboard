@@ -59,7 +59,47 @@ export function getStatusColor(status: string) {
 }
 
 /**
- * Convert file path to API file path
+ * Generate a random vibrant hex color.
+ * Uses HSL with fixed saturation/lightness for visually appealing results.
+ *
+ * Conversion uses the standard HSL → RGB chroma method:
+ *   c = chroma, x = intermediate value per 60° sector, m = brightness offset
+ *   The (r,g,b) triple is selected from one of six 60°-wide hue sectors,
+ *   then shifted by m and scaled to [0,255].
+ */
+export function randomHexColor(): string {
+  const hue = Math.floor(Math.random() * 360)
+  const s = 65 // saturation %: vibrant but not neon
+  const l = 50 // lightness %: mid-range for good contrast on both light/dark backgrounds
+  const c = (1 - Math.abs(2 * l / 100 - 1)) * s / 100
+  const x = c * (1 - Math.abs((hue / 60) % 2 - 1))
+  const m = l / 100 - c / 2
+  let r = 0, g = 0, b = 0
+  if (hue < 60) {
+    r = c
+    g = x
+  } else if (hue < 120) {
+    r = x
+    g = c
+  } else if (hue < 180) {
+    g = c
+    b = x
+  } else if (hue < 240) {
+    g = x
+    b = c
+  } else if (hue < 300) {
+    r = x
+    b = c
+  } else {
+    r = c
+    b = x
+  }
+  const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+/**
+ * Convert file path to API file path.
  * Removes the storage path prefix if present to create a relative path for the API
  * If the path is already relative, returns it as-is
  */

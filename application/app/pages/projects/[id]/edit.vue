@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { ProjectDetails } from '~~/types/api'
+import type { ProjectDetails, TagsResponse, TagInfo } from '~~/types/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -8,11 +8,16 @@ const toast = useToast()
 const projectId = route.params.id
 
 const { data: project } = await useFetch<ProjectDetails>(`/api/projects/${projectId}`)
+const { data: tagsData, refresh: refreshTags } = await useFetch<TagsResponse>('/api/tags')
+
+const allTags = computed(() => tagsData.value?.tags || [])
 
 const state = ref({
   label: project.value?.label || '',
   description: project.value?.description || ''
 })
+
+const selectedTags = ref<TagInfo[]>(project.value?.tags || [])
 
 const schema = z.object({
   label: z.string().optional(),
@@ -25,14 +30,13 @@ async function onSubmit() {
   try {
     saving.value = true
 
-    const payload = {
-      label: state.value.label || null,
-      description: state.value.description || null
-    }
-
     await $fetch(`/api/projects/${projectId}`, {
       method: 'PUT',
-      body: payload
+      body: {
+        label: state.value.label || null,
+        description: state.value.description || null,
+        tagIds: selectedTags.value.map(t => t.id)
+      }
     })
 
     toast.add({
@@ -41,7 +45,6 @@ async function onSubmit() {
       color: 'success'
     })
 
-    // Navigate back to project page
     await router.push(`/projects/${projectId}`)
   } catch (error) {
     console.error('Error updating project:', error)
@@ -106,6 +109,14 @@ function onCancel() {
 
             <UFormField label="Description" name="description" description="A description of this project">
               <UTextarea v-model="state.description" placeholder="Enter project description" :rows="3" />
+            </UFormField>
+
+            <UFormField label="Tags" name="tags" description="Select existing tags or type a new name and press Enter to create one.">
+              <TagsSelect
+                v-model="selectedTags"
+                :all-tags="allTags"
+                @tag-created="refreshTags()"
+              />
             </UFormField>
 
             <div class="flex gap-2 pt-4">

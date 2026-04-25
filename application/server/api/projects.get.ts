@@ -1,5 +1,5 @@
 import { getDatabase } from '../database'
-import { projects, testRuns, testCases, reports, type Project } from '../database/schema'
+import { projects, testRuns, testCases, reports, tags, projectTags, type Project } from '../database/schema'
 import { eq, desc, sql } from 'drizzle-orm'
 
 export default eventHandler(async () => {
@@ -31,11 +31,20 @@ export default eventHandler(async () => {
         runReports = reportRows.map(r => ({ id: r.id, type: r.type, label: r.label, path: r.path, size: r.size }))
       }
 
+      // Get tags for this project
+      const projectTagRows = await db
+        .select({ tag: tags })
+        .from(projectTags)
+        .innerJoin(tags, eq(projectTags.tagId, tags.id))
+        .where(eq(projectTags.projectId, project.id))
+      const projectTagList = projectTagRows.map(r => r.tag)
+
       return {
         ...project,
         latestRun: latestRun ? { ...latestRun, reports: runReports } : null,
         totalRuns: totalRuns[0]?.count || 0,
-        totalTestCases: totalTestCases[0]?.count || 0
+        totalTestCases: totalTestCases[0]?.count || 0,
+        tags: projectTagList
       }
     })
   )
