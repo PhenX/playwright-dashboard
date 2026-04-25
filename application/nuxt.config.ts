@@ -55,6 +55,14 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-02-23',
 
   nitro: {
+    // In demo mode, override the "internal:nuxt:prerender" storage driver with the
+    // built-in memory driver. On Windows, @nuxt/nitro-server registers this driver
+    // using pathToFileURL() which produces a "file:///C:/..." URL that Rollup cannot
+    // resolve. The module is then treated as an unresolvable external, fails to load
+    // at runtime, and every prerender request returns 500. Using memory avoids the
+    // Windows file-URL resolution issue entirely (and is equivalent for a single build
+    // run since the prerender cache is discarded after each generate anyway).
+    storage: isDemo ? { 'internal:nuxt:prerender': { driver: 'memory' } } : undefined,
     experimental: {
       // Windows-only workaround to avoid Nitro build issues caused by ESM/CJS externals
       // resolution on Windows. Enabling legacyExternals here keeps dependency resolution
