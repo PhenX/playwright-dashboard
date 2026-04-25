@@ -13,6 +13,21 @@ export type {
 } from '../server/database/schema'
 
 // ============================================================================
+// Report types (API responses)
+// ============================================================================
+
+/**
+ * Report attached to a test run
+ */
+export interface ReportInfo {
+  id: number
+  type: string
+  label: string
+  path: string
+  size?: number | null
+}
+
+// ============================================================================
 // Period and Range types (used for filtering and date range selection)
 // ============================================================================
 
@@ -50,6 +65,7 @@ export interface ProjectWithStats {
     totalTests: number
     reportPath?: string | null
     reportSize?: number | null
+    reports?: ReportInfo[]
     avgTestDuration?: number | null
     p90TestDuration?: number | null
   } | null
@@ -104,6 +120,7 @@ export interface TestRunSummary {
   p90TestDuration?: number | null
   reportPath?: string | null
   reportSize?: number | null
+  reports?: ReportInfo[]
   createdAt: Date
 }
 
@@ -133,6 +150,7 @@ export interface TestRunDetails {
     name: string
     label?: string | null
   }
+  reports?: ReportInfo[]
   testCases?: TestCaseResult[]
 }
 

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { h, resolveComponent } from 'vue'
+import { h, resolveComponent, computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import type { TestRunDetails, TestCaseResult, EndpointSummary } from '~~/types/api'
-import { formatBytes, getFileApiPath } from '~/utils'
+import type { TestRunDetails, TestCaseResult, EndpointSummary, ReportInfo } from '~~/types/api'
 
 const route = useRoute()
 const runId = route.params.id
@@ -16,6 +15,31 @@ const { data: networkEndpoints, pending: loadingEndpoints } = await useFetch<End
 )
 
 const UBadge = resolveComponent('UBadge')
+
+// Merge reports from the new `reports` table with the legacy reportPath field
+const allReports = computed<ReportInfo[]>(() => {
+  if (!testRun.value) return []
+  const list: ReportInfo[] = []
+
+  // New reports from the reports table
+  if (testRun.value.reports && testRun.value.reports.length > 0) {
+    list.push(...testRun.value.reports)
+    return list
+  }
+
+  // Backward compat: fall back to the legacy reportPath field
+  if (testRun.value.reportPath) {
+    list.push({
+      id: 0,
+      type: 'html',
+      label: 'HTML Report',
+      path: testRun.value.reportPath,
+      size: testRun.value.reportSize
+    })
+  }
+
+  return list
+})
 
 const testCasesColumns: TableColumn<TestCaseResult>[] = [
   {
@@ -262,25 +286,11 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               </div>
             </div>
 
-            <div v-if="testRun?.reportPath" class="pt-4 border-t">
+            <div v-if="allReports.length > 0" class="pt-4 border-t">
               <p class="text-sm text-gray-500 mb-2">
-                HTML Report
+                Reports
               </p>
-              <div class="flex items-center gap-2 mb-2">
-                <code class="text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded flex-1">{{ testRun.reportPath }}</code>
-                <UButton
-                  :to="`/api/files/${getFileApiPath(testRun.reportPath)}`"
-                  target="_blank"
-                  size="sm"
-                  icon="i-lucide-external-link"
-                >
-                  View Report
-                </UButton>
-              </div>
-              <div v-if="testRun?.reportSize" class="text-sm text-gray-600">
-                <span class="text-gray-500">Report Size (decompressed):</span>
-                <span class="ml-2 font-medium">{{ formatBytes(testRun.reportSize) }}</span>
-              </div>
+              <RunReports :reports="allReports" />
             </div>
 
             <!-- Metadata Section -->
