@@ -42,6 +42,11 @@ const items = computed<DropdownMenuItem[][]>(() => {
       icon: 'i-lucide-users',
       to: '/settings/users'
     })
+    configurationMenuItems.push({
+      label: 'Tags',
+      icon: 'i-lucide-tags',
+      to: '/settings/tags'
+    })
   }
 
   const baseItems: DropdownMenuItem[][] = [configurationMenuItems, [{

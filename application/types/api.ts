@@ -9,7 +9,8 @@ export type {
   TestRun as DbTestRun,
   TestCase as DbTestCase,
   TestRunsCase as DbTestRunsCase,
-  User as DbUser
+  User as DbUser,
+  Tag as DbTag
 } from '../server/database/schema'
 
 // ============================================================================
@@ -25,6 +26,28 @@ export interface ReportInfo {
   label: string
   path: string
   size?: number | null
+}
+
+// ============================================================================
+// Tag types (API responses)
+// ============================================================================
+
+/**
+ * Tag used to label projects
+ */
+export interface TagInfo {
+  id: number
+  text: string
+  color: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Tags response from API
+ */
+export interface TagsResponse {
+  tags: TagInfo[]
 }
 
 // ============================================================================
@@ -50,6 +73,7 @@ export interface ProjectWithStats {
   name: string
   label?: string | null
   description?: string | null
+  tags?: TagInfo[]
   createdAt: Date
   updatedAt: Date
   // Statistics added by API
@@ -96,6 +120,7 @@ export interface ProjectDetails {
   label?: string | null
   description?: string | null
   color?: string | null
+  tags?: TagInfo[]
 }
 
 // ============================================================================

@@ -1,5 +1,5 @@
 import { getDatabase } from '../../database'
-import { projects, testRuns, reports } from '../../database/schema'
+import { projects, testRuns, reports, tags, projectTags } from '../../database/schema'
 import { eq, desc, inArray } from 'drizzle-orm'
 
 export default eventHandler(async (event) => {
@@ -41,8 +41,16 @@ export default eventHandler(async (event) => {
     reportsByRunId.set(r.testRunId, list)
   }
 
+  // Get tags for this project
+  const projectTagRows = await db
+    .select({ tag: tags })
+    .from(projectTags)
+    .innerJoin(tags, eq(projectTags.tagId, tags.id))
+    .where(eq(projectTags.projectId, id))
+
   return {
     ...project,
+    tags: projectTagRows.map(r => r.tag),
     testRuns: runs.map(r => ({
       ...r,
       reports: reportsByRunId.get(r.id) ?? []
