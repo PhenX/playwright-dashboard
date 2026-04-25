@@ -64,7 +64,8 @@ export function getStatusColor(status: string) {
  */
 export function randomHexColor(): string {
   const hue = Math.floor(Math.random() * 360)
-  const s = 65, l = 50
+  const s = 65 // saturation %: vibrant but not neon
+  const l = 50 // lightness %: mid-range for good contrast on both light/dark backgrounds
   const c = (1 - Math.abs(2 * l / 100 - 1)) * s / 100
   const x = c * (1 - Math.abs((hue / 60) % 2 - 1))
   const m = l / 100 - c / 2

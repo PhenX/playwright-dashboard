@@ -1,5 +1,10 @@
 import { test, expect } from '@playwright/test'
 
+async function waitForHydration(page) {
+  await page.waitForLoadState('networkidle')
+  await page.waitForTimeout(1500)
+}
+
 test.describe('Project Creation API Tests', () => {
   test.beforeAll(async ({ request }) => {
     // Clean up test projects left from previous runs by checking projects list
@@ -74,11 +79,6 @@ test.describe('Project Creation API Tests', () => {
 })
 
 test.describe('Project Creation UI Tests', () => {
-  async function waitForHydration(page) {
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1500)
-  }
-
   test('should show New Project button on projects page', async ({ page }) => {
     await page.goto('/projects')
     await waitForHydration(page)
@@ -151,11 +151,6 @@ test.describe('Project Creation UI Tests', () => {
 })
 
 test.describe('Tag Management UI Tests', () => {
-  async function waitForHydration(page) {
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(1500)
-  }
-
   // Clean up any test tags before running
   test.beforeAll(async ({ request }) => {
     const res = await request.get('/api/tags')

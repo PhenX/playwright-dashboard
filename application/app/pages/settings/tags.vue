@@ -15,6 +15,8 @@ const isAdmin = computed(() => {
   return authState.value.user?.role === 'administrator'
 })
 
+const DEFAULT_TAG_COLOR = '#6366f1'
+
 const columns: TableColumn<TagInfo>[] = [
   { accessorKey: 'text', header: 'Tag' },
   { accessorKey: 'color', header: 'Color' },
@@ -32,7 +34,7 @@ type AddTagSchema = z.output<typeof addTagSchema>
 
 const newTag = reactive<Partial<AddTagSchema>>({
   text: '',
-  color: '#6366f1'
+  color: DEFAULT_TAG_COLOR
 })
 
 // Edit tag modal
@@ -40,7 +42,7 @@ const isEditTagModalOpen = ref(false)
 const editingTag = ref<TagInfo | null>(null)
 const editTagState = reactive<Partial<AddTagSchema>>({
   text: '',
-  color: '#6366f1'
+  color: DEFAULT_TAG_COLOR
 })
 
 function openEditTag(tag: TagInfo) {
@@ -65,7 +67,7 @@ async function handleAddTag() {
 
     isAddTagModalOpen.value = false
     newTag.text = ''
-    newTag.color = '#6366f1'
+    newTag.color = DEFAULT_TAG_COLOR
 
     await refresh()
   } catch (error: unknown) {
@@ -266,7 +268,7 @@ async function handleDeleteTag(tag: TagInfo) {
 
           <div v-if="newTag.text" class="mt-2">
             <span class="text-sm text-muted mr-2">Preview:</span>
-            <TagBadge :text="newTag.text" :color="newTag.color || '#6366f1'" />
+            <TagBadge :text="newTag.text" :color="newTag.color || DEFAULT_TAG_COLOR" />
           </div>
         </UForm>
       </template>
@@ -320,7 +322,7 @@ async function handleDeleteTag(tag: TagInfo) {
 
           <div v-if="editTagState.text" class="mt-2">
             <span class="text-sm text-muted mr-2">Preview:</span>
-            <TagBadge :text="editTagState.text" :color="editTagState.color || '#6366f1'" />
+            <TagBadge :text="editTagState.text" :color="editTagState.color || DEFAULT_TAG_COLOR" />
           </div>
         </UForm>
       </template>
