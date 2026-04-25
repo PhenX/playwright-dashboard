@@ -159,4 +159,50 @@ test.describe('Dashboard UI Tests', () => {
     // Data should still be visible after refresh - use link to target table
     await expect(page.getByRole('link', { name: 'ui-test-project' })).toBeVisible()
   })
+
+  test('should display storage settings page', async ({ page }) => {
+    await page.goto('/settings/storage')
+    await page.waitForLoadState('networkidle')
+
+    // Check heading and stats section
+    await expect(page.getByText('Storage Statistics')).toBeVisible()
+    await expect(page.getByText('Test Runs')).toBeVisible()
+    await expect(page.getByText('Cleanup Old Test Runs')).toBeVisible()
+
+    // Verify the cleanup button exists
+    await expect(page.getByRole('button', { name: 'Run Cleanup' })).toBeVisible()
+  })
+
+  test('should show delete confirmation modal on test run page', async ({ page, request }) => {
+    // Ensure there is a test run
+    const submitRes = await request.post('/api/test-runs/submit', {
+      data: {
+        projectName: 'ui-test-project',
+        status: 'passed',
+        startTime: new Date().toISOString(),
+        duration: 5000,
+        totalTests: 1,
+        passedTests: 1,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: [{ title: 'delete-ui-test', status: 'passed', duration: 500, location: 'tests/x.spec.ts:1:1' }]
+      }
+    })
+    const { testRunId } = await submitRes.json()
+
+    await page.goto(`/test-runs/${testRunId}`)
+    await page.waitForLoadState('networkidle')
+
+    // Delete button should be visible in the navbar
+    const deleteButton = page.getByRole('button', { name: 'Delete' })
+    await expect(deleteButton).toBeVisible()
+
+    // Click it — confirmation modal should appear
+    await deleteButton.click()
+    await expect(page.getByText('Delete Test Run')).toBeVisible()
+
+    // Close the modal
+    await page.getByRole('button', { name: 'Cancel' }).click()
+    await expect(page.getByText('Delete Test Run')).not.toBeVisible()
+  })
 })

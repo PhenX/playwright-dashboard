@@ -340,6 +340,24 @@ export interface UsersResponse {
 }
 
 // ============================================================================
+// Admin types
+// ============================================================================
+
+/**
+ * Storage statistics returned by GET /api/admin/stats
+ */
+export interface AdminStats {
+  totalProjects: number
+  totalRuns: number
+  totalTestCases: number
+  totalRunsCases: number
+  totalTraces: number
+  totalReports: number
+  reportSizeFromDb: number
+  storageSizeOnDisk: number | null
+}
+
+// ============================================================================
 // Request body types
 // ============================================================================
 

@@ -14,6 +14,10 @@ const links = [[{
   label: 'Tags',
   icon: 'i-lucide-tags',
   to: '/settings/tags'
+}, {
+  label: 'Storage',
+  icon: 'i-lucide-hard-drive',
+  to: '/settings/storage'
 }], [{
   label: 'Documentation',
   icon: 'i-lucide-book-open',

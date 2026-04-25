@@ -33,6 +33,13 @@ export interface StorageAdapter {
   mkdir(path: string): Promise<void>
 
   /**
+   * Delete a directory and all its contents recursively
+   * @param path - Relative path of the directory to delete
+   * @returns Promise that resolves when the directory is deleted
+   */
+  deleteDirectory(path: string): Promise<void>
+
+  /**
    * Get the full path for a relative path (for local storage only, returns relative path for S3)
    * @param path - Relative path
    * @returns Full path for local storage or relative path for S3

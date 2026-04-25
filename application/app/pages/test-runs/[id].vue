@@ -8,6 +8,27 @@ const runId = route.params.id
 
 const { data: testRun, refresh } = await useFetch<TestRunDetails>(`/api/test-runs/${runId}`)
 
+const toast = useToast()
+const isDeleteConfirmOpen = ref(false)
+const deleting = ref(false)
+
+async function handleDeleteRun() {
+  isDeleteConfirmOpen.value = false
+  deleting.value = true
+  try {
+    await $fetch(`/api/test-runs/${runId}`, { method: 'DELETE' })
+    toast.add({ title: 'Test run deleted', color: 'success' })
+    await navigateTo(`/projects/${testRun.value?.project?.id}`)
+  } catch (error: unknown) {
+    const errorMessage = error && typeof error === 'object' && 'data' in error
+      ? (error.data as { message?: string })?.message
+      : undefined
+    toast.add({ title: 'Delete failed', description: errorMessage || 'An error occurred', color: 'error' })
+  } finally {
+    deleting.value = false
+  }
+}
+
 // Load network requests data lazily (not during SSR) to avoid blocking page load
 const { data: networkEndpoints, pending: loadingEndpoints } = await useFetch<EndpointSummary[]>(
   `/api/test-runs/${runId}/network-requests`,
@@ -182,6 +203,15 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
             size="md"
             label="Refresh"
             @click="() => refresh()"
+          />
+          <UButton
+            icon="i-lucide-trash-2"
+            size="md"
+            color="error"
+            variant="soft"
+            label="Delete"
+            :loading="deleting"
+            @click="isDeleteConfirmOpen = true"
           />
         </template>
       </UDashboardNavbar>
@@ -475,4 +505,21 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
       </div>
     </template>
   </UDashboardPanel>
+
+  <!-- Delete Confirm Dialog -->
+  <ClientOnly>
+    <UModal :open="isDeleteConfirmOpen" title="Delete Test Run" @update:open="isDeleteConfirmOpen = $event">
+      <template #body>
+        <p>
+          Are you sure you want to delete <strong>Test Run #{{ testRun?.id }}</strong>?
+          This will also remove all associated test results, reports, and traces.
+          This action cannot be undone.
+        </p>
+      </template>
+      <template #footer>
+        <UButton color="neutral" variant="ghost" label="Cancel" @click="isDeleteConfirmOpen = false" />
+        <UButton color="error" label="Delete" icon="i-lucide-trash-2" :loading="deleting" @click="handleDeleteRun" />
+      </template>
+    </UModal>
+  </ClientOnly>
 </template>
