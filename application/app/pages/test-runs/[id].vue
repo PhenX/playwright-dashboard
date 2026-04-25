@@ -308,7 +308,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                 Reports
               </p>
               <div class="flex flex-wrap gap-2">
-                <template v-for="report in allReports" :key="report.id + '-' + report.type">
+                <template v-for="report in allReports" :key="`${report.type}-${report.path}`">
                   <div class="flex items-center gap-2">
                     <UButton
                       :to="isBlobDownload(report.type) ? undefined : `/api/files/${getFileApiPath(report.path)}`"

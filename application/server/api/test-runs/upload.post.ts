@@ -19,6 +19,12 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
   blob: 'Blob Report'
 }
 
+/** Return a human-readable label for a report type */
+function getReportLabel(type: string, override?: string): string {
+  if (override) return override
+  return REPORT_TYPE_LABELS[type] ?? `${type.charAt(0).toUpperCase() + type.slice(1)} Report`
+}
+
 export default eventHandler(async (event) => {
   // Require reporter or administrator role for uploading test results
   await requireAuth(event, ['reporter', 'administrator'])
@@ -201,7 +207,7 @@ export default eventHandler(async (event) => {
     try {
       console.log(`[Upload] Storing ${type} report: ${report.filename}`)
       const { path: storedPath, size } = await storeReport(type, report)
-      const label = report.label || REPORT_TYPE_LABELS[type] || `${type.charAt(0).toUpperCase() + type.slice(1)} Report`
+      const label = getReportLabel(type, report.label)
       storedReports.push({ type, label, path: storedPath, size })
       console.log(`[Upload] Stored ${type} report at ${storedPath} (${size} bytes)`)
 

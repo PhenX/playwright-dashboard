@@ -134,9 +134,9 @@ function extractHtmlReportMetadata(config) {
       name: p.name,
       testDir: p.testDir,
       use: {
-        browserName: p.use && p.use.browserName,
-        viewport: p.use && p.use.viewport,
-        deviceScaleFactor: p.use && p.use.deviceScaleFactor
+        browserName: p.use?.browserName,
+        viewport: p.use?.viewport,
+        deviceScaleFactor: p.use?.deviceScaleFactor
       }
     }));
   }
