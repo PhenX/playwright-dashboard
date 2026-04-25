@@ -1,5 +1,3 @@
-const { execSync } = require('child_process');
-
 /**
  * Categorize a step based on its title
  * @param {string} title - The step title
