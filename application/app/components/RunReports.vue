@@ -40,10 +40,9 @@ function reportIcon(type: string): string {
       :key="`${report.type}-${report.path}`"
       :to="report.type !== 'blob' ? `/api/files/${getFileApiPath(report.path)}` : undefined"
       :href="report.type === 'blob' ? `/api/files/${getFileApiPath(report.path)}` : undefined"
-      :download="report.type === 'blob' ? true : undefined"
-      :target="report.type !== 'blob' ? '_blank' : undefined"
       :icon="reportIcon(report.type)"
       :title="report.size ? formatBytes(report.size) : report.label"
+      target="_blank"
       size="xs"
       variant="outline"
     >

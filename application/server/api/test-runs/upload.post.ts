@@ -262,7 +262,7 @@ export default eventHandler(async (event) => {
       testRunId: testRun.id,
       type: r.type,
       label: r.label,
-      path: r.path,
+      path: r.path.replace(/\\/g, '/'), // Ensure path uses forward slashes
       size: r.size
     })
   }
