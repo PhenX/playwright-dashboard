@@ -6,7 +6,7 @@ import type { ProjectWithStats, TagInfo, TagsResponse } from '~~/types/api'
 import { formatDuration } from '~/utils'
 
 const { data: projects, refresh } = await useFetch<ProjectWithStats[]>('/api/projects')
-const { data: tagsData } = await useFetch<TagsResponse>('/api/tags')
+const { data: tagsData, refresh: refreshTags } = await useFetch<TagsResponse>('/api/tags')
 const toast = useToast()
 
 const allTags = computed(() => tagsData.value?.tags || [])
@@ -62,6 +62,7 @@ const newProject = reactive<Partial<NewProjectSchema>>({
   label: '',
   description: ''
 })
+const newProjectTags = ref<TagInfo[]>([])
 const creatingProject = ref(false)
 
 async function handleCreateProject() {
@@ -73,7 +74,8 @@ async function handleCreateProject() {
       body: {
         name: newProject.name.trim(),
         label: newProject.label?.trim() || null,
-        description: newProject.description?.trim() || null
+        description: newProject.description?.trim() || null,
+        tagIds: newProjectTags.value.map(t => t.id)
       }
     })
 
@@ -87,6 +89,7 @@ async function handleCreateProject() {
     newProject.name = ''
     newProject.label = ''
     newProject.description = ''
+    newProjectTags.value = []
 
     await refresh()
   } catch (error: unknown) {
@@ -353,6 +356,19 @@ const columns: TableColumn<ProjectWithStats>[] = [
             description="Optional description of this project."
           >
             <UTextarea v-model="newProject.description" placeholder="Enter project description" :rows="3" />
+          </UFormField>
+
+          <UFormField
+            label="Tags"
+            name="tags"
+            description="Select existing tags or type a new name and press Enter to create one."
+            class="mt-4"
+          >
+            <TagsSelect
+              v-model="newProjectTags"
+              :all-tags="allTags"
+              @tag-created="refreshTags()"
+            />
           </UFormField>
         </UForm>
       </template>

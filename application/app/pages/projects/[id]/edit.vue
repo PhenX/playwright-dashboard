@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { ProjectDetails, TagsResponse, TagInfo } from '~~/types/api'
-import { randomHexColor } from '~/utils'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,74 +14,14 @@ const allTags = computed(() => tagsData.value?.tags || [])
 
 const state = ref({
   label: project.value?.label || '',
-  description: project.value?.description || '',
-  tagIds: (project.value?.tags || []).map((t: TagInfo) => t.id)
+  description: project.value?.description || ''
 })
 
-// UInputTags model — array of tag text strings currently selected
-const selectedTagTexts = ref<string[]>(
-  (project.value?.tags || []).map((t: TagInfo) => t.text)
-)
-
-function getTagByText(text: string): TagInfo | undefined {
-  return allTags.value.find(t => t.text.toLowerCase() === String(text).toLowerCase())
-}
-
-async function onAddTag(newText: unknown) {
-  const text = String(newText).trim()
-  if (!text) return
-
-  let tag = getTagByText(text)
-
-  if (!tag) {
-    // Create a new tag with a random color
-    try {
-      const result = await $fetch<{ tag: TagInfo }>('/api/tags', {
-        method: 'POST',
-        body: { text, color: randomHexColor() }
-      })
-      await refreshTags()
-      tag = result.tag
-    } catch (error: unknown) {
-      // Remove the just-added text from the array since creation failed
-      const idx = selectedTagTexts.value.findIndex(t => t.toLowerCase() === text.toLowerCase())
-      if (idx !== -1) selectedTagTexts.value.splice(idx, 1)
-      const errorMessage = error && typeof error === 'object' && 'data' in error
-        ? (error.data as { message?: string })?.message
-        : undefined
-      toast.add({
-        title: 'Failed to create tag',
-        description: errorMessage || 'An error occurred',
-        color: 'error'
-      })
-      return
-    }
-  }
-
-  // Normalise the displayed text to the canonical casing from the DB
-  const idx = selectedTagTexts.value.findIndex(t => t.toLowerCase() === text.toLowerCase())
-  if (idx !== -1 && selectedTagTexts.value[idx] !== tag.text) {
-    selectedTagTexts.value[idx] = tag.text
-  }
-
-  if (!state.value.tagIds.includes(tag.id)) {
-    state.value.tagIds.push(tag.id)
-  }
-}
-
-function onRemoveTag(removedText: unknown) {
-  const text = String(removedText)
-  const tag = getTagByText(text)
-  if (tag) {
-    const idx = state.value.tagIds.indexOf(tag.id)
-    if (idx !== -1) state.value.tagIds.splice(idx, 1)
-  }
-}
+const selectedTags = ref<TagInfo[]>(project.value?.tags || [])
 
 const schema = z.object({
   label: z.string().optional(),
-  description: z.string().optional(),
-  tagIds: z.array(z.number()).optional()
+  description: z.string().optional()
 })
 
 const saving = ref(false)
@@ -91,15 +30,13 @@ async function onSubmit() {
   try {
     saving.value = true
 
-    const payload = {
-      label: state.value.label || null,
-      description: state.value.description || null,
-      tagIds: state.value.tagIds
-    }
-
     await $fetch(`/api/projects/${projectId}`, {
       method: 'PUT',
-      body: payload
+      body: {
+        label: state.value.label || null,
+        description: state.value.description || null,
+        tagIds: selectedTags.value.map(t => t.id)
+      }
     })
 
     toast.add({
@@ -108,7 +45,6 @@ async function onSubmit() {
       color: 'success'
     })
 
-    // Navigate back to project page
     await router.push(`/projects/${projectId}`)
   } catch (error) {
     console.error('Error updating project:', error)
@@ -175,26 +111,12 @@ function onCancel() {
               <UTextarea v-model="state.description" placeholder="Enter project description" :rows="3" />
             </UFormField>
 
-            <UFormField label="Tags" name="tagIds" description="Type a tag name and press Enter to assign it. If the tag doesn't exist yet it will be created automatically.">
-              <UInputTags
-                v-model="selectedTagTexts"
-                placeholder="Type a tag name and press Enter…"
-                icon="i-lucide-tag"
-                class="w-full"
-                @add-tag="onAddTag"
-                @remove-tag="onRemoveTag"
-              >
-                <template #item-text="{ item }">
-                  <span class="flex items-center gap-1.5">
-                    <span
-                      v-if="getTagByText(String(item))"
-                      class="inline-block size-2 rounded-full shrink-0"
-                      :style="{ backgroundColor: getTagByText(String(item))?.color }"
-                    />
-                    {{ item }}
-                  </span>
-                </template>
-              </UInputTags>
+            <UFormField label="Tags" name="tags" description="Select existing tags or type a new name and press Enter to create one.">
+              <TagsSelect
+                v-model="selectedTags"
+                :all-tags="allTags"
+                @tag-created="refreshTags()"
+              />
             </UFormField>
 
             <div class="flex gap-2 pt-4">
