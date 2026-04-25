@@ -71,6 +71,14 @@ const projectItems = computed(() => {
           onSelect: () => {
             open.value = false
           }
+        },
+        {
+          label: 'Edit',
+          icon: 'i-lucide-edit',
+          to: `/projects/${project.id}/edit`,
+          onSelect: () => {
+            open.value = false
+          }
         }
       ],
       onSelect: () => {
