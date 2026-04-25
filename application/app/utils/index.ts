@@ -59,7 +59,28 @@ export function getStatusColor(status: string) {
 }
 
 /**
- * Convert file path to API file path
+ * Generate a random vibrant hex color.
+ * Uses HSL with fixed saturation/lightness for visually appealing results.
+ */
+export function randomHexColor(): string {
+  const hue = Math.floor(Math.random() * 360)
+  const s = 65, l = 50
+  const c = (1 - Math.abs(2 * l / 100 - 1)) * s / 100
+  const x = c * (1 - Math.abs((hue / 60) % 2 - 1))
+  const m = l / 100 - c / 2
+  let r = 0, g = 0, b = 0
+  if (hue < 60) { r = c; g = x }
+  else if (hue < 120) { r = x; g = c }
+  else if (hue < 180) { g = c; b = x }
+  else if (hue < 240) { g = x; b = c }
+  else if (hue < 300) { r = x; b = c }
+  else { r = c; b = x }
+  const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+/**
+ * Convert file path to API file path.
  * Removes the storage path prefix if present to create a relative path for the API
  * If the path is already relative, returns it as-is
  */
