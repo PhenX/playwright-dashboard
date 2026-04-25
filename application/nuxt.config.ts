@@ -6,7 +6,11 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+const isDemo = process.env.NUXT_PUBLIC_DEMO_MODE === 'true'
+
 export default defineNuxtConfig({
+  ssr: isDemo ? false : undefined,
+  app: isDemo ? { baseURL: '/playwright-dashboard/' } : {},
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
@@ -29,7 +33,8 @@ export default defineNuxtConfig({
       return process.env.NUXT_AUTH_SECRET || 'default-secret-change-in-production-use-random-string'
     })(),
     public: {
-      authEnabled: process.env.NUXT_AUTH_ENABLED === 'true'
+      authEnabled: process.env.NUXT_AUTH_ENABLED === 'true',
+      demoMode: process.env.NUXT_PUBLIC_DEMO_MODE === 'true'
     }
   },
 

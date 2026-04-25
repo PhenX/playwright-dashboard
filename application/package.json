@@ -7,6 +7,8 @@
   },
   "scripts": {
     "build": "nuxt build",
+    "generate": "nuxt generate",
+    "generate:demo": "NUXT_PUBLIC_DEMO_MODE=true nuxt generate",
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

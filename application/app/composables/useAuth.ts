@@ -3,12 +3,25 @@ import type { AuthUser, AuthState } from '~~/types/api'
 export { type AuthUser, type AuthState }
 
 export const useAuth = () => {
-  const authState = useState<AuthState>('auth', () => ({
-    authenticated: false,
-    user: null
-  }))
+  const config = useRuntimeConfig()
 
-  const fetchUser = async () => {
+  const demoUser: AuthState = {
+    authenticated: true,
+    user: { id: 0, username: 'demo', role: 'admin', name: 'Demo User' }
+  }
+
+  const authState = useState<AuthState>('auth', () => {
+    if (config.public.demoMode) {
+      return demoUser
+    }
+    return { authenticated: false, user: null }
+  })
+
+  const fetchUser = async (): Promise<AuthState> => {
+    if (config.public.demoMode) {
+      authState.value = demoUser
+      return demoUser
+    }
     try {
       const data = await $fetch<AuthState>('/api/auth/me')
       authState.value = data
