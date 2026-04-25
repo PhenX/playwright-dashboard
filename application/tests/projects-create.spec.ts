@@ -140,7 +140,7 @@ test.describe('Project Creation UI Tests', () => {
     await page.getByRole('button', { name: 'Create Project' }).click()
 
     // Should show error toast
-    await expect(page.getByText(/already exists|Failed to create/i)).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('Failed to create project', { exact: true })).toBeVisible({ timeout: 5000 })
   })
 })
 
@@ -201,7 +201,7 @@ test.describe('Tag Management UI Tests', () => {
     await expect(page.getByText('Tag created', { exact: true })).toBeVisible({ timeout: 5000 })
 
     // Tag should appear in the table
-    await expect(page.getByText(tagName)).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText(tagName, { exact: true }).first()).toBeVisible({ timeout: 5000 })
   })
 
   test('should show color picker input in Add Tag modal', async ({ page }) => {
@@ -243,6 +243,6 @@ test.describe('Tag Management UI Tests', () => {
     const row = page.locator('tr').filter({ hasText: tag.text })
     await row.getByRole('button').last().click()
 
-    await expect(page.getByText('Tag deleted')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('Tag deleted', { exact: true })).toBeVisible({ timeout: 5000 })
   })
 })
