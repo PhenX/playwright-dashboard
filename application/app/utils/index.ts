@@ -75,12 +75,25 @@ export function randomHexColor(): string {
   const x = c * (1 - Math.abs((hue / 60) % 2 - 1))
   const m = l / 100 - c / 2
   let r = 0, g = 0, b = 0
-  if (hue < 60) { r = c; g = x }
-  else if (hue < 120) { r = x; g = c }
-  else if (hue < 180) { g = c; b = x }
-  else if (hue < 240) { g = x; b = c }
-  else if (hue < 300) { r = x; b = c }
-  else { r = c; b = x }
+  if (hue < 60) {
+    r = c
+    g = x
+  } else if (hue < 120) {
+    r = x
+    g = c
+  } else if (hue < 180) {
+    g = c
+    b = x
+  } else if (hue < 240) {
+    g = x
+    b = c
+  } else if (hue < 300) {
+    r = x
+    b = c
+  } else {
+    r = c
+    b = x
+  }
   const toHex = (v: number) => Math.round((v + m) * 255).toString(16).padStart(2, '0')
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }

@@ -34,7 +34,7 @@ export default eventHandler(async (event) => {
     })
   }
 
-  const updates: Partial<{ text: string; color: string; updatedAt: Date }> = { updatedAt: new Date() }
+  const updates: Partial<{ text: string, color: string, updatedAt: Date }> = { updatedAt: new Date() }
   if (validation.data.text !== undefined) updates.text = validation.data.text
   if (validation.data.color !== undefined) updates.color = validation.data.color
 

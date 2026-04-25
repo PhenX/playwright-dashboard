@@ -6,12 +6,6 @@ async function waitForHydration(page: Page) {
 }
 
 test.describe('Project Creation API Tests', () => {
-  test.beforeAll(async ({ request }) => {
-    // Clean up test projects left from previous runs by checking projects list
-    // (we can only delete via API if they exist; they are identified by name)
-    // No cleanup API exists; idempotency achieved by using unique project names
-  })
-
   test('should create a project via API', async ({ request }) => {
     const name = `api-created-project-${Date.now()}`
     const res = await request.post('/api/projects', {
