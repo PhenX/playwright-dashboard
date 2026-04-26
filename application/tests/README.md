@@ -2,53 +2,6 @@
 
 This directory contains functional tests for the Playwright Dashboard using Playwright Test.
 
-## Test Structure
-
-- **`api-server.spec.ts`** - Tests for REST API endpoints
-  - Project creation and retrieval
-  - Test run submission and querying
-  - Test case details
-  - Error handling
-
-- **`dashboard-ui.spec.ts`** - Tests for the dashboard UI (uses `dashboardFixtures`)
-  - Home page rendering
-  - Projects list and navigation
-  - Project details page
-  - Test run details page
-  - Project switcher dropdown
-  - Responsive design
-
-- **`performance-api.spec.ts`** - Tests for performance-related API endpoints
-  - Submit test results with step timings, network requests and web vitals
-  - Retrieve performance trend data
-  - Retrieve slow-tests data
-  - Network requests grouped by route endpoint
-  - Web vitals storage and retrieval
-
-- **`performance-ui.spec.ts`** - Tests for performance dashboard views (uses `dashboardFixtures`)
-  - Performance page navigation
-  - Slowest tests table
-  - Run comparison view
-  - Avg/P90 stats on test run detail page
-  - Steps and web vitals on test case detail page
-
-- **`reporter-integration.spec.ts`** - Tests for the Playwright reporter
-  - Reporter module loading
-  - Configuration options
-  - TypeScript definitions
-  - `fixtures.js` exports and content
-
-- **`file-upload.spec.ts`** - Tests for file upload functionality
-  - HTML report upload
-  - Trace file upload
-  - File download
-  - Security (path traversal prevention)
-  - Error handling
-
-- **`fixtures.ts`** - Shared test fixture
-  - Extends `@playwright/test` with `dashboardFixtures` from the reporter package
-  - Imported by all UI test files that interact with a browser page
-
 ## Running Tests
 
 ### All Tests
@@ -189,7 +142,7 @@ test('slow test', async ({ page }) => {
 ```
 
 ### Database Issues
-Tests use the same database as dev. If tests fail due to data conflicts, delete the database:
+Tests use the same database as dev. If tests fail due to data conflicts, delete the database (and all data) before running tests:
 ```bash
-rm -rf .data/playwright.db
+rm -rf .data
 ```

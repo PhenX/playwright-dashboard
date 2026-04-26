@@ -54,7 +54,7 @@ async function handleCleanup() {
     <UPageCard variant="subtle">
       <template #header>
         <h2 class="font-semibold text-base">
-          Storage Statistics
+          Storage statistics
         </h2>
       </template>
 
@@ -74,7 +74,7 @@ async function handleCleanup() {
         </div>
         <div class="space-y-1">
           <p class="text-sm text-muted">
-            Test Runs
+            Test runs
           </p>
           <p class="text-2xl font-semibold">
             {{ stats.totalRuns }}
@@ -82,7 +82,7 @@ async function handleCleanup() {
         </div>
         <div class="space-y-1">
           <p class="text-sm text-muted">
-            Test Cases (unique)
+            Test cases (unique)
           </p>
           <p class="text-2xl font-semibold">
             {{ stats.totalTestCases }}
@@ -90,7 +90,7 @@ async function handleCleanup() {
         </div>
         <div class="space-y-1">
           <p class="text-sm text-muted">
-            Test Results
+            Test results
           </p>
           <p class="text-2xl font-semibold">
             {{ stats.totalRunsCases }}
@@ -106,7 +106,7 @@ async function handleCleanup() {
         </div>
         <div class="space-y-1">
           <p class="text-sm text-muted">
-            Stored Reports
+            Stored reports
           </p>
           <p class="text-2xl font-semibold">
             {{ stats.totalReports }}
@@ -114,7 +114,7 @@ async function handleCleanup() {
         </div>
         <div class="space-y-1">
           <p class="text-sm text-muted">
-            Report Size (DB)
+            Report size (DB)
           </p>
           <p class="text-2xl font-semibold">
             {{ formatBytes(stats.reportSizeFromDb) }}
@@ -122,7 +122,7 @@ async function handleCleanup() {
         </div>
         <div class="space-y-1">
           <p class="text-sm text-muted">
-            Storage on Disk
+            Storage on disk
           </p>
           <p class="text-2xl font-semibold">
             {{ formatBytes(stats.storageSizeOnDisk) }}
@@ -147,7 +147,7 @@ async function handleCleanup() {
       <template #header>
         <div>
           <h2 class="font-semibold text-base">
-            Cleanup Old Test Runs
+            Cleanup old test runs
           </h2>
           <p class="text-sm text-muted mt-1">
             Permanently delete test runs (and their reports, traces, and test results) older than a given period.

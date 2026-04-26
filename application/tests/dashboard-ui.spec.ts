@@ -67,7 +67,7 @@ test.describe('Dashboard UI Tests', () => {
     await expect(page.getByText('Test Results Trend')).toBeVisible()
 
     // Check project name in sidebar is expanded
-    await expect(page.getByRole('link', { name: 'Test Runs' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Test runs' })).toBeVisible()
   })
 
   test('should navigate to test run details page', async ({ page }) => {
@@ -165,12 +165,12 @@ test.describe('Dashboard UI Tests', () => {
     await page.waitForLoadState('networkidle')
 
     // Check heading and stats section
-    await expect(page.getByText('Storage Statistics')).toBeVisible()
-    await expect(page.getByText('Test Runs', { exact: true })).toBeVisible()
-    await expect(page.getByText('Cleanup Old Test Runs')).toBeVisible()
+    await expect(page.getByText('Storage statistics')).toBeVisible()
+    await expect(page.getByText('Test runs', { exact: true })).toBeVisible()
+    await expect(page.getByText('Cleanup old test runs')).toBeVisible()
 
     // Verify the cleanup button exists
-    await expect(page.getByRole('button', { name: 'Run Cleanup' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Run cleanup' })).toBeVisible()
   })
 
   test('should show delete confirmation modal on test run page', async ({ page, request }) => {
@@ -199,10 +199,10 @@ test.describe('Dashboard UI Tests', () => {
 
     // Click it — confirmation modal should appear
     await deleteButton.click()
-    await expect(page.getByText('Delete Test Run')).toBeVisible()
+    await expect(page.getByText('Delete test run', { exact: true })).toBeVisible()
 
     // Close the modal
     await page.getByRole('button', { name: 'Cancel' }).click()
-    await expect(page.getByText('Delete Test Run')).not.toBeVisible()
+    await expect(page.getByText('Delete test run', { exact: true })).not.toBeVisible()
   })
 })

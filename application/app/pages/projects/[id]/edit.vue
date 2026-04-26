@@ -87,7 +87,7 @@ function onCancel() {
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
-              Edit Project Settings
+              Edit project settings
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Project Name: <span class="font-medium">{{ project?.name }}</span>
@@ -121,7 +121,7 @@ function onCancel() {
 
             <div class="flex gap-2 pt-4">
               <UButton type="submit" :loading="saving">
-                Save Changes
+                Save changes
               </UButton>
               <UButton variant="outline" @click="onCancel">
                 Cancel

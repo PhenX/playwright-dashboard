@@ -508,7 +508,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
 
   <!-- Delete Confirm Dialog -->
   <ClientOnly>
-    <UModal :open="isDeleteConfirmOpen" title="Delete Test Run" @update:open="isDeleteConfirmOpen = $event">
+    <UModal :open="isDeleteConfirmOpen" title="Delete test run" @update:open="isDeleteConfirmOpen = $event">
       <template #body>
         <p>
           Are you sure you want to delete <strong>Test Run #{{ testRun?.id }}</strong>?
@@ -517,8 +517,19 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
         </p>
       </template>
       <template #footer>
-        <UButton color="neutral" variant="ghost" label="Cancel" @click="isDeleteConfirmOpen = false" />
-        <UButton color="error" label="Delete" icon="i-lucide-trash-2" :loading="deleting" @click="handleDeleteRun" />
+        <UButton
+          color="neutral"
+          variant="ghost"
+          label="Cancel"
+          @click="isDeleteConfirmOpen = false"
+        />
+        <UButton
+          color="error"
+          label="Delete"
+          icon="i-lucide-trash-2"
+          :loading="deleting"
+          @click="handleDeleteRun"
+        />
       </template>
     </UModal>
   </ClientOnly>

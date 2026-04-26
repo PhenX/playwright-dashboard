@@ -47,7 +47,7 @@ const projectItems = computed(() => {
       active: isActive,
       children: [
         {
-          label: 'Test Runs',
+          label: 'Test runs',
           icon: 'i-lucide-play-circle',
           to: `/projects/${project.id}`,
           badge: String(project.totalRuns || 0),
@@ -56,7 +56,7 @@ const projectItems = computed(() => {
           }
         },
         {
-          label: 'Test Cases',
+          label: 'Test cases',
           icon: 'i-lucide-list-checks',
           to: `/projects/${project.id}/test-cases`,
           badge: String(project.totalTestCases || 0),
@@ -73,7 +73,7 @@ const projectItems = computed(() => {
           }
         },
         {
-          label: 'Edit',
+          label: 'Edit project',
           icon: 'i-lucide-edit',
           to: `/projects/${project.id}/edit`,
           onSelect: () => {

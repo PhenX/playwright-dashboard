@@ -134,7 +134,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
             size="sm"
             variant="outline"
           >
-            View Test Cases
+            View test cases
           </UButton>
           <UButton
             :to="`/projects/${projectId}/performance`"
@@ -187,7 +187,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
         <UCard v-if="project?.testRuns && project.testRuns.length > 0">
           <template #header>
             <h2>
-              Test Results Trend
+              Test results trend
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Test run statistics over time for {{ project?.label || project?.name }}
@@ -200,7 +200,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
         <UCard>
           <template #header>
             <h2>
-              Test Runs
+              Test runs
             </h2>
           </template>
           <UTable
@@ -228,7 +228,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
   <ClientOnly>
     <UModal
       :open="confirmDeleteRunId !== null"
-      title="Delete Test Run"
+      title="Delete test run"
       @update:open="val => { if (!val) confirmDeleteRunId = null }"
     >
       <template #body>
@@ -239,7 +239,12 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
         </p>
       </template>
       <template #footer>
-        <UButton color="neutral" variant="ghost" label="Cancel" @click="confirmDeleteRunId = null" />
+        <UButton
+          color="neutral"
+          variant="ghost"
+          label="Cancel"
+          @click="confirmDeleteRunId = null"
+        />
         <UButton
           color="error"
           label="Delete"

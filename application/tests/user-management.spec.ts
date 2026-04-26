@@ -1,12 +1,7 @@
 import { test, expect } from '@playwright/test'
+import { waitForHydration } from './utils'
 
 test.describe('User Management Page Tests', () => {
-  // Helper to wait for page hydration
-  async function waitForHydration(page) {
-    await page.waitForLoadState('networkidle')
-    await page.waitForTimeout(2000)
-  }
-
   // Clean up test users before running tests to ensure idempotency
   test.beforeAll(async ({ request }) => {
     const usersResponse = await request.get('/api/users')

@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Tags API Tests', () => {
+test.describe.serial('Tags API Tests', () => {
   let createdTagId: number
 
   // Clean up test tags before running to ensure idempotency
@@ -107,7 +107,7 @@ test.describe('Tags API Tests', () => {
   })
 })
 
-test.describe('Tags assigned to projects', () => {
+test.describe.serial('Tags assigned to projects', () => {
   let projectId: number
   let tagId: number
 

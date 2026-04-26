@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('API Server Tests', () => {
+test.describe.serial('API Server Tests', () => {
   test('should submit test results via JSON API', async ({ request }) => {
     const response = await request.post('/api/test-runs/submit', {
       data: {

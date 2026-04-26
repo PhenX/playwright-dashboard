@@ -79,19 +79,19 @@ test.describe.serial('Project Edit Tests', () => {
 
     // Should show edit page
     await expect(page).toHaveURL(new RegExp(`/projects/${projectId}/edit`))
-    await expect(page.locator('h2')).toContainText('Edit Project Settings')
+    await expect(page.locator('h2')).toContainText('Edit project settings')
   })
 
   test('should display edit form', async ({ page }) => {
     await page.goto(`/projects/${projectId}/edit`)
 
     // Check form is visible
-    await expect(page.locator('h2')).toContainText('Edit Project Settings')
+    await expect(page.locator('h2')).toContainText('Edit project settings')
 
     // Check that form fields are present
     await expect(page.locator('input').first()).toBeVisible()
     await expect(page.locator('textarea').first()).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Save Changes' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Save changes' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible()
   })
 

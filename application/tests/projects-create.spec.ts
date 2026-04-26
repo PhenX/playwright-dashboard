@@ -1,11 +1,7 @@
-import { test, expect, type Page } from '@playwright/test'
+import { test, expect } from '@playwright/test'
+import { waitForHydration } from './utils'
 
-async function waitForHydration(page: Page) {
-  await page.waitForLoadState('networkidle')
-  await page.waitForTimeout(1500)
-}
-
-test.describe('Project Creation API Tests', () => {
+test.describe.serial('Project Creation API Tests', () => {
   test('should create a project via API', async ({ request }) => {
     const name = `api-created-project-${Date.now()}`
     const res = await request.post('/api/projects', {
@@ -170,8 +166,8 @@ test.describe('Tag Management UI Tests', () => {
 
     await page.getByRole('button', { name: 'Add Tag' }).first().click()
 
-    await expect(page.getByRole('heading', { name: 'Add New Tag' })).toBeVisible({ timeout: 10000 })
-    await expect(page.getByLabel('Tag Text')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Add new tag' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByLabel('Tag text')).toBeVisible()
     await expect(page.getByLabel('Pick tag color')).toBeVisible()
   })
 
@@ -180,10 +176,10 @@ test.describe('Tag Management UI Tests', () => {
     await waitForHydration(page)
 
     await page.getByRole('button', { name: 'Add Tag' }).first().click()
-    await expect(page.getByRole('heading', { name: 'Add New Tag' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: 'Add new tag' })).toBeVisible({ timeout: 10000 })
 
     await page.getByRole('button', { name: 'Cancel' }).click()
-    await expect(page.getByRole('heading', { name: 'Add New Tag' })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Add new tag' })).not.toBeVisible()
   })
 
   test('should create a new tag from the UI', async ({ page }) => {
@@ -192,9 +188,9 @@ test.describe('Tag Management UI Tests', () => {
     await waitForHydration(page)
 
     await page.getByRole('button', { name: 'Add Tag' }).first().click()
-    await expect(page.getByRole('heading', { name: 'Add New Tag' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: 'Add new tag' })).toBeVisible({ timeout: 10000 })
 
-    await page.getByLabel('Tag Text').fill(tagName)
+    await page.getByLabel('Tag text').fill(tagName)
     await page.getByRole('button', { name: 'Create Tag' }).click()
 
     // Success toast
@@ -209,7 +205,7 @@ test.describe('Tag Management UI Tests', () => {
     await waitForHydration(page)
 
     await page.getByRole('button', { name: 'Add Tag' }).first().click()
-    await expect(page.getByRole('heading', { name: 'Add New Tag' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: 'Add new tag' })).toBeVisible({ timeout: 10000 })
 
     // Color picker input should be an input[type=color]
     const colorPicker = page.locator('input[type="color"]').first()
@@ -221,9 +217,9 @@ test.describe('Tag Management UI Tests', () => {
     await waitForHydration(page)
 
     await page.getByRole('button', { name: 'Add Tag' }).first().click()
-    await expect(page.getByRole('heading', { name: 'Add New Tag' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: 'Add new tag' })).toBeVisible({ timeout: 10000 })
 
-    await page.getByLabel('Tag Text').fill('preview-test')
+    await page.getByLabel('Tag text').fill('preview-test')
     await expect(page.getByText('Preview:')).toBeVisible()
     await expect(page.getByText('preview-test')).toBeVisible()
   })

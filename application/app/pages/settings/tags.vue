@@ -226,7 +226,7 @@ async function handleDeleteTag(tag: TagInfo) {
           </p>
           <UButton
             v-if="isAdmin"
-            label="Add Tag"
+            label="Add tag"
             icon="i-lucide-tag"
             @click="isAddTagModalOpen = true"
           />
@@ -237,11 +237,11 @@ async function handleDeleteTag(tag: TagInfo) {
 
   <!-- Add Tag Modal -->
   <ClientOnly>
-    <UModal :open="isAddTagModalOpen" title="Add New Tag" @update:open="isAddTagModalOpen = $event">
+    <UModal :open="isAddTagModalOpen" title="Add new tag" @update:open="isAddTagModalOpen = $event">
       <template #body>
         <UForm :schema="addTagSchema" :state="newTag">
           <UFormField
-            label="Tag Text"
+            label="Tag text"
             name="text"
             required
             class="mb-4"
@@ -291,11 +291,11 @@ async function handleDeleteTag(tag: TagInfo) {
     </UModal>
 
     <!-- Edit Tag Modal -->
-    <UModal :open="isEditTagModalOpen" title="Edit Tag" @update:open="isEditTagModalOpen = $event">
+    <UModal :open="isEditTagModalOpen" title="Edit tag" @update:open="isEditTagModalOpen = $event">
       <template #body>
         <UForm :schema="addTagSchema" :state="editTagState">
           <UFormField
-            label="Tag Text"
+            label="Tag text"
             name="text"
             required
             class="mb-4"
@@ -337,7 +337,7 @@ async function handleDeleteTag(tag: TagInfo) {
         />
         <UButton
           type="submit"
-          label="Save Changes"
+          label="Save changes"
           icon="i-lucide-check"
           @click="handleEditTag"
         />

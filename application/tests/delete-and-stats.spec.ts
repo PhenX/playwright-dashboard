@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Delete Test Run API', () => {
+test.describe.serial('Delete test run API', () => {
   let testRunId: number
   let projectId: number
 
