@@ -12,6 +12,10 @@
   ],
   "author": "",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PhenX/playwright-dashboard"
+  },
   "peerDependencies": {
     "@playwright/test": "^1.40.0"
   },
