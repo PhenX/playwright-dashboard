@@ -3,7 +3,7 @@ const fs = require('fs');
 const FormData = require('form-data');
 const { collectMetadata } = require('./lib/metadata');
 const { collectStepMetrics, computePerformanceSummary } = require('./lib/steps');
-const { postJSON, postFormData } = require('./lib/upload');
+const { loginUser, postJSON, postFormData } = require('./lib/upload');
 const {
   findHTMLReportDirectory,
   findReportDirectory,
@@ -26,6 +26,8 @@ class PlaywrightDashboardReporter {
       collectScmInfo: options.collectScmInfo !== false, // default true
       collectCiInfo: options.collectCiInfo !== false, // default true
       collectPerformanceMetrics: options.collectPerformanceMetrics !== false, // default true
+      username: options.username || null,
+      password: options.password || null,
       ...options
     };
 
@@ -155,11 +157,23 @@ class PlaywrightDashboardReporter {
       this.metadata.performance = computePerformanceSummary(this.testCases);
     }
 
+    // Authenticate if credentials are provided
+    let sessionCookie = null;
+    if (this.options.username && this.options.password) {
+      try {
+        console.log(`[Playwright Dashboard] Authenticating as ${this.options.username}...`);
+        sessionCookie = await loginUser(this.options.serverUrl, this.options.username, this.options.password, this.options.verbose);
+      } catch (error) {
+        console.error(`[Playwright Dashboard] Authentication failed: ${error.message}`);
+        throw error;
+      }
+    }
+
     // Try to upload with files if available
     const hasReports = this.options.uploadReport || (this.options.reports && this.options.reports.length > 0);
     if (this.options.uploadTraces || hasReports) {
       try {
-        await this.uploadWithFiles(overallStatus, duration);
+        await this.uploadWithFiles(overallStatus, duration, sessionCookie);
         return;
       } catch (error) {
         console.warn(`[Playwright Dashboard] Failed to upload with files: ${error.message}`);
@@ -168,10 +182,10 @@ class PlaywrightDashboardReporter {
     }
 
     // Fallback to JSON-only upload
-    await this.uploadJSON(overallStatus, duration);
+    await this.uploadJSON(overallStatus, duration, sessionCookie);
   }
 
-  async uploadJSON(overallStatus, duration) {
+  async uploadJSON(overallStatus, duration, sessionCookie) {
     const payload = {
       projectName: this.options.projectName,
       projectDescription: this.options.projectDescription,
@@ -199,7 +213,7 @@ class PlaywrightDashboardReporter {
     };
 
     try {
-      const response = await postJSON(this.options.serverUrl, '/api/test-runs/submit', payload, this.options.verbose);
+      const response = await postJSON(this.options.serverUrl, '/api/test-runs/submit', payload, this.options.verbose, sessionCookie);
       console.log(`[Playwright Dashboard] Successfully uploaded test results to ${this.options.serverUrl}`);
       if (response.testRunId) {
         console.log(`[Playwright Dashboard] Test Run ID: ${response.testRunId}, Project ID: ${response.projectId}`);
@@ -210,7 +224,7 @@ class PlaywrightDashboardReporter {
     }
   }
 
-  async uploadWithFiles(overallStatus, duration) {
+  async uploadWithFiles(overallStatus, duration, sessionCookie) {
     const form = new FormData();
 
     // Add project name
@@ -316,7 +330,7 @@ class PlaywrightDashboardReporter {
     }
 
     try {
-      const response = await postFormData(this.options.serverUrl, '/api/test-runs/upload', form);
+      const response = await postFormData(this.options.serverUrl, '/api/test-runs/upload', form, sessionCookie);
       console.log(`[Playwright Dashboard] Successfully uploaded test results with files to ${this.options.serverUrl}`);
       if (response.testRunId) {
         console.log(`[Playwright Dashboard] Test Run ID: ${response.testRunId}, Project ID: ${response.projectId}`);

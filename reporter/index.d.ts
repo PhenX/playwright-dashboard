@@ -97,6 +97,20 @@ export interface DashboardReporterOptions {
   collectPerformanceMetrics?: boolean;
 
   /**
+   * Username for authenticating with the dashboard server.
+   * Required when the dashboard has authentication enabled.
+   * The user must have the **reporter** role or higher.
+   * @see https://playwright-dashboard.example.com/authentication
+   */
+  username?: string;
+
+  /**
+   * Password for authenticating with the dashboard server.
+   * Used together with `username` when authentication is enabled.
+   */
+  password?: string;
+
+  /**
    * Enable verbose logging
    * @default false
    */

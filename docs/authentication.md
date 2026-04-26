@@ -86,6 +86,32 @@ When authentication is enabled:
 - `GET` endpoints remain publicly accessible (read-only).
 - The reporter's submission endpoints (`/api/test-runs/submit` and `/api/test-runs/upload`) require the **reporter** role or higher.
 
+## Using the reporter with authentication
+
+Create a dedicated user with the **reporter** role for your CI pipelines:
+
+1. Log in as an administrator in `/settings/users` and add a new user with the **Reporter** role.
+
+2. Configure the reporter with the credentials:
+
+   ```typescript
+   // playwright.config.ts
+   export default defineConfig({
+     reporter: [
+       ['playwright-dashboard-reporter', {
+         serverUrl: 'https://your-dashboard.example.com',
+         projectName: 'my-project',
+         username: process.env.DASHBOARD_USERNAME,
+         password: process.env.DASHBOARD_PASSWORD,
+       }],
+     ],
+   })
+   ```
+
+3. Add `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` as secrets in your CI provider.
+
+The reporter automatically calls `/api/auth/login` before each upload and uses the resulting session for all subsequent requests.
+
 ## Security considerations
 
 - Always use HTTPS in production.

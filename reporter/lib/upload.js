@@ -4,20 +4,20 @@ const { URL } = require('url');
 const FormData = require('form-data');
 
 /**
- * Make an HTTP/HTTPS POST request with JSON body
+ * Log in to the dashboard and return the session cookie string.
  * @param {string} serverUrl - Base server URL
- * @param {string} pathname - API path
- * @param {Object} payload - JSON payload
+ * @param {string} username - Username
+ * @param {string} password - Password
  * @param {boolean} verbose - Whether to log verbose output
- * @returns {Promise<Object>} Parsed response body
+ * @returns {Promise<string>} Session cookie header value
  */
-function postJSON(serverUrl, pathname, payload, verbose) {
+function loginUser(serverUrl, username, password, verbose) {
   return new Promise((resolve, reject) => {
-    const url = new URL(pathname, serverUrl);
+    const url = new URL('/api/auth/login', serverUrl);
     const isHttps = url.protocol === 'https:';
     const lib = isHttps ? https : http;
 
-    const postData = JSON.stringify(payload);
+    const postData = JSON.stringify({ username, password });
 
     const reqOptions = {
       hostname: url.hostname,
@@ -28,6 +28,79 @@ function postJSON(serverUrl, pathname, payload, verbose) {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData)
       }
+    };
+
+    const req = lib.request(reqOptions, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          // Extract the Set-Cookie header and join multiple cookies
+          const setCookie = res.headers['set-cookie'];
+          if (!setCookie || setCookie.length === 0) {
+            reject(new Error('Login succeeded but no session cookie was returned'));
+            return;
+          }
+          // Join multiple Set-Cookie values into a single Cookie header value
+          const cookie = setCookie.map(c => c.split(';')[0]).join('; ');
+          if (verbose) {
+            console.log('[Playwright Dashboard] Logged in successfully');
+          }
+          resolve(cookie);
+        } else {
+          if (verbose) {
+            console.error(`[Playwright Dashboard] Login response: ${data}`);
+          }
+          reject(new Error(`Login failed with status ${res.statusCode}`));
+        }
+      });
+    });
+
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    req.write(postData);
+    req.end();
+  });
+}
+
+/**
+ * Make an HTTP/HTTPS POST request with JSON body
+ * @param {string} serverUrl - Base server URL
+ * @param {string} pathname - API path
+ * @param {Object} payload - JSON payload
+ * @param {boolean} verbose - Whether to log verbose output
+ * @param {string} [cookie] - Optional session cookie to include in the request
+ * @returns {Promise<Object>} Parsed response body
+ */
+function postJSON(serverUrl, pathname, payload, verbose, cookie) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(pathname, serverUrl);
+    const isHttps = url.protocol === 'https:';
+    const lib = isHttps ? https : http;
+
+    const postData = JSON.stringify(payload);
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(postData)
+    };
+
+    if (cookie) {
+      headers['Cookie'] = cookie;
+    }
+
+    const reqOptions = {
+      hostname: url.hostname,
+      port: url.port || (isHttps ? 443 : 80),
+      path: url.pathname,
+      method: 'POST',
+      headers
     };
 
     const req = lib.request(reqOptions, (res) => {
@@ -67,20 +140,26 @@ function postJSON(serverUrl, pathname, payload, verbose) {
  * @param {string} serverUrl - Base server URL
  * @param {string} pathname - API path
  * @param {FormData} form - FormData instance
+ * @param {string} [cookie] - Optional session cookie to include in the request
  * @returns {Promise<Object>} Parsed response body
  */
-function postFormData(serverUrl, pathname, form) {
+function postFormData(serverUrl, pathname, form, cookie) {
   return new Promise((resolve, reject) => {
     const url = new URL(pathname, serverUrl);
     const isHttps = url.protocol === 'https:';
     const lib = isHttps ? https : http;
+
+    const headers = form.getHeaders();
+    if (cookie) {
+      headers['Cookie'] = cookie;
+    }
 
     const reqOptions = {
       hostname: url.hostname,
       port: url.port || (isHttps ? 443 : 80),
       path: url.pathname,
       method: 'POST',
-      headers: form.getHeaders()
+      headers
     };
 
     const req = lib.request(reqOptions, (res) => {
@@ -111,4 +190,4 @@ function postFormData(serverUrl, pathname, form) {
   });
 }
 
-module.exports = { postJSON, postFormData, FormData };
+module.exports = { loginUser, postJSON, postFormData, FormData };

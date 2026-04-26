@@ -51,6 +51,8 @@ export default defineConfig({
 | `collectScmInfo` | boolean | `true` | Auto-collect git commit, branch, author |
 | `collectCiInfo` | boolean | `true` | Auto-collect CI environment info |
 | `collectPerformanceMetrics` | boolean | `true` | Collect step timings, network requests and web vitals |
+| `username` | string | — | Username for dashboard login (required when auth is enabled) |
+| `password` | string | — | Password for dashboard login (required when auth is enabled) |
 
 ## Multiple reports
 
@@ -219,3 +221,26 @@ export default defineConfig({
 
 - Verify `serverUrl` is correct and the server is running
 - Check network connectivity and firewall settings
+
+## With authentication enabled
+
+When the dashboard has authentication enabled, the reporter must log in before submitting results.
+Provide the `username` and `password` of an account with the **reporter** or **administrator** role:
+
+```typescript
+export default defineConfig({
+  reporter: [
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'http://your-dashboard.example.com',
+      projectName: 'my-project',
+      username: process.env.DASHBOARD_USERNAME,
+      password: process.env.DASHBOARD_PASSWORD,
+    }],
+  ],
+})
+```
+
+The reporter calls `/api/auth/login` automatically before each upload.  
+Store the credentials in CI secrets — never hard-code them in the config file.
+
+See [Authentication](/authentication) for details on enabling auth and creating users.
