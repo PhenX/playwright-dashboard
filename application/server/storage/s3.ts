@@ -134,4 +134,3 @@ export class S3StorageAdapter implements StorageAdapter {
     }
   }
 }
-
