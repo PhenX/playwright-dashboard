@@ -1,10 +1,10 @@
 import type { H3Event } from 'h3'
 import { useSession, updateSession, clearSession as h3ClearSession } from 'h3'
 import { getDatabase } from '../database'
-import { users } from '../database/schema'
+import { users, apiKeys } from '../database/schema'
 import { eq } from 'drizzle-orm'
 import type { User } from '../database/schema'
-import { scrypt, randomBytes, timingSafeEqual } from 'node:crypto'
+import { scrypt, randomBytes, timingSafeEqual, createHash } from 'node:crypto'
 import { promisify } from 'node:util'
 
 const scryptAsync = promisify(scrypt)
@@ -139,6 +139,87 @@ export function isAuthEnabled(event?: H3Event): boolean {
   return config.authEnabled === true
 }
 
+// ---------------------------------------------------------------------------
+// API key helpers
+// ---------------------------------------------------------------------------
+
+const API_KEY_PREFIX = 'pd_'
+const API_KEY_BYTES = 32 // 256 bits of entropy → 64-char hex string
+
+/**
+ * Generate a new API key.
+ * Returns the plaintext key (shown ONCE to the user) and the data to persist.
+ */
+export function generateApiKey(): { plaintext: string, hash: string, prefix: string } {
+  const raw = randomBytes(API_KEY_BYTES).toString('hex')
+  const plaintext = `${API_KEY_PREFIX}${raw}`
+  const hash = createHash('sha256').update(plaintext).digest('hex')
+  const prefix = raw.slice(0, 8)
+  return { plaintext, hash, prefix }
+}
+
+/**
+ * Hash a plaintext API key the same way generateApiKey does.
+ * Used for verification.
+ */
+function hashApiKey(plaintext: string): string {
+  return createHash('sha256').update(plaintext).digest('hex')
+}
+
+/**
+ * Look up a user by a plaintext API key value.
+ * Updates `last_used_at` on a successful match.
+ * Returns null if the key does not exist, is expired, or belongs to no user.
+ */
+export async function getUserByApiKey(plaintext: string): Promise<User | null> {
+  if (!plaintext.startsWith(API_KEY_PREFIX)) {
+    return null
+  }
+
+  const hash = hashApiKey(plaintext)
+  const db = await getDatabase()
+
+  const keyResults = await db.select().from(apiKeys).where(eq(apiKeys.keyHash, hash))
+  const key = keyResults[0]
+
+  if (!key) {
+    return null
+  }
+
+  // Check expiry
+  if (key.expiresAt && key.expiresAt < new Date()) {
+    return null
+  }
+
+  // Update last used
+  await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, key.id))
+
+  const userResults = await db.select().from(users).where(eq(users.id, key.userId))
+  return userResults[0] || null
+}
+
+/**
+ * Extract the Bearer token from the Authorization header, or the value of the
+ * X-API-Key header.  Returns null if neither is present or if the value does
+ * not start with the API key prefix.
+ */
+function extractApiKey(event: H3Event): string | null {
+  const authHeader = getRequestHeader(event, 'authorization')
+  if (authHeader) {
+    const match = authHeader.match(/^Bearer\s+(.+)$/i)
+    if (match?.[1]?.startsWith(API_KEY_PREFIX)) {
+      return match[1]
+    }
+  }
+
+  const xApiKey = getRequestHeader(event, 'x-api-key')
+  if (xApiKey?.startsWith(API_KEY_PREFIX)) {
+    return xApiKey
+  }
+
+  return null
+}
+
 // Require authentication - throw error if not authenticated
 export async function requireAuth(event: H3Event, allowedRoles?: string[]): Promise<User> {
   if (!isAuthEnabled(event)) {
@@ -154,6 +235,28 @@ export async function requireAuth(event: H3Event, allowedRoles?: string[]): Prom
     }
   }
 
+  // 1. Try API key authentication (preferred for CI/reporter usage)
+  const apiKeyValue = extractApiKey(event)
+  if (apiKeyValue) {
+    const user = await getUserByApiKey(apiKeyValue)
+    if (!user) {
+      throw createError({
+        statusCode: 401,
+        message: 'Invalid or expired API key'
+      })
+    }
+
+    if (allowedRoles && !hasRole(user, allowedRoles)) {
+      throw createError({
+        statusCode: 403,
+        message: 'Insufficient permissions'
+      })
+    }
+
+    return user
+  }
+
+  // 2. Fall back to session cookie
   const user = await getCurrentUser(event)
   if (!user) {
     throw createError({

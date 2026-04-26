@@ -97,8 +97,23 @@ export interface DashboardReporterOptions {
   collectPerformanceMetrics?: boolean;
 
   /**
+   * API key for authenticating with the dashboard server.
+   *
+   * **Preferred over `username`/`password`** for CI environments.
+   * Generate a key in the dashboard UI under Settings → Users → API keys.
+   * The key is sent as an `Authorization: Bearer <key>` header on every request.
+   *
+   * Store the key in a CI secret (e.g. `DASHBOARD_API_KEY`) and reference it here:
+   * ```typescript
+   * apiKey: process.env.DASHBOARD_API_KEY,
+   * ```
+   */
+  apiKey?: string;
+
+  /**
    * Username for authenticating with the dashboard server.
-   * Required when the dashboard has authentication enabled.
+   * Use `apiKey` instead when possible.
+   * Required when the dashboard has authentication enabled and `apiKey` is not set.
    * The user must have the **reporter** role or higher.
    */
   username?: string;

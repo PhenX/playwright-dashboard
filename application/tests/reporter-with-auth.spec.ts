@@ -453,4 +453,264 @@ test.describe.serial('Reporter with authentication enabled', () => {
 
     await expect(reporter.onEnd({ status: 'passed' })).rejects.toThrow()
   })
+
+  // ---------------------------------------------------------------------------
+  // API key management
+  // ---------------------------------------------------------------------------
+
+  let reporterApiKey: string | null = null
+
+  test('admin can create an API key for the reporter user', async ({ request }) => {
+    // Login as admin
+    const loginRes = await request.post(`${AUTH_SERVER_URL}/api/auth/login`, {
+      data: { username: 'admin', password: 'adminpassword123' }
+    })
+    expect(loginRes.ok()).toBeTruthy()
+
+    // Get reporter user id
+    const usersRes = await request.get(`${AUTH_SERVER_URL}/api/users`)
+    expect(usersRes.ok()).toBeTruthy()
+    const usersData = await usersRes.json()
+    const reporterUser = usersData.users.find((u: { username: string }) => u.username === 'ci-reporter')
+    expect(reporterUser).toBeDefined()
+
+    // Create API key
+    const createRes = await request.post(`${AUTH_SERVER_URL}/api/users/${reporterUser.id}/api-keys`, {
+      data: { name: 'CI Pipeline Key' }
+    })
+    expect(createRes.ok()).toBeTruthy()
+    const keyData = await createRes.json()
+    expect(keyData.key).toMatch(/^pd_[0-9a-f]{64}$/)
+    expect(keyData.prefix).toHaveLength(8)
+    expect(keyData.name).toBe('CI Pipeline Key')
+
+    // Store the key for subsequent tests
+    reporterApiKey = keyData.key
+  })
+
+  test('GET api-keys lists the key with prefix but not the full value', async ({ request }) => {
+    // Login as reporter
+    const loginRes = await request.post(`${AUTH_SERVER_URL}/api/auth/login`, {
+      data: { username: 'ci-reporter', password: 'reporterpassword123' }
+    })
+    expect(loginRes.ok()).toBeTruthy()
+
+    const usersRes = await request.get(`${AUTH_SERVER_URL}/api/users`)
+    const usersData = await usersRes.json()
+    const reporterUser = usersData.users.find((u: { username: string }) => u.username === 'ci-reporter')
+
+    const keysRes = await request.get(`${AUTH_SERVER_URL}/api/users/${reporterUser.id}/api-keys`)
+    expect(keysRes.ok()).toBeTruthy()
+    const keysData = await keysRes.json()
+    expect(keysData.apiKeys).toHaveLength(1)
+    const listedKey = keysData.apiKeys[0]
+    expect(listedKey.name).toBe('CI Pipeline Key')
+    // Only the prefix is returned – not the full key
+    expect(listedKey.keyPrefix).toHaveLength(8)
+    expect(listedKey).not.toHaveProperty('keyHash')
+    expect(listedKey).not.toHaveProperty('key')
+  })
+
+  test('submit endpoint accepts a valid API key via Authorization header', async ({ request }) => {
+    expect(reporterApiKey).not.toBeNull()
+
+    const submitRes = await request.post(`${AUTH_SERVER_URL}/api/test-runs/submit`, {
+      headers: { Authorization: `Bearer ${reporterApiKey}` },
+      data: {
+        projectName: 'api-key-submit-test',
+        status: 'passed',
+        startTime: new Date().toISOString(),
+        duration: 2000,
+        totalTests: 1,
+        passedTests: 1,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: [{
+          title: 'loads homepage',
+          status: 'passed',
+          duration: 500,
+          location: 'tests/home.spec.ts:1:1',
+          retries: 0
+        }]
+      }
+    })
+    expect(submitRes.ok()).toBeTruthy()
+    const data = await submitRes.json()
+    expect(data.success).toBe(true)
+  })
+
+  test('submit endpoint accepts a valid API key via X-API-Key header', async ({ request }) => {
+    expect(reporterApiKey).not.toBeNull()
+
+    const submitRes = await request.post(`${AUTH_SERVER_URL}/api/test-runs/submit`, {
+      headers: { 'X-API-Key': reporterApiKey! },
+      data: {
+        projectName: 'api-key-submit-test',
+        status: 'passed',
+        startTime: new Date().toISOString(),
+        duration: 1000,
+        totalTests: 1,
+        passedTests: 1,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: []
+      }
+    })
+    expect(submitRes.ok()).toBeTruthy()
+    const data = await submitRes.json()
+    expect(data.success).toBe(true)
+  })
+
+  test('submit endpoint rejects an invalid API key', async ({ request }) => {
+    const res = await request.post(`${AUTH_SERVER_URL}/api/test-runs/submit`, {
+      headers: { Authorization: 'Bearer pd_0000000000000000000000000000000000000000000000000000000000000000' },
+      data: {
+        projectName: 'invalid-key-test',
+        status: 'passed',
+        startTime: new Date().toISOString(),
+        duration: 1000,
+        totalTests: 0,
+        passedTests: 0,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: []
+      }
+    })
+    expect(res.status()).toBe(401)
+  })
+
+  test('reporter lib postJSON with API key submits successfully', async () => {
+    expect(reporterApiKey).not.toBeNull()
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { postJSON } = require('../../../reporter/lib/upload') as {
+      postJSON: (serverUrl: string, pathname: string, payload: object, verbose: boolean, keyOrCookie?: string) => Promise<Record<string, unknown>>
+    }
+
+    const payload = {
+      projectName: 'reporter-api-key-lib-test',
+      status: 'passed',
+      startTime: new Date().toISOString(),
+      duration: 1000,
+      totalTests: 1,
+      passedTests: 1,
+      failedTests: 0,
+      skippedTests: 0,
+      testCases: [{
+        title: 'test via api key',
+        status: 'passed',
+        duration: 300,
+        location: 'tests/api-key.spec.ts:1:1',
+        retries: 0
+      }]
+    }
+
+    const result = await postJSON(AUTH_SERVER_URL, '/api/test-runs/submit', payload, false, reporterApiKey!)
+    expect(result.success).toBe(true)
+    expect(result.testRunId).toBeDefined()
+  })
+
+  test('PlaywrightDashboardReporter submits results with apiKey option', async () => {
+    expect(reporterApiKey).not.toBeNull()
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const PlaywrightDashboardReporter = require('../../../reporter/index') as new (opts: object) => {
+      onBegin: (config: object, suite: object) => void
+      onTestEnd: (test: object, result: object) => void
+      onEnd: (result: object) => Promise<void>
+    }
+
+    const reporter = new PlaywrightDashboardReporter({
+      serverUrl: AUTH_SERVER_URL,
+      projectName: 'reporter-api-key-e2e-test',
+      uploadReport: false,
+      uploadTraces: false,
+      collectScmInfo: false,
+      collectCiInfo: false,
+      collectPerformanceMetrics: false,
+      apiKey: reporterApiKey,
+      verbose: false
+    })
+
+    reporter.onBegin(
+      { projects: [], workers: 1, timeout: 30000, fullyParallel: false },
+      { allTests: () => [] }
+    )
+
+    reporter.onTestEnd(
+      {
+        title: 'api key auth works end to end',
+        location: { file: join(resolve(process.cwd()), 'tests', 'api-key.spec.ts'), line: 1, column: 1 }
+      },
+      { status: 'passed', duration: 400, error: null, retry: 0, attachments: [], steps: [] }
+    )
+
+    await reporter.onEnd({ status: 'passed' })
+
+    // Verify project was created
+    const projectsRes = await new Promise<{ status: number, body: unknown[] }>((resolve, reject) => {
+      http.get(`${AUTH_SERVER_URL}/api/projects`, (res) => {
+        let data = ''
+        res.on('data', (chunk: Buffer) => { data += chunk })
+        res.on('end', () => {
+          try { resolve({ status: res.statusCode ?? 0, body: JSON.parse(data) }) }
+          catch { resolve({ status: res.statusCode ?? 0, body: [] }) }
+        })
+      }).on('error', reject)
+    })
+
+    expect(projectsRes.status).toBe(200)
+    const projects = projectsRes.body as Array<{ name: string }>
+    expect(projects.find(p => p.name === 'reporter-api-key-e2e-test')).toBeDefined()
+  })
+
+  test('admin can revoke the API key', async ({ request }) => {
+    // Login as admin
+    const loginRes = await request.post(`${AUTH_SERVER_URL}/api/auth/login`, {
+      data: { username: 'admin', password: 'adminpassword123' }
+    })
+    expect(loginRes.ok()).toBeTruthy()
+
+    // Get reporter user id
+    const usersRes = await request.get(`${AUTH_SERVER_URL}/api/users`)
+    const usersData = await usersRes.json()
+    const reporterUser = usersData.users.find((u: { username: string }) => u.username === 'ci-reporter')
+
+    // Get the key id
+    const keysRes = await request.get(`${AUTH_SERVER_URL}/api/users/${reporterUser.id}/api-keys`)
+    const keysData = await keysRes.json()
+    expect(keysData.apiKeys).toHaveLength(1)
+    const keyId = keysData.apiKeys[0].id
+
+    // Revoke the key
+    const revokeRes = await request.delete(`${AUTH_SERVER_URL}/api/users/${reporterUser.id}/api-keys/${keyId}`)
+    expect(revokeRes.ok()).toBeTruthy()
+    const revokeData = await revokeRes.json()
+    expect(revokeData.success).toBe(true)
+
+    // Key list should now be empty
+    const keysResAfter = await request.get(`${AUTH_SERVER_URL}/api/users/${reporterUser.id}/api-keys`)
+    const keysDataAfter = await keysResAfter.json()
+    expect(keysDataAfter.apiKeys).toHaveLength(0)
+  })
+
+  test('revoked API key is rejected', async ({ request }) => {
+    expect(reporterApiKey).not.toBeNull()
+
+    const res = await request.post(`${AUTH_SERVER_URL}/api/test-runs/submit`, {
+      headers: { Authorization: `Bearer ${reporterApiKey}` },
+      data: {
+        projectName: 'revoked-key-test',
+        status: 'passed',
+        startTime: new Date().toISOString(),
+        duration: 100,
+        totalTests: 0,
+        passedTests: 0,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: []
+      }
+    })
+    expect(res.status()).toBe(401)
+  })
 })

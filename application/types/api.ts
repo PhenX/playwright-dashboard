@@ -340,6 +340,38 @@ export interface UsersResponse {
 }
 
 // ============================================================================
+// API key types
+// ============================================================================
+
+/**
+ * API key summary (key hash/plaintext is never returned after creation)
+ */
+export interface ApiKeySummary {
+  id: number
+  name: string
+  keyPrefix: string
+  createdAt: Date
+  lastUsedAt?: Date | null
+  expiresAt?: Date | null
+}
+
+/**
+ * Response from GET /api/users/[id]/api-keys
+ */
+export interface ApiKeysResponse {
+  apiKeys: ApiKeySummary[]
+}
+
+/**
+ * Response from POST /api/users/[id]/api-keys – key is shown ONCE
+ */
+export interface CreateApiKeyResponse {
+  key: string
+  prefix: string
+  name: string
+}
+
+// ============================================================================
 // Admin types
 // ============================================================================
 

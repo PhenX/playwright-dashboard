@@ -51,8 +51,9 @@ export default defineConfig({
 | `collectScmInfo` | boolean | `true` | Auto-collect git commit, branch, author |
 | `collectCiInfo` | boolean | `true` | Auto-collect CI environment info |
 | `collectPerformanceMetrics` | boolean | `true` | Collect step timings, network requests and web vitals |
-| `username` | string | — | Username for dashboard login (required when auth is enabled) |
-| `password` | string | — | Password for dashboard login (required when auth is enabled) |
+| `username` | string | — | Username for dashboard login (use `apiKey` instead when possible) |
+| `password` | string | — | Password for dashboard login (used with `username`) |
+| `apiKey` | string | — | API key for authentication (preferred over `username`/`password` for CI) |
 
 ## Multiple reports
 
@@ -224,8 +225,27 @@ export default defineConfig({
 
 ## With authentication enabled
 
-When the dashboard has authentication enabled, the reporter must log in before submitting results.
-Provide the `username` and `password` of an account with the **reporter** or **administrator** role:
+When the dashboard has authentication enabled, the reporter must authenticate before submitting results.
+
+### Recommended: API key (preferred for CI)
+
+Generate an API key in the dashboard UI (Settings → Users → API keys button), then configure the reporter:
+
+```typescript
+export default defineConfig({
+  reporter: [
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'http://your-dashboard.example.com',
+      projectName: 'my-project',
+      apiKey: process.env.DASHBOARD_API_KEY,
+    }],
+  ],
+})
+```
+
+The key is sent as an `Authorization: Bearer <key>` header. Store it in a CI secret — never hard-code it.
+
+### Alternative: username/password
 
 ```typescript
 export default defineConfig({
@@ -240,7 +260,6 @@ export default defineConfig({
 })
 ```
 
-The reporter calls `/api/auth/login` automatically before each upload.  
-Store the credentials in CI secrets — never hard-code them in the config file.
+The reporter calls `/api/auth/login` automatically before each upload.
 
-See [Authentication](/authentication) for details on enabling auth and creating users.
+See [Authentication](/authentication) for details on enabling auth, creating users, and managing API keys.

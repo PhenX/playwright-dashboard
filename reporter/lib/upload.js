@@ -75,10 +75,10 @@ function loginUser(serverUrl, username, password, verbose) {
  * @param {string} pathname - API path
  * @param {Object} payload - JSON payload
  * @param {boolean} verbose - Whether to log verbose output
- * @param {string} [cookie] - Optional session cookie to include in the request
+ * @param {string} [cookieOrApiKey] - Optional session cookie or API key (Bearer) to include
  * @returns {Promise<Object>} Parsed response body
  */
-function postJSON(serverUrl, pathname, payload, verbose, cookie) {
+function postJSON(serverUrl, pathname, payload, verbose, cookieOrApiKey) {
   return new Promise((resolve, reject) => {
     const url = new URL(pathname, serverUrl);
     const isHttps = url.protocol === 'https:';
@@ -91,8 +91,12 @@ function postJSON(serverUrl, pathname, payload, verbose, cookie) {
       'Content-Length': Buffer.byteLength(postData)
     };
 
-    if (cookie) {
-      headers['Cookie'] = cookie;
+    if (cookieOrApiKey) {
+      if (cookieOrApiKey.startsWith('pd_')) {
+        headers['Authorization'] = `Bearer ${cookieOrApiKey}`;
+      } else {
+        headers['Cookie'] = cookieOrApiKey;
+      }
     }
 
     const reqOptions = {
@@ -140,18 +144,22 @@ function postJSON(serverUrl, pathname, payload, verbose, cookie) {
  * @param {string} serverUrl - Base server URL
  * @param {string} pathname - API path
  * @param {FormData} form - FormData instance
- * @param {string} [cookie] - Optional session cookie to include in the request
+ * @param {string} [cookieOrApiKey] - Optional session cookie or API key (Bearer) to include
  * @returns {Promise<Object>} Parsed response body
  */
-function postFormData(serverUrl, pathname, form, cookie) {
+function postFormData(serverUrl, pathname, form, cookieOrApiKey) {
   return new Promise((resolve, reject) => {
     const url = new URL(pathname, serverUrl);
     const isHttps = url.protocol === 'https:';
     const lib = isHttps ? https : http;
 
     const headers = form.getHeaders();
-    if (cookie) {
-      headers['Cookie'] = cookie;
+    if (cookieOrApiKey) {
+      if (cookieOrApiKey.startsWith('pd_')) {
+        headers['Authorization'] = `Bearer ${cookieOrApiKey}`;
+      } else {
+        headers['Cookie'] = cookieOrApiKey;
+      }
     }
 
     const reqOptions = {

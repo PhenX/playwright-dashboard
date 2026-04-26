@@ -35,6 +35,7 @@ test.describe('Reporter Integration Tests', () => {
     expect(typeDefs).toContain('projectName')
     expect(typeDefs).toContain('uploadReport')
     expect(typeDefs).toContain('uploadTraces')
+    expect(typeDefs).toContain('apiKey')
     expect(typeDefs).toContain('username')
     expect(typeDefs).toContain('password')
   })

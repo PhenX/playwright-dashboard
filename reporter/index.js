@@ -28,6 +28,7 @@ class PlaywrightDashboardReporter {
       collectPerformanceMetrics: options.collectPerformanceMetrics !== false, // default true
       username: options.username || null,
       password: options.password || null,
+      apiKey: options.apiKey || null,
       ...options
     };
 
@@ -159,7 +160,13 @@ class PlaywrightDashboardReporter {
 
     // Authenticate if credentials are provided
     let sessionCookie = null;
-    if (this.options.username && this.options.password) {
+    if (this.options.apiKey) {
+      // API key – passed directly as a Bearer token, no login step needed
+      sessionCookie = this.options.apiKey;
+      if (this.options.verbose) {
+        console.log('[Playwright Dashboard] Using API key for authentication');
+      }
+    } else if (this.options.username && this.options.password) {
       try {
         console.log(`[Playwright Dashboard] Authenticating as ${this.options.username}...`);
         sessionCookie = await loginUser(this.options.serverUrl, this.options.username, this.options.password, this.options.verbose);
