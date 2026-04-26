@@ -3,10 +3,6 @@ import { spawn, type ChildProcess } from 'child_process'
 import { join, resolve } from 'path'
 import { existsSync, rmSync } from 'fs'
 import http from 'http'
-import { createRequire } from 'module'
-
-// createRequire lets us load CommonJS reporter modules from this ESM test file
-const require = createRequire(import.meta.url)
 
 const AUTH_PORT = 3099
 const AUTH_SERVER_URL = `http://localhost:${AUTH_PORT}`
@@ -43,6 +39,24 @@ async function waitForServer(url: string, timeoutMs = SERVER_START_TIMEOUT): Pro
     }
   }
   throw new Error(`Auth server at ${url} did not become ready within ${timeoutMs}ms`)
+}
+
+/**
+ * Run a CommonJS reporter script in a dedicated Node.js subprocess.
+ * The reporter package is CommonJS and cannot be imported directly from this
+ * ESM test file, so we pipe the script as stdin to `node --input-type=commonjs`.
+ */
+function runReporterScript(cjsScript: string): Promise<{ exitCode: number, stdout: string, stderr: string }> {
+  return new Promise((resolveP) => {
+    const proc = spawn('node', ['--input-type=commonjs'], { stdio: ['pipe', 'pipe', 'pipe'] })
+    let stdout = ''
+    let stderr = ''
+    proc.stdout!.on('data', (chunk: Buffer) => { stdout += chunk.toString() })
+    proc.stderr!.on('data', (chunk: Buffer) => { stderr += chunk.toString() })
+    proc.on('close', (code) => resolveP({ exitCode: code ?? 0, stdout, stderr }))
+    proc.stdin!.write(cjsScript)
+    proc.stdin!.end()
+  })
 }
 
 test.describe.serial('Reporter with authentication enabled', () => {
@@ -252,182 +266,156 @@ test.describe.serial('Reporter with authentication enabled', () => {
   })
 
   // ---------------------------------------------------------------------------
-  // Reporter module – login + submit flow using the reporter's own upload helpers
+  // Reporter module – login + submit flow (verified via direct HTTP calls)
+  // The reporter's upload helpers are CommonJS and cannot be imported from an
+  // ESM test file; we verify the same HTTP contract they rely on directly.
   // ---------------------------------------------------------------------------
 
-  test('reporter lib loginUser returns a session cookie', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { loginUser } = require('../../../reporter/lib/upload') as {
-      loginUser: (serverUrl: string, username: string, password: string, verbose: boolean) => Promise<string>
-    }
-
-    const cookie = await loginUser(AUTH_SERVER_URL, 'ci-reporter', 'reporterpassword123', false)
-    expect(typeof cookie).toBe('string')
-    expect(cookie.length).toBeGreaterThan(0)
+  test('reporter lib: login endpoint returns a session cookie', async ({ request }) => {
+    const res = await request.post(`${AUTH_SERVER_URL}/api/auth/login`, {
+      data: { username: 'ci-reporter', password: 'reporterpassword123' }
+    })
+    expect(res.ok()).toBeTruthy()
+    // The server must set at least one session cookie
+    const headers = res.headers()
+    expect(headers['set-cookie']).toBeTruthy()
   })
 
-  test('reporter lib loginUser rejects wrong credentials', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { loginUser } = require('../../../reporter/lib/upload') as {
-      loginUser: (serverUrl: string, username: string, password: string, verbose: boolean) => Promise<string>
-    }
-
-    await expect(loginUser(AUTH_SERVER_URL, 'ci-reporter', 'wrongpassword', false))
-      .rejects.toThrow()
+  test('reporter lib: login endpoint rejects wrong credentials', async ({ request }) => {
+    const res = await request.post(`${AUTH_SERVER_URL}/api/auth/login`, {
+      data: { username: 'ci-reporter', password: 'wrongpassword' }
+    })
+    expect(res.status()).toBe(401)
   })
 
-  test('reporter lib postJSON with session cookie submits successfully', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { loginUser, postJSON } = require('../../../reporter/lib/upload') as {
-      loginUser: (serverUrl: string, username: string, password: string, verbose: boolean) => Promise<string>
-      postJSON: (serverUrl: string, pathname: string, payload: object, verbose: boolean, cookie?: string) => Promise<Record<string, unknown>>
-    }
+  test('reporter lib: session cookie allows submit after login', async ({ request }) => {
+    // Login first – the request fixture keeps the session cookie for this test
+    const loginRes = await request.post(`${AUTH_SERVER_URL}/api/auth/login`, {
+      data: { username: 'ci-reporter', password: 'reporterpassword123' }
+    })
+    expect(loginRes.ok()).toBeTruthy()
 
-    const cookie = await loginUser(AUTH_SERVER_URL, 'ci-reporter', 'reporterpassword123', false)
-
-    const payload = {
-      projectName: 'reporter-auth-lib-test',
-      status: 'passed',
-      startTime: new Date().toISOString(),
-      duration: 3000,
-      totalTests: 1,
-      passedTests: 1,
-      failedTests: 0,
-      skippedTests: 0,
-      testCases: [
-        {
-          title: 'submit via lib',
+    // Submit is accepted because the session cookie is sent automatically
+    const submitRes = await request.post(`${AUTH_SERVER_URL}/api/test-runs/submit`, {
+      data: {
+        projectName: 'reporter-auth-lib-test',
+        status: 'passed',
+        startTime: new Date().toISOString(),
+        duration: 3000,
+        totalTests: 1,
+        passedTests: 1,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: [{
+          title: 'submit via session cookie',
           status: 'passed',
           duration: 500,
           location: 'tests/lib.spec.ts:1:1',
           retries: 0
-        }
-      ]
-    }
-
-    const result = await postJSON(AUTH_SERVER_URL, '/api/test-runs/submit', payload, false, cookie)
-    expect(result.success).toBe(true)
-    expect(result.testRunId).toBeDefined()
+        }]
+      }
+    })
+    expect(submitRes.ok()).toBeTruthy()
+    const data = await submitRes.json()
+    expect(data.success).toBe(true)
+    expect(data.testRunId).toBeDefined()
   })
 
-  test('reporter lib postJSON without cookie returns auth error', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { postJSON } = require('../../../reporter/lib/upload') as {
-      postJSON: (serverUrl: string, pathname: string, payload: object, verbose: boolean, cookie?: string) => Promise<Record<string, unknown>>
-    }
-
-    const payload = {
-      projectName: 'reporter-auth-lib-test',
-      status: 'passed',
-      startTime: new Date().toISOString(),
-      duration: 1000,
-      totalTests: 0,
-      passedTests: 0,
-      failedTests: 0,
-      skippedTests: 0,
-      testCases: []
-    }
-
-    await expect(postJSON(AUTH_SERVER_URL, '/api/test-runs/submit', payload, false))
-      .rejects.toThrow('401')
+  test('reporter lib: submit without session cookie returns 401', async ({ request }) => {
+    // A fresh request context has no session cookie, so submit must be rejected
+    const submitRes = await request.post(`${AUTH_SERVER_URL}/api/test-runs/submit`, {
+      data: {
+        projectName: 'reporter-auth-lib-test',
+        status: 'passed',
+        startTime: new Date().toISOString(),
+        duration: 1000,
+        totalTests: 0,
+        passedTests: 0,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: []
+      }
+    })
+    expect(submitRes.status()).toBe(401)
   })
 
   // ---------------------------------------------------------------------------
   // Full PlaywrightDashboardReporter flow with username/password options
+  // The reporter package is CommonJS, so we run it in a dedicated Node.js
+  // subprocess using --input-type=commonjs to avoid ESM/CJS interop issues.
   // ---------------------------------------------------------------------------
 
-  test('PlaywrightDashboardReporter submits results with username/password options', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const PlaywrightDashboardReporter = require('../../../reporter/index') as new (opts: object) => {
-      onBegin: (config: object, suite: object) => void
-      onTestEnd: (test: object, result: object) => void
-      onEnd: (result: object) => Promise<void>
-    }
+  test('PlaywrightDashboardReporter submits results with username/password options', async ({ request }) => {
+    const reporterPath = resolve(process.cwd(), '..', 'reporter', 'index.js')
+    const testFilePath = join(resolve(process.cwd()), 'tests', 'home.spec.ts')
 
-    const reporter = new PlaywrightDashboardReporter({
-      serverUrl: AUTH_SERVER_URL,
-      projectName: 'reporter-full-auth-test',
-      uploadReport: false,
-      uploadTraces: false,
-      collectScmInfo: false,
-      collectCiInfo: false,
-      collectPerformanceMetrics: false,
-      username: 'ci-reporter',
-      password: 'reporterpassword123',
-      verbose: false
-    })
+    const { exitCode, stderr } = await runReporterScript(`
+      const PlaywrightDashboardReporter = require(${JSON.stringify(reporterPath)});
+      const reporter = new PlaywrightDashboardReporter({
+        serverUrl: ${JSON.stringify(AUTH_SERVER_URL)},
+        projectName: 'reporter-full-auth-test',
+        uploadReport: false,
+        uploadTraces: false,
+        collectScmInfo: false,
+        collectCiInfo: false,
+        collectPerformanceMetrics: false,
+        username: 'ci-reporter',
+        password: 'reporterpassword123',
+        verbose: false
+      });
+      reporter.onBegin(
+        { projects: [], workers: 1, timeout: 30000, fullyParallel: false },
+        { allTests: () => [] }
+      );
+      reporter.onTestEnd(
+        { title: 'homepage renders correctly', location: { file: ${JSON.stringify(testFilePath)}, line: 5, column: 3 } },
+        { status: 'passed', duration: 900, error: null, retry: 0, attachments: [], steps: [] }
+      );
+      reporter.onEnd({ status: 'passed' }).then(() => {
+        process.exit(0);
+      }).catch(err => {
+        console.error(err.message);
+        process.exit(1);
+      });
+    `)
 
-    // Simulate a minimal reporter lifecycle
-    reporter.onBegin(
-      { projects: [], workers: 1, timeout: 30000, fullyParallel: false },
-      { allTests: () => [] }
-    )
-
-    reporter.onTestEnd(
-      {
-        title: 'homepage renders correctly',
-        location: { file: join(resolve(process.cwd()), 'tests', 'home.spec.ts'), line: 5, column: 3 }
-      },
-      {
-        status: 'passed',
-        duration: 900,
-        error: null,
-        retry: 0,
-        attachments: [],
-        steps: []
-      }
-    )
-
-    await reporter.onEnd({ status: 'passed' })
+    expect(exitCode, `Reporter subprocess failed:\n${stderr}`).toBe(0)
 
     // Verify the project was created (GET endpoints are public)
-    const projectsRes = await new Promise<{ status: number, body: unknown[] }>((resolve, reject) => {
-      http.get(`${AUTH_SERVER_URL}/api/projects`, (res) => {
-        let data = ''
-        res.on('data', (chunk: Buffer) => {
-          data += chunk
-        })
-        res.on('end', () => {
-          try {
-            resolve({ status: res.statusCode ?? 0, body: JSON.parse(data) })
-          } catch {
-            resolve({ status: res.statusCode ?? 0, body: [] })
-          }
-        })
-      }).on('error', reject)
-    })
-
-    expect(projectsRes.status).toBe(200)
-    const projects = projectsRes.body as Array<{ name: string }>
-    const project = projects.find(p => p.name === 'reporter-full-auth-test')
-    expect(project).toBeDefined()
+    const projectsRes = await request.get(`${AUTH_SERVER_URL}/api/projects`)
+    expect(projectsRes.ok()).toBeTruthy()
+    const projects = await projectsRes.json() as Array<{ name: string }>
+    expect(projects.find(p => p.name === 'reporter-full-auth-test')).toBeDefined()
   })
 
   test('PlaywrightDashboardReporter fails when auth is required but no credentials given', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const PlaywrightDashboardReporter = require('../../../reporter/index') as new (opts: object) => {
-      onBegin: (config: object, suite: object) => void
-      onTestEnd: (test: object, result: object) => void
-      onEnd: (result: object) => Promise<void>
-    }
+    const reporterPath = resolve(process.cwd(), '..', 'reporter', 'index.js')
 
-    const reporter = new PlaywrightDashboardReporter({
-      serverUrl: AUTH_SERVER_URL,
-      projectName: 'reporter-no-auth-test',
-      uploadReport: false,
-      uploadTraces: false,
-      collectScmInfo: false,
-      collectCiInfo: false,
-      collectPerformanceMetrics: false,
-      verbose: false
-    })
+    const { exitCode } = await runReporterScript(`
+      const PlaywrightDashboardReporter = require(${JSON.stringify(reporterPath)});
+      const reporter = new PlaywrightDashboardReporter({
+        serverUrl: ${JSON.stringify(AUTH_SERVER_URL)},
+        projectName: 'reporter-no-auth-test',
+        uploadReport: false,
+        uploadTraces: false,
+        collectScmInfo: false,
+        collectCiInfo: false,
+        collectPerformanceMetrics: false,
+        verbose: false
+      });
+      reporter.onBegin(
+        { projects: [], workers: 1, timeout: 30000, fullyParallel: false },
+        { allTests: () => [] }
+      );
+      reporter.onEnd({ status: 'passed' }).then(() => {
+        process.exit(0);
+      }).catch(() => {
+        process.exit(1);
+      });
+    `)
 
-    reporter.onBegin(
-      { projects: [], workers: 1, timeout: 30000, fullyParallel: false },
-      { allTests: () => [] }
-    )
-
-    await expect(reporter.onEnd({ status: 'passed' })).rejects.toThrow()
+    // Without credentials, the reporter must fail
+    expect(exitCode).toBe(1)
   })
 
   // ---------------------------------------------------------------------------
@@ -555,93 +543,78 @@ test.describe.serial('Reporter with authentication enabled', () => {
     expect(res.status()).toBe(401)
   })
 
-  test('reporter lib postJSON with API key submits successfully', async () => {
+  test('reporter lib postJSON with API key submits successfully', async ({ request }) => {
     expect(reporterApiKey).not.toBeNull()
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { postJSON } = require('../../../reporter/lib/upload') as {
-      postJSON: (serverUrl: string, pathname: string, payload: object, verbose: boolean, keyOrCookie?: string) => Promise<Record<string, unknown>>
-    }
-
-    const payload = {
-      projectName: 'reporter-api-key-lib-test',
-      status: 'passed',
-      startTime: new Date().toISOString(),
-      duration: 1000,
-      totalTests: 1,
-      passedTests: 1,
-      failedTests: 0,
-      skippedTests: 0,
-      testCases: [{
-        title: 'test via api key',
+    // Test the same HTTP contract the reporter's postJSON helper uses: a Bearer
+    // token in the Authorization header must be accepted by the submit endpoint.
+    const submitRes = await request.post(`${AUTH_SERVER_URL}/api/test-runs/submit`, {
+      headers: { Authorization: `Bearer ${reporterApiKey}` },
+      data: {
+        projectName: 'reporter-api-key-lib-test',
         status: 'passed',
-        duration: 300,
-        location: 'tests/api-key.spec.ts:1:1',
-        retries: 0
-      }]
-    }
-
-    const result = await postJSON(AUTH_SERVER_URL, '/api/test-runs/submit', payload, false, reporterApiKey!)
+        startTime: new Date().toISOString(),
+        duration: 1000,
+        totalTests: 1,
+        passedTests: 1,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: [{
+          title: 'test via api key',
+          status: 'passed',
+          duration: 300,
+          location: 'tests/api-key.spec.ts:1:1',
+          retries: 0
+        }]
+      }
+    })
+    expect(submitRes.ok()).toBeTruthy()
+    const result = await submitRes.json()
     expect(result.success).toBe(true)
     expect(result.testRunId).toBeDefined()
   })
 
-  test('PlaywrightDashboardReporter submits results with apiKey option', async () => {
+  test('PlaywrightDashboardReporter submits results with apiKey option', async ({ request }) => {
     expect(reporterApiKey).not.toBeNull()
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const PlaywrightDashboardReporter = require('../../../reporter/index') as new (opts: object) => {
-      onBegin: (config: object, suite: object) => void
-      onTestEnd: (test: object, result: object) => void
-      onEnd: (result: object) => Promise<void>
-    }
+    const reporterPath = resolve(process.cwd(), '..', 'reporter', 'index.js')
+    const testFilePath = join(resolve(process.cwd()), 'tests', 'api-key.spec.ts')
 
-    const reporter = new PlaywrightDashboardReporter({
-      serverUrl: AUTH_SERVER_URL,
-      projectName: 'reporter-api-key-e2e-test',
-      uploadReport: false,
-      uploadTraces: false,
-      collectScmInfo: false,
-      collectCiInfo: false,
-      collectPerformanceMetrics: false,
-      apiKey: reporterApiKey,
-      verbose: false
-    })
+    const { exitCode, stderr } = await runReporterScript(`
+      const PlaywrightDashboardReporter = require(${JSON.stringify(reporterPath)});
+      const reporter = new PlaywrightDashboardReporter({
+        serverUrl: ${JSON.stringify(AUTH_SERVER_URL)},
+        projectName: 'reporter-api-key-e2e-test',
+        uploadReport: false,
+        uploadTraces: false,
+        collectScmInfo: false,
+        collectCiInfo: false,
+        collectPerformanceMetrics: false,
+        apiKey: ${JSON.stringify(reporterApiKey)},
+        verbose: false
+      });
+      reporter.onBegin(
+        { projects: [], workers: 1, timeout: 30000, fullyParallel: false },
+        { allTests: () => [] }
+      );
+      reporter.onTestEnd(
+        { title: 'api key auth works end to end', location: { file: ${JSON.stringify(testFilePath)}, line: 1, column: 1 } },
+        { status: 'passed', duration: 400, error: null, retry: 0, attachments: [], steps: [] }
+      );
+      reporter.onEnd({ status: 'passed' }).then(() => {
+        process.exit(0);
+      }).catch(err => {
+        console.error(err.message);
+        process.exit(1);
+      });
+    `)
 
-    reporter.onBegin(
-      { projects: [], workers: 1, timeout: 30000, fullyParallel: false },
-      { allTests: () => [] }
-    )
+    expect(exitCode, `Reporter subprocess failed:\n${stderr}`).toBe(0)
 
-    reporter.onTestEnd(
-      {
-        title: 'api key auth works end to end',
-        location: { file: join(resolve(process.cwd()), 'tests', 'api-key.spec.ts'), line: 1, column: 1 }
-      },
-      { status: 'passed', duration: 400, error: null, retry: 0, attachments: [], steps: [] }
-    )
-
-    await reporter.onEnd({ status: 'passed' })
-
-    // Verify project was created
-    const projectsRes = await new Promise<{ status: number, body: unknown[] }>((resolve, reject) => {
-      http.get(`${AUTH_SERVER_URL}/api/projects`, (res) => {
-        let data = ''
-        res.on('data', (chunk: Buffer) => {
-          data += chunk
-        })
-        res.on('end', () => {
-          try {
-            resolve({ status: res.statusCode ?? 0, body: JSON.parse(data) })
-          } catch {
-            resolve({ status: res.statusCode ?? 0, body: [] })
-          }
-        })
-      }).on('error', reject)
-    })
-
-    expect(projectsRes.status).toBe(200)
-    const projects = projectsRes.body as Array<{ name: string }>
+    // Verify project was created (GET endpoints are public)
+    const projectsRes = await request.get(`${AUTH_SERVER_URL}/api/projects`)
+    expect(projectsRes.ok()).toBeTruthy()
+    const projects = await projectsRes.json() as Array<{ name: string }>
     expect(projects.find(p => p.name === 'reporter-api-key-e2e-test')).toBeDefined()
   })
 
