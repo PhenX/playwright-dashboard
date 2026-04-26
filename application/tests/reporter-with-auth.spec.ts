@@ -51,9 +51,13 @@ function runReporterScript(cjsScript: string): Promise<{ exitCode: number, stdou
     const proc = spawn('node', ['--input-type=commonjs'], { stdio: ['pipe', 'pipe', 'pipe'] })
     let stdout = ''
     let stderr = ''
-    proc.stdout!.on('data', (chunk: Buffer) => { stdout += chunk.toString() })
-    proc.stderr!.on('data', (chunk: Buffer) => { stderr += chunk.toString() })
-    proc.on('close', (code) => resolveP({ exitCode: code ?? 0, stdout, stderr }))
+    proc.stdout!.on('data', (chunk: Buffer) => {
+      stdout += chunk.toString()
+    })
+    proc.stderr!.on('data', (chunk: Buffer) => {
+      stderr += chunk.toString()
+    })
+    proc.on('close', code => resolveP({ exitCode: code ?? 0, stdout, stderr }))
     proc.stdin!.write(cjsScript)
     proc.stdin!.end()
   })
