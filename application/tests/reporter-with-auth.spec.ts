@@ -3,6 +3,10 @@ import { spawn, type ChildProcess } from 'child_process'
 import { join, resolve } from 'path'
 import { existsSync, rmSync } from 'fs'
 import http from 'http'
+import { createRequire } from 'module'
+
+// createRequire lets us load CommonJS reporter modules from this ESM test file
+const require = createRequire(import.meta.url)
 
 const AUTH_PORT = 3099
 const AUTH_SERVER_URL = `http://localhost:${AUTH_PORT}`
@@ -77,9 +81,16 @@ test.describe.serial('Reporter with authentication enabled', () => {
     await waitForServer(AUTH_SERVER_URL)
   }, SERVER_START_TIMEOUT + 10000)
 
-  test.afterAll(() => {
+  test.afterAll(async () => {
     if (authServer) {
-      authServer.kill('SIGTERM')
+      // Wait for the process to fully exit so port 3099 is freed before a
+      // potential serial-block retry runs beforeAll and spawns a new server.
+      await new Promise<void>((resolve) => {
+        const proc = authServer!
+        proc.once('exit', resolve)
+        proc.once('error', resolve)
+        proc.kill('SIGTERM')
+      })
       authServer = null
     }
     if (existsSync(DB_PATH)) rmSync(DB_PATH)
