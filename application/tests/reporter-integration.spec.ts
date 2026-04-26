@@ -35,6 +35,9 @@ test.describe('Reporter Integration Tests', () => {
     expect(typeDefs).toContain('projectName')
     expect(typeDefs).toContain('uploadReport')
     expect(typeDefs).toContain('uploadTraces')
+    expect(typeDefs).toContain('apiKey')
+    expect(typeDefs).toContain('username')
+    expect(typeDefs).toContain('password')
   })
 
   test('reporter TypeScript definitions should include reports array option', async () => {
@@ -104,6 +107,7 @@ test.describe('Reporter Integration Tests', () => {
     const source = readFileSync(uploadPath, 'utf-8')
     expect(source).toContain('postJSON')
     expect(source).toContain('postFormData')
+    expect(source).toContain('loginUser')
   })
 
   test('reporter lib/files.js should exist with file discovery functions', async () => {
