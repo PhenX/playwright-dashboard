@@ -33,9 +33,12 @@ export default eventHandler(async (event) => {
   const testRunResults = await db.select().from(testRuns).where(eq(testRuns.id, testRunsCase.testRunId))
   const testRun = testRunResults[0]
 
-  // Get the project info
-  const projectResults = testRun ? await db.select().from(projects).where(eq(projects.id, testRun.projectId)) : []
-  const project = projectResults[0]
+  // Get the project info (only when testRun is available)
+  let project
+  if (testRun) {
+    const projectResults = await db.select().from(projects).where(eq(projects.id, testRun.projectId))
+    project = projectResults[0]
+  }
 
   // Format the response to match the expected structure
   return {

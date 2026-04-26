@@ -205,7 +205,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
           :items="[
             { label: 'Home', icon: 'i-lucide-house', to: '/' },
             { label: 'Projects', to: '/projects' },
-            { label: testRun?.project?.name || 'Project', to: `/projects/${testRun?.project?.id}` },
+            ...(testRun?.project?.id ? [{ label: testRun.project.name || 'Project', to: `/projects/${testRun.project.id}` }] : [{ label: 'Project' }]),
             { label: `Test run #${runId}` }
           ]"
         />
