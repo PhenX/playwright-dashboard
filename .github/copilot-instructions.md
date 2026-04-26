@@ -264,6 +264,42 @@ curl -X POST http://localhost:3000/api/test-runs/submit \
 - **Uploads failing**: Verify `serverUrl` in reporter config points to running dashboard
 - **Authentication errors**: This dashboard has no authentication; check network connectivity
 
+## Maintaining documentation
+
+The project has two documentation surfaces that must stay in sync with code changes:
+
+1. **`docs/`** — VitePress documentation site published to https://phenx.github.io/playwright-dashboard.  
+   Each page covers a specific topic:
+   - `docs/getting-started.md` — requirements, quick-start, first API call, dev commands
+   - `docs/reporter.md` — reporter options, multiple reports, fixtures, metadata collection
+   - `docs/api.md` — all REST API endpoints with request/response examples
+   - `docs/authentication.md` — roles, enabling auth, user management
+   - `docs/storage.md` — local and S3 storage config, DB schema management
+   - `docs/deployment.md` — Docker, Docker Compose, Kubernetes, production build
+
+2. **`README.md`** — concise project landing page; links out to the docs site.
+
+### When to update docs
+
+Update the relevant `docs/` page(s) **in the same commit** as your code change whenever you:
+
+- Add, remove, or change an **API endpoint** (path, method, request/response shape) → `docs/api.md`
+- Add, remove, or change a **reporter option** or fixture behaviour → `docs/reporter.md`
+- Change **authentication** behaviour, roles, or setup steps → `docs/authentication.md`
+- Change **storage** configuration, environment variables, or DB migration workflow → `docs/storage.md`
+- Change **deployment** steps, Docker image tags, environment variables, or compose/k8s examples → `docs/deployment.md`
+- Change **requirements** (Node.js version, dependencies) or the **quick-start** flow → `docs/getting-started.md`
+- Add or remove a major **feature** → `docs/index.md` (hero features list) and the relevant detail page
+
+Update `README.md` only when the top-level feature list or the quick-start Docker commands change.
+
+### What does NOT require a doc update
+
+- Internal refactors with no user-visible effect
+- Test-only changes
+- Dependency bumps with no API/behaviour change
+- Bug fixes that restore already-documented behaviour
+
 ## Important Notes
 - Database is auto-initialized on first API call
 - Projects are auto-created when first test results are submitted
