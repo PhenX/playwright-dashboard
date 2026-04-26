@@ -200,15 +200,15 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
       <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              ...(testRun?.project?.id ? [{ label: testRun.project.label || testRun.project.name || 'Project', to: `/projects/${testRun.project.id}` }] : [{ label: 'Project' }]),
+              { label: `Test run #${runId}` }
+            ]"
+          />
         </template>
-        <UBreadcrumb
-          :items="[
-            { label: 'Home', icon: 'i-lucide-house', to: '/' },
-            { label: 'Projects', to: '/projects' },
-            ...(testRun?.project?.id ? [{ label: testRun.project.name || 'Project', to: `/projects/${testRun.project.id}` }] : [{ label: 'Project' }]),
-            { label: `Test run #${runId}` }
-          ]"
-        />
         <template #right>
           <UButton
             icon="i-lucide-refresh-cw"
@@ -250,7 +250,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                   Project
                 </p>
                 <p class="font-medium">
-                  {{ testRun?.project?.name }}
+                  {{ testRun?.project?.label ?? testRun?.project?.name }}
                 </p>
               </div>
               <div>

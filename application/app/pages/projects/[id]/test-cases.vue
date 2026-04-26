@@ -94,15 +94,15 @@ const testCasesColumns: TableColumn<TestCaseWithStats>[] = [
       <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              { label: project?.label || project?.name || 'Project', to: `/projects/${projectId}` },
+              { label: 'Test cases' }
+            ]"
+          />
         </template>
-        <UBreadcrumb
-          :items="[
-            { label: 'Home', icon: 'i-lucide-house', to: '/' },
-            { label: 'Projects', to: '/projects' },
-            { label: project?.label || project?.name || 'Project', to: `/projects/${projectId}` },
-            { label: 'Test cases' }
-          ]"
-        />
         <template #right>
           <UButton
             icon="i-lucide-refresh-cw"

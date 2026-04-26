@@ -123,14 +123,14 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
       <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              { label: project?.label || project?.name || 'Project' }
+            ]"
+          />
         </template>
-        <UBreadcrumb
-          :items="[
-            { label: 'Home', icon: 'i-lucide-house', to: '/' },
-            { label: 'Projects', to: '/projects' },
-            { label: project?.label || project?.name || 'Project' }
-          ]"
-        />
         <template #right>
           <UButton
             :to="`/projects/${projectId}/edit`"

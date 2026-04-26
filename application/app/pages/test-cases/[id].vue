@@ -79,16 +79,16 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
       <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              ...(testCase?.testRun?.project?.id ? [{ label: testCase.testRun.project.name || 'Project', to: `/projects/${testCase.testRun.project.id}` }] : [{ label: 'Project' }]),
+              ...(testCase?.testRun?.id ? [{ label: `Test run #${testCase.testRun.id}`, to: `/test-runs/${testCase.testRun.id}` }] : [{ label: 'Test run' }]),
+              { label: testCase?.title || `Test case #${testCaseId}` }
+            ]"
+          />
         </template>
-        <UBreadcrumb
-          :items="[
-            { label: 'Home', icon: 'i-lucide-house', to: '/' },
-            { label: 'Projects', to: '/projects' },
-            ...(testCase?.testRun?.project?.id ? [{ label: testCase.testRun.project.name || 'Project', to: `/projects/${testCase.testRun.project.id}` }] : [{ label: 'Project' }]),
-            ...(testCase?.testRun?.id ? [{ label: `Test run #${testCase.testRun.id}`, to: `/test-runs/${testCase.testRun.id}` }] : [{ label: 'Test run' }]),
-            { label: testCase?.title || `Test case #${testCaseId}` }
-          ]"
-        />
         <template #right>
           <UButton
             icon="i-lucide-refresh-cw"

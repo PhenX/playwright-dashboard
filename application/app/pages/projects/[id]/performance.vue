@@ -251,15 +251,15 @@ function refresh() {
       <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              { label: project?.label || project?.name || 'Project', to: `/projects/${projectId}` },
+              { label: 'Performance' }
+            ]"
+          />
         </template>
-        <UBreadcrumb
-          :items="[
-            { label: 'Home', icon: 'i-lucide-house', to: '/' },
-            { label: 'Projects', to: '/projects' },
-            { label: project?.label || project?.name || 'Project', to: `/projects/${projectId}` },
-            { label: 'Performance' }
-          ]"
-        />
         <template #right>
           <UButton
             icon="i-lucide-refresh-cw"
@@ -276,7 +276,7 @@ function refresh() {
         <!-- Performance Trend Chart -->
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold">
+            <h2>
               Performance trend
             </h2>
             <p class="text-sm text-gray-600 mt-1">

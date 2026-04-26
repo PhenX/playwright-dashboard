@@ -71,8 +71,8 @@ const allTestRuns = computed(() => {
       <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb :items="[{ label: 'Home', icon: 'i-lucide-house', to: '/' }]" />
         </template>
-        <UBreadcrumb :items="[{ label: 'Home', icon: 'i-lucide-house', to: '/' }]" />
       </UDashboardNavbar>
     </template>
 

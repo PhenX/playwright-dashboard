@@ -71,15 +71,15 @@ function onCancel() {
       <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              { label: project?.label || project?.name || 'Project', to: `/projects/${projectId}` },
+              { label: 'Edit' }
+            ]"
+          />
         </template>
-        <UBreadcrumb
-          :items="[
-            { label: 'Home', icon: 'i-lucide-house', to: '/' },
-            { label: 'Projects', to: '/projects' },
-            { label: project?.label || project?.name || 'Project', to: `/projects/${projectId}` },
-            { label: 'Edit' }
-          ]"
-        />
       </UDashboardNavbar>
     </template>
 
@@ -87,7 +87,7 @@ function onCancel() {
       <div class="p-4 space-y-4">
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold">
+            <h2>
               Edit project settings
             </h2>
             <p class="text-sm text-gray-600 mt-1">

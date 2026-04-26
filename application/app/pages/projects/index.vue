@@ -232,8 +232,8 @@ const columns: TableColumn<ProjectWithStats>[] = [
       <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb :items="[{ label: 'Home', icon: 'i-lucide-house', to: '/' }, { label: 'Projects' }]" />
         </template>
-        <UBreadcrumb :items="[{ label: 'Home', icon: 'i-lucide-house', to: '/' }, { label: 'Projects' }]" />
         <template #right>
           <UButton
             icon="i-lucide-plus"
