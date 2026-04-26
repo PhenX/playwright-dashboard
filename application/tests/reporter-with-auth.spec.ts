@@ -454,4 +454,3 @@ test.describe.serial('Reporter with authentication enabled', () => {
     await expect(reporter.onEnd({ status: 'passed' })).rejects.toThrow()
   })
 })
-

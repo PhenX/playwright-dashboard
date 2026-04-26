@@ -100,7 +100,6 @@ export interface DashboardReporterOptions {
    * Username for authenticating with the dashboard server.
    * Required when the dashboard has authentication enabled.
    * The user must have the **reporter** role or higher.
-   * @see https://playwright-dashboard.example.com/authentication
    */
   username?: string;
 
