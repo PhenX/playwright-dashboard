@@ -121,7 +121,17 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
   <UDashboardPanel id="project-detail">
     <template #header>
       <UDashboardNavbar>
-        <template #trailing>
+        <template #leading>
+          <UDashboardSidebarCollapse />
+        </template>
+        <UBreadcrumb
+          :items="[
+            { label: 'Home', icon: 'i-lucide-house', to: '/' },
+            { label: 'Projects', to: '/projects' },
+            { label: project?.label || project?.name || 'Project' }
+          ]"
+        />
+        <template #right>
           <UButton
             :to="`/projects/${projectId}/edit`"
             icon="i-lucide-pencil"
@@ -146,18 +156,6 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
           >
             Performance
           </UButton>
-        </template>
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <UBreadcrumb
-          :items="[
-            { label: 'Home', icon: 'i-lucide-house', to: '/' },
-            { label: 'Projects', to: '/projects' },
-            { label: project?.label || project?.name || 'Project' }
-          ]"
-        />
-        <template #right>
           <UButton
             icon="i-lucide-refresh-cw"
             size="md"
