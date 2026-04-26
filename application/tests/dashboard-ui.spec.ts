@@ -109,7 +109,7 @@ test.describe('Dashboard UI Tests', () => {
     await page.waitForURL('/projects')
 
     // Click on Home in sidebar
-    await page.getByRole('link', { name: 'Home' }).click()
+    await page.locator('#dashboard-sidebar-default').getByRole('link', { name: 'Home' }).click()
 
     // Check navigation
     await page.waitForURL('/')
