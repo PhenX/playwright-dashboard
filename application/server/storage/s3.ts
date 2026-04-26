@@ -110,17 +110,13 @@ export class S3StorageAdapter implements StorageAdapter {
           ContinuationToken: continuationToken
         })
 
-        const listResult: {
-          Contents?: Array<{ Key: string }>
-          IsTruncated?: boolean
-          NextContinuationToken?: string
-        } = await this.s3Client.send(listCommand)
+        const listResult = await this.s3Client.send(listCommand)
 
         if (listResult.Contents && listResult.Contents.length > 0) {
           const deleteCommand = new DeleteObjectsCommand({
             Bucket: this.config.bucket,
             Delete: {
-              Objects: listResult.Contents.map((obj: { Key: string }) => ({ Key: obj.Key }))
+              Objects: listResult.Contents.map(obj => ({ Key: obj.Key }))
             }
           })
           await this.s3Client.send(deleteCommand)
