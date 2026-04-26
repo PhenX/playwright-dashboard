@@ -53,4 +53,5 @@ export interface S3Config {
   accessKeyId: string
   secretAccessKey: string
   endpoint?: string // Optional custom endpoint for S3-compatible services
+  forcePathStyle?: boolean // Force path-style URLs (required for MinIO and most S3-compatible services)
 }

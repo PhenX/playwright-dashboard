@@ -71,7 +71,7 @@ export const testRunsCases = sqliteTable('test_runs_cases', {
 export const reports = sqliteTable('reports', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   testRunId: integer('test_run_id').notNull().references(() => testRuns.id),
-  type: text('type').notNull(), // 'html', 'monocart', 'allure', 'blob', etc.
+  type: text('type').notNull(), // 'html', 'monocart', 'blob', etc.
   label: text('label').notNull(), // Display label e.g. 'HTML Report', 'Monocart Report'
   path: text('path').notNull(), // Relative path in storage (for browsable) or file path (for blob)
   size: integer('size'), // File/directory size in bytes
@@ -120,6 +120,21 @@ export const users = sqliteTable('users', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
 })
 
+// API keys table - for reporter/CI authentication
+export const apiKeys = sqliteTable('api_keys', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(), // Human-readable label, e.g. "CI pipeline"
+  keyHash: text('key_hash').notNull().unique(), // SHA-256 hash of the full key
+  keyPrefix: text('key_prefix').notNull(), // First 8 chars after "pd_" prefix – shown in UI
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+  expiresAt: integer('expires_at', { mode: 'timestamp' })
+}, table => ({
+  userIdIdx: index('idx_api_keys_user_id').on(table.userId),
+  keyHashIdx: index('idx_api_keys_key_hash').on(table.keyHash)
+}))
+
 // Type exports for TypeScript
 export type Project = typeof projects.$inferSelect
 export type NewProject = typeof projects.$inferInsert
@@ -135,6 +150,8 @@ export type Report = typeof reports.$inferSelect
 export type NewReport = typeof reports.$inferInsert
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
+export type ApiKey = typeof apiKeys.$inferSelect
+export type NewApiKey = typeof apiKeys.$inferInsert
 export type Tag = typeof tags.$inferSelect
 export type NewTag = typeof tags.$inferInsert
 export type ProjectTag = typeof projectTags.$inferSelect

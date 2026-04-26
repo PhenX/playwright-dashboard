@@ -1,4 +1,5 @@
 import { defineConfig, devices, type ReporterDescription } from '@playwright/test'
+import { join } from 'path'
 
 const reporters: ReporterDescription[] = []
 
@@ -7,7 +8,6 @@ reporters.push(['list'])
 if (!process.env.CI) {
   reporters.push(['html', { outputFolder: 'playwright-report' }])
   reporters.push(['monocart-reporter', { name: 'Playwright Dashboard Tests', outputFile: 'monocart-report/index.html' }])
-  reporters.push(['allure-playwright', { resultsDir: 'allure-results' }])
   reporters.push(['blob', { outputDir: 'blob-report' }])
   reporters.push(['../reporter', {
     serverUrl: 'http://localhost:3000',
@@ -17,7 +17,6 @@ if (!process.env.CI) {
     reports: [
       { type: 'html' },
       { type: 'monocart' },
-      { type: 'allure' },
       { type: 'blob', label: 'Blob Archive' }
     ]
   }])
@@ -50,7 +49,7 @@ export default defineConfig({
     baseURL: 'http://localhost:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on'
+    trace: 'retain-on-failure'
   },
 
   /* Configure projects for major browsers */
@@ -62,10 +61,29 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 60 * 1000
-  }
+  webServer: [
+    {
+      command: 'npm run dev',
+      url: 'http://localhost:3000',
+      reuseExistingServer: !process.env.CI,
+      timeout: 60 * 1000
+    },
+    // Auth-enabled server used by reporter-with-auth.spec.ts.
+    // Only started in CI; the corresponding tests are skipped when CI is not set.
+    ...(process.env.CI
+      ? [{
+          command: 'npm run dev',
+          url: 'http://localhost:3099/api/auth/me',
+          env: {
+            NUXT_AUTH_ENABLED: 'true',
+            NUXT_AUTH_SECRET: 'test-auth-secret-key-for-reporter-tests',
+            DATABASE_PATH: join(process.cwd(), '.test-temp', 'auth-test.db'),
+            STORAGE_PATH: join(process.cwd(), '.test-temp', 'auth-test-storage'),
+            NITRO_PORT: '3099'
+          },
+          reuseExistingServer: false,
+          timeout: 90 * 1000
+        }]
+      : [])
+  ]
 })

@@ -84,7 +84,92 @@ When authentication is enabled:
 
 - `POST` / `PUT` / `DELETE` endpoints require an active session with appropriate role permissions.
 - `GET` endpoints remain publicly accessible (read-only).
-- The reporter's submission endpoints (`/api/test-runs/submit` and `/api/test-runs/upload`) require the **reporter** role or higher.
+- The reporter's submission endpoints (`/api/test-runs/submit` and `/api/test-runs/upload`) accept both session cookies and API keys.
+
+## API keys
+
+API keys are the recommended way to authenticate CI pipelines and the Playwright reporter. They are long-lived tokens tied to a specific user account.
+
+### Security properties
+
+- Keys are generated with 256 bits of cryptographic entropy (`pd_` prefix + 64-character hex string).
+- Only a SHA-256 hash of the key is stored in the database — the plaintext is shown **once** at creation time and never retrievable again.
+- Each key displays a short prefix (`pd_xxxxxxxx…`) in the UI for identification without revealing the secret.
+- Keys are sent as `Authorization: Bearer <key>` or `X-API-Key: <key>` headers.
+- Keys can be given an optional expiry date.
+
+### Creating an API key
+
+1. Navigate to **Settings → Users** in the dashboard.
+2. Click the key icon next to the user you want to generate a key for.
+3. Click **Create API key**, enter a descriptive name (e.g. "GitHub Actions"), and set an optional expiry.
+4. Copy the key **immediately** — it will never be shown again.
+5. Store it as a CI secret (e.g. `DASHBOARD_API_KEY`).
+
+### Revoking an API key
+
+1. Navigate to **Settings → Users** and click the key icon.
+2. Click the trash icon next to the key you want to revoke.
+3. The key stops working immediately.
+
+### Using the API key in the reporter
+
+```typescript
+// playwright.config.ts
+export default defineConfig({
+  reporter: [
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'https://your-dashboard.example.com',
+      projectName: 'my-project',
+      apiKey: process.env.DASHBOARD_API_KEY,
+    }],
+  ],
+})
+```
+
+### Using the API key in raw HTTP calls
+
+```bash
+# Authorization: Bearer header (recommended)
+curl -X POST https://your-dashboard.example.com/api/test-runs/submit \
+  -H "Authorization: Bearer pd_<your-key>" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
+
+# X-API-Key header (alternative)
+curl -X POST https://your-dashboard.example.com/api/test-runs/submit \
+  -H "X-API-Key: pd_<your-key>" \
+  -H "Content-Type: application/json" \
+  -d '{ ... }'
+```
+
+## Using the reporter with session authentication (username/password)
+
+As an alternative to API keys, create a dedicated user with the **reporter** role for your CI pipelines:
+
+1. Log in as an administrator in `/settings/users` and add a new user with the **Reporter** role.
+
+2. Configure the reporter with the credentials:
+
+   ```typescript
+   // playwright.config.ts
+   export default defineConfig({
+     reporter: [
+       ['playwright-dashboard-reporter', {
+         serverUrl: 'https://your-dashboard.example.com',
+         projectName: 'my-project',
+         username: process.env.DASHBOARD_USERNAME,
+         password: process.env.DASHBOARD_PASSWORD,
+       }],
+     ],
+   })
+   ```
+
+3. Add `DASHBOARD_USERNAME` and `DASHBOARD_PASSWORD` as secrets in your CI provider.
+
+The reporter automatically calls `/api/auth/login` before each upload and uses the resulting session for all subsequent requests.
+
+> **Tip:** API keys are preferred over username/password for CI because they don't require a login round-trip and can be individually revoked.
 
 ## Security considerations
 

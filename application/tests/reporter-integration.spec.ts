@@ -35,6 +35,9 @@ test.describe('Reporter Integration Tests', () => {
     expect(typeDefs).toContain('projectName')
     expect(typeDefs).toContain('uploadReport')
     expect(typeDefs).toContain('uploadTraces')
+    expect(typeDefs).toContain('apiKey')
+    expect(typeDefs).toContain('username')
+    expect(typeDefs).toContain('password')
   })
 
   test('reporter TypeScript definitions should include reports array option', async () => {
@@ -104,6 +107,7 @@ test.describe('Reporter Integration Tests', () => {
     const source = readFileSync(uploadPath, 'utf-8')
     expect(source).toContain('postJSON')
     expect(source).toContain('postFormData')
+    expect(source).toContain('loginUser')
   })
 
   test('reporter lib/files.js should exist with file discovery functions', async () => {
@@ -118,15 +122,11 @@ test.describe('Reporter Integration Tests', () => {
     expect(source).toContain('DEFAULT_REPORT_DIRS')
   })
 
-  test('reporter lib/files.js DEFAULT_REPORT_DIRS should include monocart, allure, and blob', async () => {
+  test('reporter lib/files.js DEFAULT_REPORT_DIRS should include monocart, and blob', async () => {
     const filesPath = join(process.cwd(), '..', 'reporter', 'lib', 'files.js')
     const source = readFileSync(filesPath, 'utf-8')
 
     expect(source).toContain('monocart')
-    expect(source).toContain('allure')
     expect(source).toContain('blob')
-    // allure default dir must be the generated HTML report, NOT the raw results
-    expect(source).toContain('allure: \'allure-report\'')
-    expect(source).not.toContain('allure: \'allure-results\'')
   })
 })

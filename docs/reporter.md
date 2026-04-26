@@ -36,21 +36,24 @@ export default defineConfig({
 
 ## Configuration options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `serverUrl` | string | `'http://localhost:3000'` | URL of the Playwright Dashboard server |
-| `projectName` | string | `'default-project'` | Name of the project to report results under |
-| `uploadTraces` | boolean | `true` | Upload trace files to the dashboard |
-| `uploadReport` | boolean | `true` | Upload the Playwright HTML report |
-| `reports` | array | — | Additional report types to upload (see [Multiple reports](#multiple-reports)) |
-| `projectDescription` | string | — | Description of the project |
-| `relatedIssue` | string | — | Related issue reference, e.g. `"JIRA-123"` |
-| `ciInfo` | string | — | CI job information |
-| `tags` | string[] | — | Tags to categorise the test run |
-| `customData` | object | — | Additional custom metadata as key-value pairs |
-| `collectScmInfo` | boolean | `true` | Auto-collect git commit, branch, author |
-| `collectCiInfo` | boolean | `true` | Auto-collect CI environment info |
-| `collectPerformanceMetrics` | boolean | `true` | Collect step timings, network requests and web vitals |
+| Option                      | Type     | Default                   | Description                                                                   |
+|-----------------------------|----------|---------------------------|-------------------------------------------------------------------------------|
+| `serverUrl`                 | string   | `'http://localhost:3000'` | URL of the Playwright Dashboard server                                        |
+| `projectName`               | string   | `'default-project'`       | Name of the project to report results under                                   |
+| `uploadTraces`              | boolean  | `true`                    | Upload trace files to the dashboard                                           |
+| `uploadReport`              | boolean  | `true`                    | Upload the Playwright HTML report                                             |
+| `reports`                   | array    | —                         | Additional report types to upload (see [Multiple reports](#multiple-reports)) |
+| `projectDescription`        | string   | —                         | Description of the project                                                    |
+| `relatedIssue`              | string   | —                         | Related issue reference, e.g. `"JIRA-123"`                                    |
+| `ciInfo`                    | string   | —                         | CI job information                                                            |
+| `tags`                      | string[] | —                         | Tags to categorise the test run                                               |
+| `customData`                | object   | —                         | Additional custom metadata as key-value pairs                                 |
+| `collectScmInfo`            | boolean  | `true`                    | Auto-collect git commit, branch, author                                       |
+| `collectCiInfo`             | boolean  | `true`                    | Auto-collect CI environment info                                              |
+| `collectPerformanceMetrics` | boolean  | `true`                    | Collect step timings, network requests and web vitals                         |
+| `username`                  | string   | —                         | Username for dashboard login (use `apiKey` instead when possible)             |
+| `password`                  | string   | —                         | Password for dashboard login (used with `username`)                           |
+| `apiKey`                    | string   | —                         | API key for authentication (preferred over `username`/`password` for CI)      |
 
 ## Multiple reports
 
@@ -62,7 +65,6 @@ export default defineConfig({
     ['list'],
     ['@playwright/test/reporter-html', { outputFolder: 'playwright-report' }],
     ['monocart-reporter', { name: 'My Tests', outputFile: 'monocart-report/index.html' }],
-    ['allure-playwright', { resultsDir: 'allure-results' }],
     ['blob'],
     ['playwright-dashboard-reporter', {
       serverUrl: 'http://localhost:3000',
@@ -70,7 +72,6 @@ export default defineConfig({
       reports: [
         { type: 'html' },
         { type: 'monocart' },
-        { type: 'allure', dir: 'allure-results' },
         { type: 'blob', dir: 'blob-report', label: 'Blob archive' },
       ],
     }],
@@ -80,12 +81,11 @@ export default defineConfig({
 
 Built-in report types with auto-detected directories:
 
-| Type | Default directory | Behaviour in UI |
-|------|-------------------|-----------------|
-| `html` | `playwright-report/` | Opens in new tab |
-| `monocart` | `monocart-report/` | Opens in new tab |
-| `allure` | `allure-results/` | Opens in new tab |
-| `blob` | `blob-report/` | Downloaded as archive |
+| Type       | Default directory    | Behaviour in UI       |
+|------------|----------------------|-----------------------|
+| `html`     | `playwright-report/` | Opens in new tab      |
+| `monocart` | `monocart-report/`   | Opens in new tab      |
+| `blob`     | `blob-report/`       | Downloaded as archive |
 
 Any other type is also accepted; the directory must be provided via `dir`.
 
@@ -143,14 +143,14 @@ When `collectScmInfo` is enabled (default), the reporter collects:
 
 When `collectCiInfo` is enabled (default), the reporter auto-detects:
 
-| Platform | Collected fields |
-|----------|-----------------|
-| GitHub Actions | Run ID, run number, workflow, actor, repository, ref, SHA |
-| Jenkins | Build number, build URL, job name |
-| GitLab CI | Pipeline ID, pipeline URL, job ID, job URL, job name |
-| CircleCI | Build number, build URL, job name, workflow |
-| Travis CI | Build number, build URL, job number |
-| Azure Pipelines | Build number, build ID, build URL, job name |
+| Platform        | Collected fields                                          |
+|-----------------|-----------------------------------------------------------|
+| GitHub Actions  | Run ID, run number, workflow, actor, repository, ref, SHA |
+| Jenkins         | Build number, build URL, job name                         |
+| GitLab CI       | Pipeline ID, pipeline URL, job ID, job URL, job name      |
+| CircleCI        | Build number, build URL, job name, workflow               |
+| Travis CI       | Build number, build URL, job number                       |
+| Azure Pipelines | Build number, build ID, build URL, job name               |
 
 ### Playwright configuration
 
@@ -219,3 +219,44 @@ export default defineConfig({
 
 - Verify `serverUrl` is correct and the server is running
 - Check network connectivity and firewall settings
+
+## With authentication enabled
+
+When the dashboard has authentication enabled, the reporter must authenticate before submitting results.
+
+### Recommended: API key (preferred for CI)
+
+Generate an API key in the dashboard UI (Settings → Users → API keys button), then configure the reporter:
+
+```typescript
+export default defineConfig({
+  reporter: [
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'http://your-dashboard.example.com',
+      projectName: 'my-project',
+      apiKey: process.env.DASHBOARD_API_KEY,
+    }],
+  ],
+})
+```
+
+The key is sent as an `Authorization: Bearer <key>` header. Store it in a CI secret — never hard-code it.
+
+### Alternative: username/password
+
+```typescript
+export default defineConfig({
+  reporter: [
+    ['playwright-dashboard-reporter', {
+      serverUrl: 'http://your-dashboard.example.com',
+      projectName: 'my-project',
+      username: process.env.DASHBOARD_USERNAME,
+      password: process.env.DASHBOARD_PASSWORD,
+    }],
+  ],
+})
+```
+
+The reporter calls `/api/auth/login` automatically before each upload.
+
+See [Authentication](/authentication) for details on enabling auth, creating users, and managing API keys.

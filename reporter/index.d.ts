@@ -33,18 +33,16 @@ export interface DashboardReporterOptions {
    * Built-in types with auto-detected default directories:
    *  - `'html'`       → `playwright-report/`   (same as uploadReport)
    *  - `'monocart'`   → `monocart-report/`
-   *  - `'allure'`     → `allure-results/`
    *  - `'blob'`       → `blob-report/`          (stored as a downloadable archive)
    *
    * @example
    * reports: [
    *   { type: 'monocart' },
-   *   { type: 'allure', dir: 'allure-results', label: 'Allure Report' },
    *   { type: 'blob', dir: 'blob-report', label: 'Blob Archive' },
    * ]
    */
   reports?: Array<{
-    /** Report type identifier (e.g. 'html', 'monocart', 'allure', 'blob') */
+    /** Report type identifier (e.g. 'html', 'monocart', 'blob') */
     type: string;
     /** Path to the report output directory (overrides the default for this type) */
     dir?: string;
@@ -95,6 +93,34 @@ export interface DashboardReporterOptions {
    * @default true
    */
   collectPerformanceMetrics?: boolean;
+
+  /**
+   * API key for authenticating with the dashboard server.
+   *
+   * **Preferred over `username`/`password`** for CI environments.
+   * Generate a key in the dashboard UI under Settings → Users → API keys.
+   * The key is sent as an `Authorization: Bearer <key>` header on every request.
+   *
+   * Store the key in a CI secret (e.g. `DASHBOARD_API_KEY`) and reference it here:
+   * ```typescript
+   * apiKey: process.env.DASHBOARD_API_KEY,
+   * ```
+   */
+  apiKey?: string;
+
+  /**
+   * Username for authenticating with the dashboard server.
+   * Use `apiKey` instead when possible.
+   * Required when the dashboard has authentication enabled and `apiKey` is not set.
+   * The user must have the **reporter** role or higher.
+   */
+  username?: string;
+
+  /**
+   * Password for authenticating with the dashboard server.
+   * Used together with `username` when authentication is enabled.
+   */
+  password?: string;
 
   /**
    * Enable verbose logging
