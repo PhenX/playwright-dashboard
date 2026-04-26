@@ -1,4 +1,5 @@
 import { defineConfig, devices, type ReporterDescription } from '@playwright/test'
+import { join } from 'path'
 
 const reporters: ReporterDescription[] = []
 
@@ -60,10 +61,27 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
-    timeout: 60 * 1000
-  }
+  webServer: [
+    {
+      command: 'npm run dev',
+      url: 'http://localhost:3000',
+      reuseExistingServer: !process.env.CI,
+      timeout: 60 * 1000
+    },
+    // Auth-enabled server used by reporter-with-auth.spec.ts.
+    // Only started in CI; the corresponding tests are skipped when CI is not set.
+    ...(process.env.CI ? [{
+      command: 'npm run dev',
+      url: 'http://localhost:3099/api/auth/me',
+      env: {
+        NUXT_AUTH_ENABLED: 'true',
+        NUXT_AUTH_SECRET: 'test-auth-secret-key-for-reporter-tests',
+        DATABASE_PATH: join(process.cwd(), '.test-temp', 'auth-test.db'),
+        STORAGE_PATH: join(process.cwd(), '.test-temp', 'auth-test-storage'),
+        NITRO_PORT: '3099'
+      },
+      reuseExistingServer: false,
+      timeout: 90 * 1000
+    }] : [])
+  ]
 })

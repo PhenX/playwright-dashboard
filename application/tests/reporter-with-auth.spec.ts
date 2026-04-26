@@ -1,45 +1,12 @@
 import { test, expect } from '@playwright/test'
-import { spawn, type ChildProcess } from 'child_process'
+import { spawn } from 'child_process'
 import { join, resolve } from 'path'
 import { existsSync, rmSync } from 'fs'
-import http from 'http'
 
 const AUTH_PORT = 3099
 const AUTH_SERVER_URL = `http://localhost:${AUTH_PORT}`
-const AUTH_SECRET = 'test-auth-secret-key-for-reporter-tests'
 const DB_PATH = join(process.cwd(), '.test-temp', 'auth-test.db')
 const STORAGE_PATH = join(process.cwd(), '.test-temp', 'auth-test-storage')
-
-// Allow extra time for the auth server to start
-const SERVER_START_TIMEOUT = 90000
-
-let authServer: ChildProcess | null = null
-
-/**
- * Wait for the auth server to be ready by polling its /api/auth/me endpoint.
- */
-async function waitForServer(url: string, timeoutMs = SERVER_START_TIMEOUT): Promise<void> {
-  const deadline = Date.now() + timeoutMs
-  while (Date.now() < deadline) {
-    try {
-      await new Promise<void>((resolve, reject) => {
-        const req = http.get(`${url}/api/auth/me`, (res) => {
-          res.resume()
-          resolve()
-        })
-        req.on('error', reject)
-        req.setTimeout(2000, () => {
-          req.destroy()
-          reject(new Error('timeout'))
-        })
-      })
-      return
-    } catch {
-      await new Promise(r => setTimeout(r, 500))
-    }
-  }
-  throw new Error(`Auth server at ${url} did not become ready within ${timeoutMs}ms`)
-}
 
 /**
  * Run a CommonJS reporter script in a dedicated Node.js subprocess.
@@ -64,53 +31,12 @@ function runReporterScript(cjsScript: string): Promise<{ exitCode: number, stdou
 }
 
 test.describe.serial('Reporter with authentication enabled', () => {
-  test.beforeAll(async () => {
-    // Remove stale test database so the server starts fresh
-    if (existsSync(DB_PATH)) rmSync(DB_PATH)
-    if (existsSync(STORAGE_PATH)) rmSync(STORAGE_PATH, { recursive: true, force: true })
+  // The auth server (port 3099) is only started by the playwright webServer config
+  // when running in CI. Skip all tests in this file when not in CI.
+  test.skip(!process.env.CI, 'Auth server tests only run in CI (see playwright.config.ts webServer)')
 
-    const appDir = resolve(process.cwd())
-
-    authServer = spawn('npm', ['run', 'dev'], {
-      cwd: appDir,
-      env: {
-        ...process.env,
-        NUXT_AUTH_ENABLED: 'true',
-        NUXT_AUTH_SECRET: AUTH_SECRET,
-        DATABASE_PATH: DB_PATH,
-        STORAGE_PATH,
-        NITRO_PORT: String(AUTH_PORT)
-      },
-      stdio: 'pipe'
-    })
-
-    authServer.stderr?.on('data', (data: Buffer) => {
-      if (process.env.DEBUG_AUTH_SERVER) {
-        process.stderr.write(`[auth-server] ${data}`)
-      }
-    })
-
-    authServer.stdout?.on('data', (data: Buffer) => {
-      if (process.env.DEBUG_AUTH_SERVER) {
-        process.stdout.write(`[auth-server] ${data}`)
-      }
-    })
-
-    await waitForServer(AUTH_SERVER_URL)
-  }, SERVER_START_TIMEOUT + 10000)
-
-  test.afterAll(async () => {
-    if (authServer) {
-      // Wait for the process to fully exit so port 3099 is freed before a
-      // potential serial-block retry runs beforeAll and spawns a new server.
-      await new Promise<void>((resolve) => {
-        const proc = authServer!
-        proc.once('exit', resolve)
-        proc.once('error', resolve)
-        proc.kill('SIGTERM')
-      })
-      authServer = null
-    }
+  test.afterAll(() => {
+    // Clean up test database and storage created by the auth server
     if (existsSync(DB_PATH)) rmSync(DB_PATH)
     if (existsSync(STORAGE_PATH)) rmSync(STORAGE_PATH, { recursive: true, force: true })
   })
