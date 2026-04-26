@@ -114,7 +114,7 @@ const RunReports = resolveComponent('RunReports')
 const columns: TableColumn<ProjectWithStats>[] = [
   {
     accessorKey: 'name',
-    header: createSortHeader<ProjectWithStats>('Project Name'),
+    header: createSortHeader<ProjectWithStats>('Project name'),
     cell: ({ row }) => {
       const displayName = (row.original.label || row.getValue('name')) as string
       const tags = (row.original.tags || []) as TagInfo[]
@@ -328,7 +328,7 @@ const columns: TableColumn<ProjectWithStats>[] = [
 
   <!-- New Project Modal -->
   <ClientOnly>
-    <UModal :open="isNewProjectModalOpen" title="Create New Project" @update:open="isNewProjectModalOpen = $event">
+    <UModal :open="isNewProjectModalOpen" title="Create new project" @update:open="isNewProjectModalOpen = $event">
       <template #body>
         <UForm :schema="newProjectSchema" :state="newProject">
           <UFormField

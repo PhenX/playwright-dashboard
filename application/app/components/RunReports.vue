@@ -14,7 +14,7 @@ const normalizedReports = computed<ReportInfo[]>(() => {
     return [{
       id: 0,
       type: 'html',
-      label: 'HTML Report',
+      label: 'HTML report',
       path: props.legacyPath,
       size: props.legacySize
     }]

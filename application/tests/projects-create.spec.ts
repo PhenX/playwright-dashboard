@@ -72,18 +72,18 @@ test.describe('Project Creation UI Tests', () => {
   test('should show New Project button on projects page', async ({ page }) => {
     await page.goto('/projects')
     await waitForHydration(page)
-    await expect(page.getByRole('button', { name: 'New Project' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'New project' })).toBeVisible()
   })
 
   test('should open New Project modal when clicking button', async ({ page }) => {
     await page.goto('/projects')
     await waitForHydration(page)
 
-    await page.getByRole('button', { name: 'New Project' }).click()
+    await page.getByRole('button', { name: 'New project' }).click()
 
-    await expect(page.getByRole('heading', { name: 'Create New Project' })).toBeVisible({ timeout: 10000 })
-    await expect(page.getByLabel('Project Name')).toBeVisible()
-    await expect(page.getByLabel('Display Label')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Create new project' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByLabel('Project name')).toBeVisible()
+    await expect(page.getByLabel('Display label')).toBeVisible()
     await expect(page.getByLabel('Description')).toBeVisible()
   })
 
@@ -91,11 +91,11 @@ test.describe('Project Creation UI Tests', () => {
     await page.goto('/projects')
     await waitForHydration(page)
 
-    await page.getByRole('button', { name: 'New Project' }).click()
-    await expect(page.getByRole('heading', { name: 'Create New Project' })).toBeVisible({ timeout: 10000 })
+    await page.getByRole('button', { name: 'New project' }).click()
+    await expect(page.getByRole('heading', { name: 'Create new project' })).toBeVisible({ timeout: 10000 })
 
     await page.getByRole('button', { name: 'Cancel' }).click()
-    await expect(page.getByRole('heading', { name: 'Create New Project' })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Create new project' })).not.toBeVisible()
   })
 
   test('should create a new project from the UI', async ({ page }) => {
@@ -103,19 +103,19 @@ test.describe('Project Creation UI Tests', () => {
     await page.goto('/projects')
     await waitForHydration(page)
 
-    await page.getByRole('button', { name: 'New Project' }).click()
-    await expect(page.getByRole('heading', { name: 'Create New Project' })).toBeVisible({ timeout: 10000 })
+    await page.getByRole('button', { name: 'New project' }).click()
+    await expect(page.getByRole('heading', { name: 'Create new project' })).toBeVisible({ timeout: 10000 })
 
-    await page.getByLabel('Project Name').fill(projectName)
-    await page.getByLabel('Display Label').fill('My UI Project')
+    await page.getByLabel('Project name').fill(projectName)
+    await page.getByLabel('Display label').fill('My UI Project')
 
-    await page.getByRole('button', { name: 'Create Project' }).click()
+    await page.getByRole('button', { name: 'Create project' }).click()
 
     // Should show success toast
     await expect(page.getByText('Project created', { exact: true })).toBeVisible({ timeout: 5000 })
 
     // Modal should close
-    await expect(page.getByRole('heading', { name: 'Create New Project' })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Create new project' })).not.toBeVisible()
 
     // New project should appear in the list
     await expect(page.getByRole('link', { name: 'My UI Project' })).toBeVisible({ timeout: 5000 })
@@ -129,11 +129,11 @@ test.describe('Project Creation UI Tests', () => {
     await page.goto('/projects')
     await waitForHydration(page)
 
-    await page.getByRole('button', { name: 'New Project' }).click()
-    await expect(page.getByRole('heading', { name: 'Create New Project' })).toBeVisible({ timeout: 10000 })
+    await page.getByRole('button', { name: 'New project' }).click()
+    await expect(page.getByRole('heading', { name: 'Create new project' })).toBeVisible({ timeout: 10000 })
 
-    await page.getByLabel('Project Name').fill(projectName)
-    await page.getByRole('button', { name: 'Create Project' }).click()
+    await page.getByLabel('Project name').fill(projectName)
+    await page.getByRole('button', { name: 'Create project' }).click()
 
     // Should show error toast
     await expect(page.getByText('Failed to create project', { exact: true })).toBeVisible({ timeout: 5000 })
@@ -156,15 +156,15 @@ test.describe('Tag Management UI Tests', () => {
     await page.goto('/settings/tags')
     await waitForHydration(page)
 
-    await expect(page.getByRole('heading', { name: 'Tag Management' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Add Tag' }).first()).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Tag management' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Add tag' }).first()).toBeVisible()
   })
 
   test('should open Add Tag modal', async ({ page }) => {
     await page.goto('/settings/tags')
     await waitForHydration(page)
 
-    await page.getByRole('button', { name: 'Add Tag' }).first().click()
+    await page.getByRole('button', { name: 'Add tag' }).first().click()
 
     await expect(page.getByRole('heading', { name: 'Add new tag' })).toBeVisible({ timeout: 10000 })
     await expect(page.getByLabel('Tag text')).toBeVisible()
@@ -175,7 +175,7 @@ test.describe('Tag Management UI Tests', () => {
     await page.goto('/settings/tags')
     await waitForHydration(page)
 
-    await page.getByRole('button', { name: 'Add Tag' }).first().click()
+    await page.getByRole('button', { name: 'Add tag' }).first().click()
     await expect(page.getByRole('heading', { name: 'Add new tag' })).toBeVisible({ timeout: 10000 })
 
     await page.getByRole('button', { name: 'Cancel' }).click()
@@ -187,11 +187,11 @@ test.describe('Tag Management UI Tests', () => {
     await page.goto('/settings/tags')
     await waitForHydration(page)
 
-    await page.getByRole('button', { name: 'Add Tag' }).first().click()
+    await page.getByRole('button', { name: 'Add tag' }).first().click()
     await expect(page.getByRole('heading', { name: 'Add new tag' })).toBeVisible({ timeout: 10000 })
 
     await page.getByLabel('Tag text').fill(tagName)
-    await page.getByRole('button', { name: 'Create Tag' }).click()
+    await page.getByRole('button', { name: 'Create tag' }).click()
 
     // Success toast
     await expect(page.getByText('Tag created', { exact: true })).toBeVisible({ timeout: 5000 })
@@ -204,7 +204,7 @@ test.describe('Tag Management UI Tests', () => {
     await page.goto('/settings/tags')
     await waitForHydration(page)
 
-    await page.getByRole('button', { name: 'Add Tag' }).first().click()
+    await page.getByRole('button', { name: 'Add tag' }).first().click()
     await expect(page.getByRole('heading', { name: 'Add new tag' })).toBeVisible({ timeout: 10000 })
 
     // Color picker input should be an input[type=color]
@@ -216,7 +216,7 @@ test.describe('Tag Management UI Tests', () => {
     await page.goto('/settings/tags')
     await waitForHydration(page)
 
-    await page.getByRole('button', { name: 'Add Tag' }).first().click()
+    await page.getByRole('button', { name: 'Add tag' }).first().click()
     await expect(page.getByRole('heading', { name: 'Add new tag' })).toBeVisible({ timeout: 10000 })
 
     await page.getByLabel('Tag text').fill('preview-test')

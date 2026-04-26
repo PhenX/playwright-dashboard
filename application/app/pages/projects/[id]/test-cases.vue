@@ -28,7 +28,7 @@ function getTestCaseStatus(testCase: TestCaseWithStats) {
 const testCasesColumns: TableColumn<TestCaseWithStats>[] = [
   {
     accessorKey: 'title',
-    header: createSortHeader<TestCaseWithStats>('Test Case'),
+    header: createSortHeader<TestCaseWithStats>('Test case'),
     cell: ({ row }) => {
       return h('div', {}, [
         h('div', { class: 'font-medium' }, row.getValue('title')),
@@ -51,7 +51,7 @@ const testCasesColumns: TableColumn<TestCaseWithStats>[] = [
   },
   {
     accessorKey: 'passRate',
-    header: createSortHeader<TestCaseWithStats>('Pass Rate'),
+    header: createSortHeader<TestCaseWithStats>('Pass rate'),
     cell: ({ row }) => {
       const passRate = getPassRate(row.original)
       const colorClass = passRate >= 80 ? 'text-green-600' : passRate >= 50 ? 'text-yellow-600' : 'text-red-600'
@@ -72,12 +72,12 @@ const testCasesColumns: TableColumn<TestCaseWithStats>[] = [
   },
   {
     accessorKey: 'avgDuration',
-    header: createSortHeader<TestCaseWithStats>('Avg Duration'),
+    header: createSortHeader<TestCaseWithStats>('Avg duration'),
     cell: ({ row }) => formatDuration(row.getValue('avgDuration'))
   },
   {
     accessorKey: 'lastRun',
-    header: createSortHeader<TestCaseWithStats>('Last Run'),
+    header: createSortHeader<TestCaseWithStats>('Last run'),
     cell: ({ row }) => {
       const timestamp = row.getValue('lastRun') as number
       return h('span', { class: 'text-xs' }, formatDate(timestamp))
@@ -112,7 +112,7 @@ const testCasesColumns: TableColumn<TestCaseWithStats>[] = [
           variant="ghost"
           size="sm"
         >
-          Back to Project
+          Back to project
         </UButton>
 
         <UCard>

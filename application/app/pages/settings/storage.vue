@@ -168,7 +168,7 @@ async function handleCleanup() {
           color="error"
           variant="soft"
           :loading="cleaning"
-          label="Run Cleanup"
+          label="Run cleanup"
           class="mt-4 sm:mt-5"
           @click="isConfirmOpen = true"
         />
@@ -178,7 +178,7 @@ async function handleCleanup() {
 
   <!-- Confirm Dialog -->
   <ClientOnly>
-    <UModal :open="isConfirmOpen" title="Confirm Cleanup" @update:open="isConfirmOpen = $event">
+    <UModal :open="isConfirmOpen" title="Confirm cleanup" @update:open="isConfirmOpen = $event">
       <template #body>
         <p>
           This will permanently delete all test runs older than <strong>{{ selectedPeriod }} days</strong>,

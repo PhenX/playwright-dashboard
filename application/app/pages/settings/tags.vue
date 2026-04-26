@@ -146,11 +146,11 @@ async function handleDeleteTag(tag: TagInfo) {
 <template>
   <UDashboardPanel grow>
     <template #header>
-      <UDashboardNavbar title="Tag Management">
+      <UDashboardNavbar title="Tag management">
         <template #right>
           <UButton
             v-if="isAdmin"
-            label="Add Tag"
+            label="Add tag"
             icon="i-lucide-tag"
             @click="isAddTagModalOpen = true"
           />
@@ -283,7 +283,7 @@ async function handleDeleteTag(tag: TagInfo) {
         />
         <UButton
           type="submit"
-          label="Create Tag"
+          label="Create tag"
           icon="i-lucide-tag"
           @click="handleAddTag"
         />

@@ -72,7 +72,7 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
 <template>
   <UDashboardPanel id="test-case-detail">
     <template #header>
-      <UDashboardNavbar title="Test Case Details">
+      <UDashboardNavbar title="Test case details">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -95,14 +95,14 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
           variant="ghost"
           size="sm"
         >
-          Back to Test Run
+          Back to test run
         </UButton>
 
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
               <h2 class="text-xl font-semibold">
-                Test Case #{{ testCase?.id }}
+                Test case #{{ testCase?.id }}
               </h2>
               <UBadge v-if="testCase" :color="getStatusColor(testCase.status)" size="lg">
                 {{ testCase.status }}
@@ -154,7 +154,7 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
               </div>
               <div v-if="testCase?.slowestStep">
                 <p class="text-sm text-gray-500">
-                  Slowest Step
+                  Slowest step
                 </p>
                 <p class="font-medium text-orange-600">
                   {{ testCase.slowestStep }}
@@ -167,7 +167,7 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
 
             <div v-if="testCase?.error" class="pt-4 border-t">
               <p class="text-sm text-gray-500 mb-2">
-                Error Details
+                Error details
               </p>
               <pre class="text-sm bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 p-4 rounded overflow-x-auto">{{ testCase.error }}</pre>
             </div>
@@ -237,7 +237,7 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-gauge" class="w-5 h-5 text-primary" />
               <h3 class="text-lg font-medium">
-                Browser Performance (Web Vitals)
+                Browser performance (Web Vitals)
               </h3>
             </div>
           </template>
@@ -336,7 +336,7 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-network" class="w-5 h-5 text-primary" />
               <h3 class="text-lg font-medium">
-                Network Requests
+                Network requests
               </h3>
             </div>
           </template>

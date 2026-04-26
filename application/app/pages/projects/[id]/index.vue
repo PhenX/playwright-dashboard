@@ -167,7 +167,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
           variant="ghost"
           size="sm"
         >
-          Back to Projects
+          Back to projects
         </UButton>
 
         <p v-if="project?.description" class="text-gray-600 mt-2">

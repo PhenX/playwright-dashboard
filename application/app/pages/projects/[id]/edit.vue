@@ -81,7 +81,7 @@ function onCancel() {
           variant="ghost"
           size="sm"
         >
-          Back to Project
+          Back to project
         </UButton>
 
         <UCard>
@@ -103,7 +103,7 @@ function onCancel() {
             class="space-y-4"
             @submit="onSubmit"
           >
-            <UFormField label="Display Label" name="label" description="A friendly name to display in the UI (defaults to project name if not set)">
+            <UFormField label="Display label" name="label" description="A friendly name to display in the UI (defaults to project name if not set)">
               <UInput v-model="state.label" placeholder="Enter display label" />
             </UFormField>
 

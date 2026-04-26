@@ -128,11 +128,11 @@ function getRoleBadgeColor(role: string) {
 <template>
   <UDashboardPanel grow>
     <template #header>
-      <UDashboardNavbar title="User Management">
+      <UDashboardNavbar title="User management">
         <template #right>
           <UButton
             v-if="isAdmin"
-            label="Add User"
+            label="Add user"
             icon="i-lucide-user-plus"
             @click="isAddUserModalOpen = true"
           />
@@ -209,7 +209,7 @@ function getRoleBadgeColor(role: string) {
           </p>
           <UButton
             v-if="isAdmin"
-            label="Add User"
+            label="Add user"
             icon="i-lucide-user-plus"
             @click="isAddUserModalOpen = true"
           />
@@ -220,7 +220,7 @@ function getRoleBadgeColor(role: string) {
 
   <!-- Add User Modal -->
   <ClientOnly>
-    <UModal :open="isAddUserModalOpen" title="Add New User" @update:open="isAddUserModalOpen = $event">
+    <UModal :open="isAddUserModalOpen" title="Add new user" @update:open="isAddUserModalOpen = $event">
       <template #body>
         <UForm :schema="addUserSchema" :state="newUser">
           <UFormField
@@ -241,7 +241,7 @@ function getRoleBadgeColor(role: string) {
             <UInput v-model="newUser.password" type="password" placeholder="Enter password" />
           </UFormField>
 
-          <UFormField label="Display Name" name="name" class="mb-4">
+          <UFormField label="Display name" name="name" class="mb-4">
             <UInput v-model="newUser.name" placeholder="Enter display name (optional)" />
           </UFormField>
 
@@ -265,7 +265,7 @@ function getRoleBadgeColor(role: string) {
         />
         <UButton
           type="submit"
-          label="Create User"
+          label="Create user"
           icon="i-lucide-user-plus"
           @click="handleAddUser"
         />

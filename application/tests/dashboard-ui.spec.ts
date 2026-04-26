@@ -36,12 +36,12 @@ test.describe('Dashboard UI Tests', () => {
     await expect(page.locator('h1')).toContainText('Playwright Dashboard')
 
     // Check for statistics cards
-    await expect(page.getByText('Total Projects')).toBeVisible()
-    await expect(page.getByText('Total Test Runs')).toBeVisible()
-    await expect(page.getByText('Active Projects')).toBeVisible()
+    await expect(page.getByText('Total projects')).toBeVisible()
+    await expect(page.getByText('Total test runs')).toBeVisible()
+    await expect(page.getByText('Active projects')).toBeVisible()
 
     // Check for recent projects section
-    await expect(page.getByText('Recent Projects')).toBeVisible()
+    await expect(page.getByText('Recent projects')).toBeVisible()
   })
 
   test('should display projects list page', async ({ page }) => {
@@ -64,7 +64,7 @@ test.describe('Dashboard UI Tests', () => {
     await page.waitForURL(/\/projects\/\d+/)
 
     // Check for test results trend section
-    await expect(page.getByText('Test Results Trend')).toBeVisible()
+    await expect(page.getByText('Test results trend')).toBeVisible()
 
     // Check project name in sidebar is expanded
     await expect(page.getByRole('link', { name: 'Test runs' })).toBeVisible()
@@ -85,21 +85,21 @@ test.describe('Dashboard UI Tests', () => {
     await page.waitForURL(/\/test-runs\/\d+/)
 
     // Check test run details are displayed
-    await expect(page.getByText('Test Run Details')).toBeVisible()
+    await expect(page.getByText('Test run details')).toBeVisible()
   })
 
   test('should show project switcher dropdown', async ({ page }) => {
     await page.goto('/')
 
     // Find and click the project switcher - use first() to get the header one, not sidebar
-    const projectSwitcher = page.getByRole('button', { name: /All Projects|ui-test-project/ }).first()
+    const projectSwitcher = page.getByRole('button', { name: /All projects|ui-test-project/ }).first()
     await expect(projectSwitcher).toBeVisible()
 
     // Click to open dropdown
     await projectSwitcher.click()
 
     // Check dropdown options
-    await expect(page.getByText('All Projects').first()).toBeVisible()
+    await expect(page.getByText('All projects').first()).toBeVisible()
   })
 
   test('should navigate using sidebar', async ({ page }) => {

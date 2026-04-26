@@ -18,10 +18,10 @@ test.describe('User Management Page Tests', () => {
     await waitForHydration(page)
 
     // Check page title
-    await expect(page.getByRole('heading', { name: 'User Management' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'User management' })).toBeVisible()
 
     // Check that Add User button is visible
-    await expect(page.getByRole('button', { name: 'Add User' }).first()).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Add user' }).first()).toBeVisible()
 
     // Check info message about auth being disabled
     await expect(page.getByText('Authentication is disabled')).toBeVisible()
@@ -32,18 +32,18 @@ test.describe('User Management Page Tests', () => {
     await waitForHydration(page)
 
     // Modal should not be visible initially
-    await expect(page.getByRole('heading', { name: 'Add New User' })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Add new user' })).not.toBeVisible()
 
     // Click Add User button
-    await page.getByRole('button', { name: 'Add User' }).first().click()
+    await page.getByRole('button', { name: 'Add user' }).first().click()
 
     // Wait for modal to appear
-    await expect(page.getByRole('heading', { name: 'Add New User' })).toBeVisible({ timeout: 10000 })
+    await expect(page.getByRole('heading', { name: 'Add new user' })).toBeVisible({ timeout: 10000 })
 
     // Check form fields are visible
     await expect(page.getByLabel('Username', { exact: true })).toBeVisible()
     await expect(page.getByLabel('Password', { exact: true })).toBeVisible()
-    await expect(page.getByLabel('Display Name')).toBeVisible()
+    await expect(page.getByLabel('Display name')).toBeVisible()
     await expect(page.getByLabel('Role', { exact: true })).toBeVisible()
   })
 
@@ -52,14 +52,14 @@ test.describe('User Management Page Tests', () => {
     await waitForHydration(page)
 
     // Open modal
-    await page.getByRole('button', { name: 'Add User' }).first().click()
-    await expect(page.getByRole('heading', { name: 'Add New User' })).toBeVisible({ timeout: 10000 })
+    await page.getByRole('button', { name: 'Add user' }).first().click()
+    await expect(page.getByRole('heading', { name: 'Add new user' })).toBeVisible({ timeout: 10000 })
 
     // Click Cancel button
     await page.getByRole('button', { name: 'Cancel' }).click()
 
     // Modal should be closed
-    await expect(page.getByRole('heading', { name: 'Add New User' })).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Add new user' })).not.toBeVisible()
   })
 
   test('should create a new user', async ({ page }) => {
@@ -67,20 +67,20 @@ test.describe('User Management Page Tests', () => {
     await waitForHydration(page)
 
     // Open modal
-    await page.getByRole('button', { name: 'Add User' }).first().click()
-    await expect(page.getByRole('heading', { name: 'Add New User' })).toBeVisible({ timeout: 10000 })
+    await page.getByRole('button', { name: 'Add user' }).first().click()
+    await expect(page.getByRole('heading', { name: 'Add new user' })).toBeVisible({ timeout: 10000 })
 
     // Fill in the form
     await page.getByLabel('Username', { exact: true }).fill('testuser')
     await page.getByLabel('Password', { exact: true }).fill('testpassword123')
-    await page.getByLabel('Display Name').fill('Test User')
+    await page.getByLabel('Display name').fill('Test User')
 
     // Select role (administrator)
     await page.getByLabel('Role', { exact: true }).click()
     await page.getByRole('option', { name: 'Administrator' }).click()
 
     // Submit form
-    await page.getByRole('button', { name: 'Create User' }).click()
+    await page.getByRole('button', { name: 'Create user' }).click()
 
     // Check for success message (toast notification)
     await expect(page.getByText('User created', { exact: true })).toBeVisible({ timeout: 5000 })
@@ -109,15 +109,15 @@ test.describe('User Management Page Tests', () => {
     await waitForHydration(page)
 
     // Open modal
-    await page.getByRole('button', { name: 'Add User' }).first().click()
-    await expect(page.getByRole('heading', { name: 'Add New User' })).toBeVisible({ timeout: 10000 })
+    await page.getByRole('button', { name: 'Add user' }).first().click()
+    await expect(page.getByRole('heading', { name: 'Add new user' })).toBeVisible({ timeout: 10000 })
 
     // Try to submit empty form
-    await page.getByRole('button', { name: 'Create User' }).click()
+    await page.getByRole('button', { name: 'Create user' }).click()
 
     // Form should not submit (validation should prevent it)
     // Modal should still be visible
-    await expect(page.getByRole('heading', { name: 'Add New User' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Add new user' })).toBeVisible()
   })
 
   test('should show delete confirmation for users', async ({ page }) => {
@@ -129,14 +129,14 @@ test.describe('User Management Page Tests', () => {
 
     if (noUsersText) {
       // Create a test user first
-      await page.getByRole('button', { name: 'Add User' }).first().click()
-      await expect(page.getByRole('heading', { name: 'Add New User' })).toBeVisible({ timeout: 10000 })
+      await page.getByRole('button', { name: 'Add user' }).first().click()
+      await expect(page.getByRole('heading', { name: 'Add new user' })).toBeVisible({ timeout: 10000 })
 
       await page.getByLabel('Username', { exact: true }).fill('deletetest')
       await page.getByLabel('Password', { exact: true }).fill('password123')
       await page.getByLabel('Role', { exact: true }).click()
       await page.getByRole('option', { name: 'User' }).click()
-      await page.getByRole('button', { name: 'Create User' }).click()
+      await page.getByRole('button', { name: 'Create user' }).click()
       await page.waitForTimeout(2000)
     }
 
