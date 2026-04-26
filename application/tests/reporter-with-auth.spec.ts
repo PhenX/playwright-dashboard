@@ -41,43 +41,6 @@ async function waitForServer(url: string, timeoutMs = SERVER_START_TIMEOUT): Pro
   throw new Error(`Auth server at ${url} did not become ready within ${timeoutMs}ms`)
 }
 
-/**
- * Log in and return the session cookie string
- */
-async function loginAndGetCookie(serverUrl: string, username: string, password: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const postData = JSON.stringify({ username, password })
-    const parsed = new URL('/api/auth/login', serverUrl)
-
-    const req = http.request({
-      hostname: parsed.hostname,
-      port: Number(parsed.port),
-      path: parsed.pathname,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(postData)
-      }
-    }, (res) => {
-      res.resume()
-      if (res.statusCode !== 200) {
-        reject(new Error(`Login failed: ${res.statusCode}`))
-        return
-      }
-      const setCookie = res.headers['set-cookie']
-      if (!setCookie || setCookie.length === 0) {
-        reject(new Error('No session cookie returned'))
-        return
-      }
-      resolve(setCookie.map(c => c.split(';')[0]).join('; '))
-    })
-
-    req.on('error', reject)
-    req.write(postData)
-    req.end()
-  })
-}
-
 test.describe.serial('Reporter with authentication enabled', () => {
   test.beforeAll(async () => {
     // Remove stale test database so the server starts fresh
@@ -410,7 +373,9 @@ test.describe.serial('Reporter with authentication enabled', () => {
     const projectsRes = await new Promise<{ status: number, body: unknown[] }>((resolve, reject) => {
       http.get(`${AUTH_SERVER_URL}/api/projects`, (res) => {
         let data = ''
-        res.on('data', (chunk: Buffer) => { data += chunk })
+        res.on('data', (chunk: Buffer) => {
+          data += chunk
+        })
         res.on('end', () => {
           try {
             resolve({ status: res.statusCode ?? 0, body: JSON.parse(data) })
@@ -651,10 +616,15 @@ test.describe.serial('Reporter with authentication enabled', () => {
     const projectsRes = await new Promise<{ status: number, body: unknown[] }>((resolve, reject) => {
       http.get(`${AUTH_SERVER_URL}/api/projects`, (res) => {
         let data = ''
-        res.on('data', (chunk: Buffer) => { data += chunk })
+        res.on('data', (chunk: Buffer) => {
+          data += chunk
+        })
         res.on('end', () => {
-          try { resolve({ status: res.statusCode ?? 0, body: JSON.parse(data) }) }
-          catch { resolve({ status: res.statusCode ?? 0, body: [] }) }
+          try {
+            resolve({ status: res.statusCode ?? 0, body: JSON.parse(data) })
+          } catch {
+            resolve({ status: res.statusCode ?? 0, body: [] })
+          }
         })
       }).on('error', reject)
     })

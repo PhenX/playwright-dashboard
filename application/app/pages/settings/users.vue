@@ -136,7 +136,6 @@ const selectedUserForKeys = ref<UserDetails | null>(null)
 const isApiKeysModalOpen = ref(false)
 
 const apiKeysList = ref<ApiKeySummary[]>([])
-let refreshApiKeysImpl: (() => Promise<void>) | null = null
 
 async function openApiKeysModal(user: UserDetails) {
   selectedUserForKeys.value = user
@@ -548,4 +547,3 @@ function canManageApiKeys(user: UserDetails): boolean {
     </UModal>
   </ClientOnly>
 </template>
-
