@@ -229,7 +229,7 @@ const columns: TableColumn<ProjectWithStats>[] = [
 <template>
   <UDashboardPanel id="projects">
     <template #header>
-      <UDashboardNavbar title="Projects">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>

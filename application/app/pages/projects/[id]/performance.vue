@@ -248,7 +248,7 @@ function refresh() {
 <template>
   <UDashboardPanel id="project-performance">
     <template #header>
-      <UDashboardNavbar :title="`${project?.label || project?.name || 'Project'} — Performance`">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -273,15 +273,6 @@ function refresh() {
 
     <template #body>
       <div class="p-4 space-y-6">
-        <UButton
-          :to="`/projects/${projectId}`"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to project
-        </UButton>
-
         <!-- Performance Trend Chart -->
         <UCard>
           <template #header>

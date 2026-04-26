@@ -76,7 +76,7 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
 <template>
   <UDashboardPanel id="test-case-detail">
     <template #header>
-      <UDashboardNavbar title="Test case details">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -102,15 +102,6 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton
-          :to="`/test-runs/${testCase?.testRun?.id}`"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to test run
-        </UButton>
-
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">

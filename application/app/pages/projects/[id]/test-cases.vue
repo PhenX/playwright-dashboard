@@ -91,7 +91,7 @@ const testCasesColumns: TableColumn<TestCaseWithStats>[] = [
 <template>
   <UDashboardPanel id="project-test-cases">
     <template #header>
-      <UDashboardNavbar :title="`${project?.name || 'Project'} - Test cases`">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -116,15 +116,6 @@ const testCasesColumns: TableColumn<TestCaseWithStats>[] = [
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton
-          :to="`/projects/${projectId}`"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to project
-        </UButton>
-
         <UCard>
           <template #header>
             <h2>

@@ -197,7 +197,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
 <template>
   <UDashboardPanel id="test-run-detail">
     <template #header>
-      <UDashboardNavbar title="Test run details">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -231,15 +231,6 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton
-          :to="`/projects/${testRun?.project?.id}`"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to project
-        </UButton>
-
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">

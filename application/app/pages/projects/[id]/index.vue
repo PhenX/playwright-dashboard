@@ -120,7 +120,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
 <template>
   <UDashboardPanel id="project-detail">
     <template #header>
-      <UDashboardNavbar :title="project?.label || project?.name || 'Project Details'">
+      <UDashboardNavbar>
         <template #trailing>
           <UButton
             :to="`/projects/${projectId}/edit`"
@@ -170,15 +170,6 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton
-          to="/projects"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to projects
-        </UButton>
-
         <p v-if="project?.description" class="text-gray-600 mt-2">
           {{ project.description }}
         </p>

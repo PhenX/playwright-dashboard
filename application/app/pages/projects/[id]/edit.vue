@@ -68,7 +68,7 @@ function onCancel() {
 <template>
   <UDashboardPanel id="project-edit">
     <template #header>
-      <UDashboardNavbar :title="`Edit ${project?.name || 'Project'}`">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -85,15 +85,6 @@ function onCancel() {
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton
-          :to="`/projects/${projectId}`"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to project
-        </UButton>
-
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
