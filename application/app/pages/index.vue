@@ -98,7 +98,7 @@ const allTestRuns = computed(() => {
         <UCard v-if="allTestRuns.length > 0">
           <template #header>
             <h2 class="text-xl font-semibold">
-            Test results trend
+              Test results trend
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Overview of test results across all projects
@@ -154,7 +154,7 @@ const allTestRuns = computed(() => {
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
-                Getting started
+              Getting started
             </h2>
           </template>
 
