@@ -7,7 +7,7 @@ lang: en-US
 
 ## Requirements
 
-- **Node.js 22+** (Node.js 24 recommended) — required for native SQLite support
+- **Node.js 24+** — required for native SQLite support
 - **npm** — for package management
 
 ## Quick start with Docker
