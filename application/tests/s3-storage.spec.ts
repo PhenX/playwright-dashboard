@@ -124,7 +124,7 @@ test.describe('S3 storage', () => {
     })
 
     test('deleteDirectory should not throw when prefix does not exist', async () => {
-      await expect(adapter.deleteDirectory(`${keyPrefix}/nonexistent-dir`)).resolves.not.toThrow()
+      await expect(adapter.deleteDirectory(`${keyPrefix}/nonexistent-dir`)).resolves.toBeUndefined()
     })
   })
 
