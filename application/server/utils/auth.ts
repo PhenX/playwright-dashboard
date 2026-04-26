@@ -191,8 +191,11 @@ export async function getUserByApiKey(plaintext: string): Promise<User | null> {
     return null
   }
 
-  // Update last used
-  await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, key.id))
+  // Update last used at most once per hour to avoid excessive write load
+  const ONE_HOUR_MS = 60 * 60 * 1000
+  if (!key.lastUsedAt || (new Date().getTime() - key.lastUsedAt.getTime()) > ONE_HOUR_MS) {
+    await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, key.id))
+  }
 
   const userResults = await db.select().from(users).where(eq(users.id, key.userId))
   return userResults[0] || null

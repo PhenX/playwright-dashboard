@@ -39,13 +39,12 @@ function loginUser(serverUrl, username, password, verbose) {
 
       res.on('end', () => {
         if (res.statusCode >= 200 && res.statusCode < 300) {
-          // Extract the Set-Cookie header and join multiple cookies
           const setCookie = res.headers['set-cookie'];
           if (!setCookie || setCookie.length === 0) {
             reject(new Error('Login succeeded but no session cookie was returned'));
             return;
           }
-          // Join multiple Set-Cookie values into a single Cookie header value
+          // Nuxt may set multiple cookies (session + CSRF); join them all into one Cookie header
           const cookie = setCookie.map(c => c.split(';')[0]).join('; ');
           if (verbose) {
             console.log('[Playwright Dashboard] Logged in successfully');
