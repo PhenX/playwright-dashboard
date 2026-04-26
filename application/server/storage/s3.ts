@@ -27,7 +27,9 @@ export class S3StorageAdapter implements StorageAdapter {
           accessKeyId: this.config.accessKeyId,
           secretAccessKey: this.config.secretAccessKey
         },
-        ...(this.config.endpoint && { endpoint: this.config.endpoint })
+        ...(this.config.endpoint && { endpoint: this.config.endpoint }),
+        // Default to path-style when a custom endpoint is set (required for MinIO, LocalStack, etc.)
+        forcePathStyle: this.config.forcePathStyle ?? !!this.config.endpoint
       })
     } catch (error) {
       console.error('Failed to initialize S3 client. Make sure @aws-sdk/client-s3 is installed.')

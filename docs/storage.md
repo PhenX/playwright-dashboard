@@ -66,6 +66,8 @@ S3_ACCESS_KEY_ID=minioadmin
 S3_SECRET_ACCESS_KEY=minioadmin
 ```
 
+Path-style URLs are enabled automatically when `S3_ENDPOINT` is set (as required by MinIO and most self-hosted S3-compatible services). Set `S3_FORCE_PATH_STYLE=false` to override this behaviour.
+
 ### DigitalOcean Spaces
 
 ```bash
