@@ -5,14 +5,6 @@ const toast = useToast()
 
 const { data: stats, refresh, pending } = await useFetch<AdminStats>('/api/admin/stats')
 
-function formatBytes(bytes: number | null | undefined): string {
-  if (bytes == null) return 'N/A'
-  if (bytes === 0) return '0 B'
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${units[i]}`
-}
-
 const periodOptions = [
   { label: '7 days', value: 7 },
   { label: '14 days', value: 14 },
@@ -167,9 +159,7 @@ async function handleCleanup() {
         <UFormField label="Delete runs older than" name="period">
           <USelect
             v-model="selectedPeriod"
-            :options="periodOptions"
-            value-key="value"
-            label-key="label"
+            :items="periodOptions"
           />
         </UFormField>
 

@@ -1,6 +1,6 @@
 import { getDatabase } from '../../database'
 import { testRuns, testRunsCases, traces, reports } from '../../database/schema'
-import { lt, eq, inArray } from 'drizzle-orm'
+import { lt, inArray } from 'drizzle-orm'
 import { requireAuth } from '../../utils/auth'
 import { getStorage } from '../../storage'
 
@@ -12,7 +12,7 @@ export default eventHandler(async (event) => {
   // olderThanDays: number — delete runs whose startTime is older than this many days
   const olderThanDays = parseInt(body?.olderThanDays ?? '0', 10)
 
-const MS_PER_DAY = 24 * 60 * 60 * 1000
+  const MS_PER_DAY = 24 * 60 * 60 * 1000
 
   if (!olderThanDays || olderThanDays < 1) {
     throw createError({

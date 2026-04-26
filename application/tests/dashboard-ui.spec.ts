@@ -166,7 +166,7 @@ test.describe('Dashboard UI Tests', () => {
 
     // Check heading and stats section
     await expect(page.getByText('Storage Statistics')).toBeVisible()
-    await expect(page.getByText('Test Runs')).toBeVisible()
+    await expect(page.getByText('Test Runs', { exact: true })).toBeVisible()
     await expect(page.getByText('Cleanup Old Test Runs')).toBeVisible()
 
     // Verify the cleanup button exists
@@ -194,7 +194,7 @@ test.describe('Dashboard UI Tests', () => {
     await page.waitForLoadState('networkidle')
 
     // Delete button should be visible in the navbar
-    const deleteButton = page.getByRole('button', { name: 'Delete' })
+    const deleteButton = page.getByRole('button', { name: 'Delete', exact: true })
     await expect(deleteButton).toBeVisible()
 
     // Click it — confirmation modal should appear
