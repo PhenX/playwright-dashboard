@@ -42,7 +42,9 @@ export function getStorage(): StorageAdapter {
       region,
       accessKeyId,
       secretAccessKey,
-      endpoint: process.env.S3_ENDPOINT
+      endpoint: process.env.S3_ENDPOINT,
+      // When S3_FORCE_PATH_STYLE is explicitly set, use its value; otherwise default to true when a custom endpoint is configured
+      ...(process.env.S3_FORCE_PATH_STYLE !== undefined && { forcePathStyle: process.env.S3_FORCE_PATH_STYLE !== 'false' })
     }
 
     console.log(`[Storage] Initializing S3 storage with bucket: ${bucket}, region: ${region}`)
