@@ -81,13 +81,13 @@ function onCancel() {
           variant="ghost"
           size="sm"
         >
-          Back to Project
+          Back to project
         </UButton>
 
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
-              Edit Project Settings
+              Edit project settings
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Project Name: <span class="font-medium">{{ project?.name }}</span>
@@ -103,7 +103,7 @@ function onCancel() {
             class="space-y-4"
             @submit="onSubmit"
           >
-            <UFormField label="Display Label" name="label" description="A friendly name to display in the UI (defaults to project name if not set)">
+            <UFormField label="Display label" name="label" description="A friendly name to display in the UI (defaults to project name if not set)">
               <UInput v-model="state.label" placeholder="Enter display label" />
             </UFormField>
 
@@ -121,7 +121,7 @@ function onCancel() {
 
             <div class="flex gap-2 pt-4">
               <UButton type="submit" :loading="saving">
-                Save Changes
+                Save changes
               </UButton>
               <UButton variant="outline" @click="onCancel">
                 Cancel

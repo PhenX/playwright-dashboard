@@ -108,6 +108,11 @@ The repository is organized into three main parts:
 - **Nuxt conventions**: Follow Nuxt 4 file-based routing and auto-imports
 - **UI Components**: Use Nuxt UI components (@nuxt/ui)
 
+## UI best practices
+- Do not capitalize every word in the UI. Use sentence case for better readability (e.g., "Test runs" instead of "Test Runs").
+- When displaying dates and times, use relative formats (e.g., "5 minutes ago") instead of absolute timestamps for better user experience, with the full timestamp, human-readable format, and timezone available on hover for clarity. (use date-fns)
+- When displaying durations, use human-readable formats (e.g., "2m 30s" instead of "150000 ms") for better readability, with the exact duration in milliseconds available on hover for precision. (use date-fns)
+
 ## Environment Configuration
 The application uses minimal environment configuration:
 

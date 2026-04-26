@@ -114,7 +114,7 @@ const RunReports = resolveComponent('RunReports')
 const columns: TableColumn<ProjectWithStats>[] = [
   {
     accessorKey: 'name',
-    header: createSortHeader<ProjectWithStats>('Project Name'),
+    header: createSortHeader<ProjectWithStats>('Project name'),
     cell: ({ row }) => {
       const displayName = (row.original.label || row.getValue('name')) as string
       const tags = (row.original.tags || []) as TagInfo[]
@@ -142,12 +142,12 @@ const columns: TableColumn<ProjectWithStats>[] = [
   },
   {
     accessorKey: 'totalRuns',
-    header: createSortHeader<ProjectWithStats>('Test Runs'),
+    header: createSortHeader<ProjectWithStats>('Test runs'),
     cell: ({ row }) => `${row.getValue('totalRuns')} runs`
   },
   {
     accessorKey: 'latestRun',
-    header: createSortHeader<ProjectWithStats>('Last Run'),
+    header: createSortHeader<ProjectWithStats>('Last run'),
     cell: ({ row }) => {
       const latestRun = row.getValue('latestRun') as ProjectWithStats['latestRun']
       return latestRun ? formatDate(latestRun.startTime) : 'N/A'
@@ -211,7 +211,7 @@ const columns: TableColumn<ProjectWithStats>[] = [
           to: `/projects/${row.original.id}`,
           size: 'sm',
           variant: 'outline'
-        }, () => 'View Details'),
+        }, () => 'View details'),
         h(UButton, {
           to: `/projects/${row.original.id}/edit`,
           size: 'sm',
@@ -235,7 +235,7 @@ const columns: TableColumn<ProjectWithStats>[] = [
           <UButton
             icon="i-lucide-plus"
             size="md"
-            label="New Project"
+            label="New project"
             @click="isNewProjectModalOpen = true"
           />
           <UButton
@@ -319,7 +319,7 @@ const columns: TableColumn<ProjectWithStats>[] = [
         </p>
         <UButton
           icon="i-lucide-plus"
-          label="New Project"
+          label="New project"
           @click="isNewProjectModalOpen = true"
         />
       </div>
@@ -328,11 +328,11 @@ const columns: TableColumn<ProjectWithStats>[] = [
 
   <!-- New Project Modal -->
   <ClientOnly>
-    <UModal :open="isNewProjectModalOpen" title="Create New Project" @update:open="isNewProjectModalOpen = $event">
+    <UModal :open="isNewProjectModalOpen" title="Create new project" @update:open="isNewProjectModalOpen = $event">
       <template #body>
         <UForm :schema="newProjectSchema" :state="newProject">
           <UFormField
-            label="Project Name"
+            label="Project name"
             name="name"
             required
             description="A unique identifier used to match test results from the reporter."
@@ -342,7 +342,7 @@ const columns: TableColumn<ProjectWithStats>[] = [
           </UFormField>
 
           <UFormField
-            label="Display Label"
+            label="Display label"
             name="label"
             description="A friendly name shown in the UI (defaults to project name if not set)."
             class="mb-4"
@@ -381,7 +381,7 @@ const columns: TableColumn<ProjectWithStats>[] = [
           @click="isNewProjectModalOpen = false"
         />
         <UButton
-          label="Create Project"
+          label="Create project"
           icon="i-lucide-plus"
           :loading="creatingProject"
           @click="handleCreateProject"

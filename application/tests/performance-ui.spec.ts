@@ -68,9 +68,9 @@ test.describe('Performance UI Tests', () => {
 
   test('should navigate to performance page', async ({ page }) => {
     await page.goto(`/projects/${projectId}/performance`)
-    await expect(page.getByText('Performance Trend')).toBeVisible()
-    await expect(page.getByText('Slowest Tests')).toBeVisible()
-    await expect(page.getByText('Run Comparison')).toBeVisible()
+    await expect(page.getByText('Performance trend')).toBeVisible()
+    await expect(page.getByText('Slowest tests')).toBeVisible()
+    await expect(page.getByText('Run comparison')).toBeVisible()
   })
 
   test('should show slowest tests on performance page', async ({ page }) => {
@@ -88,11 +88,11 @@ test.describe('Performance UI Tests', () => {
     await page.goto(`/test-runs/${testRunId}`)
 
     // Should show avg and p90 test duration
-    await expect(page.getByText('Avg Test Duration')).toBeVisible()
-    await expect(page.getByText('P90 Test Duration')).toBeVisible()
+    await expect(page.getByText('Avg test duration')).toBeVisible()
+    await expect(page.getByText('P90 test duration')).toBeVisible()
 
     // Should show slowest step column
-    await expect(page.getByText('Slowest Step')).toBeVisible()
+    await expect(page.getByText('Slowest step')).toBeVisible()
   })
 
   test('should show steps and hints on test case detail page', async ({ page }) => {
@@ -107,7 +107,7 @@ test.describe('Performance UI Tests', () => {
 
     if (testCaseWithSteps) {
       await page.goto(`/test-cases/${testCaseWithSteps.id}`)
-      await expect(page.getByText('Slowest Step')).toBeVisible()
+      await expect(page.getByText('Slowest step')).toBeVisible()
 
       // Should show steps section
       await expect(page.getByText('Steps')).toBeVisible()

@@ -8,6 +8,27 @@ const projectId = route.params.id
 
 const { data: project, refresh } = await useFetch<ProjectWithTestRuns>(`/api/projects/${projectId}`)
 
+const toast = useToast()
+const deletingRunId = ref<number | null>(null)
+const confirmDeleteRunId = ref<number | null>(null)
+
+async function handleDeleteRun(runId: number) {
+  confirmDeleteRunId.value = null
+  deletingRunId.value = runId
+  try {
+    await $fetch(`/api/test-runs/${runId}`, { method: 'DELETE' })
+    toast.add({ title: 'Test run deleted', color: 'success' })
+    await refresh()
+  } catch (error: unknown) {
+    const errorMessage = error && typeof error === 'object' && 'data' in error
+      ? (error.data as { message?: string })?.message
+      : undefined
+    toast.add({ title: 'Delete failed', description: errorMessage || 'An error occurred', color: 'error' })
+  } finally {
+    deletingRunId.value = null
+  }
+}
+
 const UBadge = resolveComponent('UBadge')
 const TestStatusBar = resolveComponent('TestStatusBar')
 const RunReports = resolveComponent('RunReports')
@@ -77,7 +98,17 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
           to: `/test-runs/${row.original.id}`,
           size: 'sm',
           variant: 'outline'
-        }, () => 'View')
+        }, () => 'View'),
+        h(UButton, {
+          size: 'sm',
+          color: 'error',
+          variant: 'soft',
+          icon: 'i-lucide-trash-2',
+          loading: deletingRunId.value === row.original.id,
+          onClick: () => {
+            confirmDeleteRunId.value = row.original.id
+          }
+        }, () => 'Delete')
       ])
     }
   }
@@ -103,7 +134,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
             size="sm"
             variant="outline"
           >
-            View Test Cases
+            View test cases
           </UButton>
           <UButton
             :to="`/projects/${projectId}/performance`"
@@ -136,7 +167,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
           variant="ghost"
           size="sm"
         >
-          Back to Projects
+          Back to projects
         </UButton>
 
         <p v-if="project?.description" class="text-gray-600 mt-2">
@@ -156,7 +187,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
         <UCard v-if="project?.testRuns && project.testRuns.length > 0">
           <template #header>
             <h2>
-              Test Results Trend
+              Test results trend
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Test run statistics over time for {{ project?.label || project?.name }}
@@ -169,7 +200,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
         <UCard>
           <template #header>
             <h2>
-              Test Runs
+              Test runs
             </h2>
           </template>
           <UTable
@@ -192,4 +223,36 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
       </div>
     </template>
   </UDashboardPanel>
+
+  <!-- Delete Run Confirm Dialog -->
+  <ClientOnly>
+    <UModal
+      :open="confirmDeleteRunId !== null"
+      title="Delete test run"
+      @update:open="val => { if (!val) confirmDeleteRunId = null }"
+    >
+      <template #body>
+        <p>
+          Are you sure you want to delete <strong>Run #{{ confirmDeleteRunId }}</strong>?
+          This will also remove all associated test results, reports, and traces.
+          This action cannot be undone.
+        </p>
+      </template>
+      <template #footer>
+        <UButton
+          color="neutral"
+          variant="ghost"
+          label="Cancel"
+          @click="confirmDeleteRunId = null"
+        />
+        <UButton
+          color="error"
+          label="Delete"
+          icon="i-lucide-trash-2"
+          :loading="deletingRunId === confirmDeleteRunId"
+          @click="handleDeleteRun(confirmDeleteRunId!)"
+        />
+      </template>
+    </UModal>
+  </ClientOnly>
 </template>

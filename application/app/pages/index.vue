@@ -17,16 +17,16 @@ const stats = computed(() => {
   )[0]
 
   const statItems: { label: string, value: string | number, icon: string }[] = [
-    { label: 'Total Projects', value: totalProjects, icon: 'i-lucide-folder' },
-    { label: 'Total Test Runs', value: totalRuns, icon: 'i-lucide-play-circle' },
-    { label: 'Active Projects', value: recentRuns, icon: 'i-lucide-activity' },
-    { label: 'Passing Projects', value: passedRuns, icon: 'i-lucide-check-circle' },
-    { label: 'Flaky Tests', value: totalFlakyTests, icon: 'i-lucide-alert-triangle' }
+    { label: 'Total projects', value: totalProjects, icon: 'i-lucide-folder' },
+    { label: 'Total test runs', value: totalRuns, icon: 'i-lucide-play-circle' },
+    { label: 'Active projects', value: recentRuns, icon: 'i-lucide-activity' },
+    { label: 'Passing projects', value: passedRuns, icon: 'i-lucide-check-circle' },
+    { label: 'Flaky tests', value: totalFlakyTests, icon: 'i-lucide-alert-triangle' }
   ]
 
   if (slowestProject) {
     statItems.push({
-      label: 'Slowest Project',
+      label: 'Slowest project',
       value: slowestProject.label || slowestProject.name,
       icon: 'i-lucide-gauge'
     })
@@ -98,7 +98,7 @@ const allTestRuns = computed(() => {
         <UCard v-if="allTestRuns.length > 0">
           <template #header>
             <h2 class="text-xl font-semibold">
-              Test Results Trend
+              Test results trend
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Overview of test results across all projects
@@ -113,10 +113,10 @@ const allTestRuns = computed(() => {
           <template #header>
             <div class="flex justify-between items-center">
               <h2 class="text-xl font-semibold">
-                Recent Projects
+                Recent projects
               </h2>
               <UButton to="/projects" variant="outline" size="sm">
-                View All
+                View all
               </UButton>
             </div>
           </template>
@@ -154,7 +154,7 @@ const allTestRuns = computed(() => {
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
-              Getting Started
+              Getting started
             </h2>
           </template>
 

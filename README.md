@@ -15,6 +15,9 @@ A modern dashboard for storing and visualizing Playwright test results, built wi
 - 🔬 **Browser Web Vitals** - Capture TTFB, DOMContentLoaded, FCP and more via the Performance API
 - 📊 **Run Comparison** - Side-by-side delta view of two test runs with improved/regressed/unchanged summary
 - 🔍 **Detailed Views** - Drill down from projects → test runs → test cases → traces
+- 🗑️ **Delete Test Runs** - Delete individual runs from the run detail page or from the project runs table
+- 🧹 **Bulk Cleanup** - Remove test runs older than a configurable period (days) from the Settings › Storage page
+- 📦 **Storage Stats** - Administrator view of total projects, runs, test cases, reports, and on-disk storage size
 - 🔌 **REST API** - Simple JSON API for submitting test results
 - 📦 **Playwright Reporter** - Custom reporter for automatic result submission
 - 💾 **SQLite Database** - Lightweight database storage with Drizzle ORM
@@ -132,6 +135,13 @@ curl -X POST http://localhost:3000/api/test-runs/upload \
 - `GET /api/test-runs/[id]` - Get test run details with test cases
 - `GET /api/test-runs/[id]/network-requests` - Network requests grouped by HTTP method + normalised route
 - `GET /api/test-cases/[id]` - Get test case details with traces
+
+**Delete:**
+- `DELETE /api/test-runs/[id]` - Delete a test run and all its associated data (requires administrator role)
+
+**Admin:**
+- `GET /api/admin/stats` - Get storage statistics (total projects, runs, test cases, reports, storage size) — requires administrator role
+- `DELETE /api/admin/cleanup` - Delete all test runs older than a given number of days, including their reports and traces — requires administrator role. Body: `{ "olderThanDays": 30 }`
 
 **Files:**
 - `GET /api/files/[...path]` - Download HTML reports and trace files
@@ -350,6 +360,18 @@ To create additional users:
 1. Navigate to `/settings/users` in the dashboard
 2. Click "Add User" to create a new account
 3. Set username, password, role, and optional display name
+
+### Storage Management
+
+The **Settings › Storage** page (`/settings/storage`) provides administrators with an overview of all stored data and tools to free up disk space:
+
+- **Statistics panel** — shows total projects, test runs, unique test cases, individual test results, traces, stored reports, aggregate report size (from DB), and actual on-disk storage size (local storage only).
+- **Cleanup panel** — lets you permanently delete all test runs (along with their reports, traces, and test results) that are older than a configurable number of days (7, 14, 30, 60, 90, 180, or 365 days). A confirmation dialog is shown before any data is deleted.
+
+You can also delete individual test runs:
+
+- From the **test run detail page** (`/test-runs/[id]`) — click the red **Delete** button in the page header.
+- From the **project detail page** (`/projects/[id]`) — click the **Delete** button in the Actions column of the test runs table.
 
 ### API Authentication
 

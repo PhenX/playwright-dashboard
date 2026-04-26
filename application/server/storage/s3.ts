@@ -113,4 +113,43 @@ export class S3StorageAdapter implements StorageAdapter {
     // For S3, return the key as-is (relative path)
     return path
   }
+
+  async deleteDirectory(path: string): Promise<void> {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { ListObjectsV2Command, DeleteObjectsCommand } = require('@aws-sdk/client-s3')
+
+      const prefix = path.endsWith('/') ? path : `${path}/`
+      let continuationToken: string | undefined
+
+      do {
+        const listCommand = new ListObjectsV2Command({
+          Bucket: this.config.bucket,
+          Prefix: prefix,
+          ContinuationToken: continuationToken
+        })
+
+        const listResult: {
+          Contents?: Array<{ Key: string }>
+          IsTruncated?: boolean
+          NextContinuationToken?: string
+        } = await this.s3Client.send(listCommand)
+
+        if (listResult.Contents && listResult.Contents.length > 0) {
+          const deleteCommand = new DeleteObjectsCommand({
+            Bucket: this.config.bucket,
+            Delete: {
+              Objects: listResult.Contents.map((obj: { Key: string }) => ({ Key: obj.Key }))
+            }
+          })
+          await this.s3Client.send(deleteCommand)
+        }
+
+        continuationToken = listResult.IsTruncated ? listResult.NextContinuationToken : undefined
+      } while (continuationToken)
+    } catch (error) {
+      console.error(`Failed to delete directory from S3: ${path}`, error)
+      throw error
+    }
+  }
 }

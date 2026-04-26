@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-const links = [[{
+/*
+{
   label: 'General',
   icon: 'i-lucide-user',
   to: '/settings',
   exact: true
-}, {
+},
+ */
+
+const links = [[{
   label: 'Users',
   icon: 'i-lucide-users',
   to: '/settings/users'
@@ -14,10 +18,14 @@ const links = [[{
   label: 'Tags',
   icon: 'i-lucide-tags',
   to: '/settings/tags'
+}, {
+  label: 'Storage',
+  icon: 'i-lucide-hard-drive',
+  to: '/settings/storage'
 }], [{
   label: 'Documentation',
   icon: 'i-lucide-book-open',
-  to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
+  to: 'https://github.com/PhenX/playwright-dashboard',
   target: '_blank'
 }]] satisfies NavigationMenuItem[][]
 </script>

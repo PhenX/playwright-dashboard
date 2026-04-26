@@ -21,7 +21,7 @@ const currentProjectId = computed(() => {
 const selectedProject = computed(() => {
   if (!currentProjectId.value || !projects.value) {
     return {
-      label: 'All Projects',
+      label: 'All projects',
       icon: 'i-lucide-folder-open'
     }
   }
@@ -33,7 +33,7 @@ const selectedProject = computed(() => {
         icon: 'i-lucide-folder'
       }
     : {
-        label: 'All Projects',
+        label: 'All projects',
         icon: 'i-lucide-folder-open'
       }
 })
@@ -41,7 +41,7 @@ const selectedProject = computed(() => {
 // Create dropdown items
 const items = computed<DropdownMenuItem[][]>(() => {
   const projectItems = [{
-    label: 'All Projects',
+    label: 'All projects',
     icon: 'i-lucide-folder-open',
     onSelect() {
       router.push('/projects')

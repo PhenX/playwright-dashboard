@@ -36,12 +36,12 @@ test.describe('Dashboard UI Tests', () => {
     await expect(page.locator('h1')).toContainText('Playwright Dashboard')
 
     // Check for statistics cards
-    await expect(page.getByText('Total Projects')).toBeVisible()
-    await expect(page.getByText('Total Test Runs')).toBeVisible()
-    await expect(page.getByText('Active Projects')).toBeVisible()
+    await expect(page.getByText('Total projects')).toBeVisible()
+    await expect(page.getByText('Total test runs')).toBeVisible()
+    await expect(page.getByText('Active projects')).toBeVisible()
 
     // Check for recent projects section
-    await expect(page.getByText('Recent Projects')).toBeVisible()
+    await expect(page.getByText('Recent projects')).toBeVisible()
   })
 
   test('should display projects list page', async ({ page }) => {
@@ -64,10 +64,10 @@ test.describe('Dashboard UI Tests', () => {
     await page.waitForURL(/\/projects\/\d+/)
 
     // Check for test results trend section
-    await expect(page.getByText('Test Results Trend')).toBeVisible()
+    await expect(page.getByText('Test results trend')).toBeVisible()
 
     // Check project name in sidebar is expanded
-    await expect(page.getByRole('link', { name: 'Test Runs' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Test runs' })).toBeVisible()
   })
 
   test('should navigate to test run details page', async ({ page }) => {
@@ -85,21 +85,21 @@ test.describe('Dashboard UI Tests', () => {
     await page.waitForURL(/\/test-runs\/\d+/)
 
     // Check test run details are displayed
-    await expect(page.getByText('Test Run Details')).toBeVisible()
+    await expect(page.getByText('Test run details')).toBeVisible()
   })
 
   test('should show project switcher dropdown', async ({ page }) => {
     await page.goto('/')
 
     // Find and click the project switcher - use first() to get the header one, not sidebar
-    const projectSwitcher = page.getByRole('button', { name: /All Projects|ui-test-project/ }).first()
+    const projectSwitcher = page.getByRole('button', { name: /All projects|ui-test-project/ }).first()
     await expect(projectSwitcher).toBeVisible()
 
     // Click to open dropdown
     await projectSwitcher.click()
 
     // Check dropdown options
-    await expect(page.getByText('All Projects').first()).toBeVisible()
+    await expect(page.getByText('All projects').first()).toBeVisible()
   })
 
   test('should navigate using sidebar', async ({ page }) => {
@@ -158,5 +158,51 @@ test.describe('Dashboard UI Tests', () => {
 
     // Data should still be visible after refresh - use link to target table
     await expect(page.getByRole('link', { name: 'ui-test-project' })).toBeVisible()
+  })
+
+  test('should display storage settings page', async ({ page }) => {
+    await page.goto('/settings/storage')
+    await page.waitForLoadState('networkidle')
+
+    // Check heading and stats section
+    await expect(page.getByText('Storage statistics')).toBeVisible()
+    await expect(page.getByText('Test runs', { exact: true })).toBeVisible()
+    await expect(page.getByText('Cleanup old test runs')).toBeVisible()
+
+    // Verify the cleanup button exists
+    await expect(page.getByRole('button', { name: 'Run cleanup' })).toBeVisible()
+  })
+
+  test('should show delete confirmation modal on test run page', async ({ page, request }) => {
+    // Ensure there is a test run
+    const submitRes = await request.post('/api/test-runs/submit', {
+      data: {
+        projectName: 'ui-test-project',
+        status: 'passed',
+        startTime: new Date().toISOString(),
+        duration: 5000,
+        totalTests: 1,
+        passedTests: 1,
+        failedTests: 0,
+        skippedTests: 0,
+        testCases: [{ title: 'delete-ui-test', status: 'passed', duration: 500, location: 'tests/x.spec.ts:1:1' }]
+      }
+    })
+    const { testRunId } = await submitRes.json()
+
+    await page.goto(`/test-runs/${testRunId}`)
+    await page.waitForLoadState('networkidle')
+
+    // Delete button should be visible in the navbar
+    const deleteButton = page.getByRole('button', { name: 'Delete', exact: true })
+    await expect(deleteButton).toBeVisible()
+
+    // Click it — confirmation modal should appear
+    await deleteButton.click()
+    await expect(page.getByText('Delete test run', { exact: true })).toBeVisible()
+
+    // Close the modal
+    await page.getByRole('button', { name: 'Cancel' }).click()
+    await expect(page.getByText('Delete test run', { exact: true })).not.toBeVisible()
   })
 })

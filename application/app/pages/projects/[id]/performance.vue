@@ -16,7 +16,7 @@ const UBadge = resolveComponent('UBadge')
 const slowTestsColumns: TableColumn<SlowTest>[] = [
   {
     accessorKey: 'title',
-    header: createSortHeader<SlowTest>('Test Case'),
+    header: createSortHeader<SlowTest>('Test case'),
     cell: ({ row }) => {
       return h('div', {}, [
         h('div', { class: 'font-medium' }, row.getValue('title')),
@@ -26,7 +26,7 @@ const slowTestsColumns: TableColumn<SlowTest>[] = [
   },
   {
     accessorKey: 'avgDuration',
-    header: createSortHeader<SlowTest>('Avg Duration'),
+    header: createSortHeader<SlowTest>('Avg duration'),
     cell: ({ row }) => formatDuration(row.getValue('avgDuration'))
   },
   {
@@ -194,7 +194,7 @@ const comparisonSummary = computed(() => {
 const comparisonColumns: TableColumn<ComparisonRow>[] = [
   {
     accessorKey: 'title',
-    header: createSortHeader<ComparisonRow>('Test Case'),
+    header: createSortHeader<ComparisonRow>('Test case'),
     cell: ({ row }) => h('span', { class: 'font-medium' }, row.getValue('title'))
   },
   {
@@ -269,14 +269,14 @@ function refresh() {
           variant="ghost"
           size="sm"
         >
-          Back to Project
+          Back to project
         </UButton>
 
         <!-- Performance Trend Chart -->
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
-              Performance Trend
+              Performance trend
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Duration metrics over time
@@ -290,7 +290,7 @@ function refresh() {
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
-              Slowest Tests
+              Slowest tests
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Top 20 slowest test cases across recent runs
@@ -319,7 +319,7 @@ function refresh() {
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
-              Run Comparison
+              Run comparison
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Compare two test runs side-by-side to see performance changes

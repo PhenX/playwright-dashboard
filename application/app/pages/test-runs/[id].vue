@@ -8,6 +8,27 @@ const runId = route.params.id
 
 const { data: testRun, refresh } = await useFetch<TestRunDetails>(`/api/test-runs/${runId}`)
 
+const toast = useToast()
+const isDeleteConfirmOpen = ref(false)
+const deleting = ref(false)
+
+async function handleDeleteRun() {
+  isDeleteConfirmOpen.value = false
+  deleting.value = true
+  try {
+    await $fetch(`/api/test-runs/${runId}`, { method: 'DELETE' })
+    toast.add({ title: 'Test run deleted', color: 'success' })
+    await navigateTo(`/projects/${testRun.value?.project?.id}`)
+  } catch (error: unknown) {
+    const errorMessage = error && typeof error === 'object' && 'data' in error
+      ? (error.data as { message?: string })?.message
+      : undefined
+    toast.add({ title: 'Delete failed', description: errorMessage || 'An error occurred', color: 'error' })
+  } finally {
+    deleting.value = false
+  }
+}
+
 // Load network requests data lazily (not during SSR) to avoid blocking page load
 const { data: networkEndpoints, pending: loadingEndpoints } = await useFetch<EndpointSummary[]>(
   `/api/test-runs/${runId}/network-requests`,
@@ -44,7 +65,7 @@ const allReports = computed<ReportInfo[]>(() => {
 const testCasesColumns: TableColumn<TestCaseResult>[] = [
   {
     accessorKey: 'title',
-    header: createSortHeader<TestCaseResult>('Test Case'),
+    header: createSortHeader<TestCaseResult>('Test case'),
     cell: ({ row }) => {
       return h('a', {
         href: `/test-cases/${row.original.id}`,
@@ -79,7 +100,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
   },
   {
     accessorKey: 'slowestStep',
-    header: createSortHeader<TestCaseResult>('Slowest Step'),
+    header: createSortHeader<TestCaseResult>('Slowest step'),
     cell: ({ row }) => {
       const step = row.getValue('slowestStep') as string | null
       const stepDuration = row.original.slowestStepDuration
@@ -108,7 +129,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
           to: `/test-cases/${row.original.id}`,
           size: 'sm',
           variant: 'outline'
-        }, () => 'View Details')
+        }, () => 'View details')
       )
     }
   }
@@ -172,7 +193,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
 <template>
   <UDashboardPanel id="test-run-detail">
     <template #header>
-      <UDashboardNavbar title="Test Run Details">
+      <UDashboardNavbar title="Test run details">
         <template #leading>
           <UDashboardSidebarCollapse />
         </template>
@@ -182,6 +203,15 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
             size="md"
             label="Refresh"
             @click="() => refresh()"
+          />
+          <UButton
+            icon="i-lucide-trash-2"
+            size="md"
+            color="error"
+            variant="soft"
+            label="Delete"
+            :loading="deleting"
+            @click="isDeleteConfirmOpen = true"
           />
         </template>
       </UDashboardNavbar>
@@ -195,14 +225,14 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
           variant="ghost"
           size="sm"
         >
-          Back to Project
+          Back to project
         </UButton>
 
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
               <h2 class="text-xl font-semibold">
-                Test Run #{{ testRun?.id }}
+                Test run #{{ testRun?.id }}
               </h2>
               <UBadge v-if="testRun" :color="getStatusColor(testRun.status)" size="lg">
                 {{ testRun.status }}
@@ -222,7 +252,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               </div>
               <div>
                 <p class="text-sm text-gray-500">
-                  Total Tests
+                  Total tests
                 </p>
                 <p class="font-medium">
                   {{ testRun?.totalTests }}
@@ -262,7 +292,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               </div>
               <div v-if="testRun?.avgTestDuration">
                 <p class="text-sm text-gray-500">
-                  Avg Test Duration
+                  Avg test duration
                 </p>
                 <p class="font-medium">
                   {{ formatDuration(testRun.avgTestDuration) }}
@@ -270,7 +300,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               </div>
               <div v-if="testRun?.p90TestDuration">
                 <p class="text-sm text-gray-500">
-                  P90 Test Duration
+                  P90 test duration
                 </p>
                 <p class="font-medium text-orange-600">
                   {{ formatDuration(testRun.p90TestDuration) }}
@@ -278,7 +308,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               </div>
               <div>
                 <p class="text-sm text-gray-500">
-                  Start Time
+                  Start time
                 </p>
                 <p class="font-medium">
                   {{ testRun?.startTime ? new Date(testRun.startTime).toLocaleString() : 'N/A' }}
@@ -312,7 +342,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                 <!-- Related Issue -->
                 <div v-if="testRun.metadata.relatedIssue">
                   <p class="text-xs text-gray-500 uppercase">
-                    Related Issue
+                    Related issue
                   </p>
                   <p class="text-sm">
                     {{ testRun.metadata.relatedIssue }}
@@ -322,7 +352,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                 <!-- CI Info -->
                 <div v-if="testRun.metadata.ci" class="space-y-2">
                   <p class="text-xs text-gray-500 uppercase">
-                    CI Information
+                    CI information
                   </p>
                   <div class="grid grid-cols-2 gap-2 text-sm">
                     <div v-if="testRun.metadata.ci.provider">
@@ -353,7 +383,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                 <!-- SCM Info -->
                 <div v-if="testRun.metadata.scm" class="space-y-2">
                   <p class="text-xs text-gray-500 uppercase">
-                    Source Control
+                    Source control
                   </p>
                   <div class="space-y-1 text-sm">
                     <div v-if="testRun.metadata.scm.commit">
@@ -395,7 +425,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                 <!-- Custom Data -->
                 <div v-if="testRun.metadata.customData">
                   <p class="text-xs text-gray-500 uppercase mb-2">
-                    Custom Data
+                    Custom data
                   </p>
                   <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded text-xs font-mono overflow-x-auto">
                     <pre>{{ JSON.stringify(testRun.metadata.customData, null, 2) }}</pre>
@@ -409,7 +439,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
         <UCard>
           <template #header>
             <h3 class="text-lg font-medium">
-              Test Cases
+              Test cases
             </h3>
           </template>
 
@@ -438,7 +468,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               <UIcon name="i-lucide-network" class="w-5 h-5 text-primary" />
               <div>
                 <h3 class="text-lg font-medium">
-                  Slow API Endpoints
+                  Slow API endpoints
                 </h3>
                 <p class="text-sm text-gray-500 mt-0.5">
                   Network requests grouped by route and HTTP method — requires
@@ -475,4 +505,32 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
       </div>
     </template>
   </UDashboardPanel>
+
+  <!-- Delete Confirm Dialog -->
+  <ClientOnly>
+    <UModal :open="isDeleteConfirmOpen" title="Delete test run" @update:open="isDeleteConfirmOpen = $event">
+      <template #body>
+        <p>
+          Are you sure you want to delete <strong>Test Run #{{ testRun?.id }}</strong>?
+          This will also remove all associated test results, reports, and traces.
+          This action cannot be undone.
+        </p>
+      </template>
+      <template #footer>
+        <UButton
+          color="neutral"
+          variant="ghost"
+          label="Cancel"
+          @click="isDeleteConfirmOpen = false"
+        />
+        <UButton
+          color="error"
+          label="Delete"
+          icon="i-lucide-trash-2"
+          :loading="deleting"
+          @click="handleDeleteRun"
+        />
+      </template>
+    </UModal>
+  </ClientOnly>
 </template>
