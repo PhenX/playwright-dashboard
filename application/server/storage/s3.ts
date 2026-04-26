@@ -1,3 +1,11 @@
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  HeadObjectCommand,
+  ListObjectsV2Command,
+  DeleteObjectsCommand
+} from '@aws-sdk/client-s3'
 import type { StorageAdapter, S3Config } from './types'
 
 /**
@@ -6,43 +14,24 @@ import type { StorageAdapter, S3Config } from './types'
  */
 export class S3StorageAdapter implements StorageAdapter {
   private readonly config: S3Config
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private s3Client: any // AWS S3Client instance (type is dynamic)
+  private s3Client: S3Client
 
   constructor(config: S3Config) {
     this.config = config
-    this.initializeS3Client()
-  }
-
-  private initializeS3Client() {
-    try {
-      // Dynamically import AWS SDK v3
-      // This will only load if S3 storage is actually used
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { S3Client } = require('@aws-sdk/client-s3')
-
-      this.s3Client = new S3Client({
-        region: this.config.region,
-        credentials: {
-          accessKeyId: this.config.accessKeyId,
-          secretAccessKey: this.config.secretAccessKey
-        },
-        ...(this.config.endpoint && { endpoint: this.config.endpoint }),
-        // Default to path-style when a custom endpoint is set (required for MinIO, LocalStack, etc.)
-        forcePathStyle: this.config.forcePathStyle ?? !!this.config.endpoint
-      })
-    } catch (error) {
-      console.error('Failed to initialize S3 client. Make sure @aws-sdk/client-s3 is installed.')
-      console.error('Install it with: npm install @aws-sdk/client-s3')
-      throw error
-    }
+    this.s3Client = new S3Client({
+      region: this.config.region,
+      credentials: {
+        accessKeyId: this.config.accessKeyId,
+        secretAccessKey: this.config.secretAccessKey
+      },
+      ...(this.config.endpoint && { endpoint: this.config.endpoint }),
+      // Default to path-style when a custom endpoint is set (required for MinIO, LocalStack, etc.)
+      forcePathStyle: this.config.forcePathStyle ?? !!this.config.endpoint
+    })
   }
 
   async writeFile(path: string, data: Buffer): Promise<void> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { PutObjectCommand } = require('@aws-sdk/client-s3')
-
       const command = new PutObjectCommand({
         Bucket: this.config.bucket,
         Key: path,
@@ -58,9 +47,6 @@ export class S3StorageAdapter implements StorageAdapter {
 
   async readFile(path: string): Promise<Buffer> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { GetObjectCommand } = require('@aws-sdk/client-s3')
-
       const command = new GetObjectCommand({
         Bucket: this.config.bucket,
         Key: path
@@ -71,7 +57,6 @@ export class S3StorageAdapter implements StorageAdapter {
       // Convert stream to buffer
       const chunks: Buffer[] = []
       // Response.Body is a readable stream from AWS SDK
-      // TypeScript doesn't know the exact type, but it's iterable
       const body = response.Body as AsyncIterable<Uint8Array>
       for await (const chunk of body) {
         chunks.push(Buffer.from(chunk))
@@ -85,9 +70,6 @@ export class S3StorageAdapter implements StorageAdapter {
 
   async exists(path: string): Promise<boolean> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { HeadObjectCommand } = require('@aws-sdk/client-s3')
-
       const command = new HeadObjectCommand({
         Bucket: this.config.bucket,
         Key: path
@@ -118,9 +100,6 @@ export class S3StorageAdapter implements StorageAdapter {
 
   async deleteDirectory(path: string): Promise<void> {
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const { ListObjectsV2Command, DeleteObjectsCommand } = require('@aws-sdk/client-s3')
-
       const prefix = path.endsWith('/') ? path : `${path}/`
       let continuationToken: string | undefined
 
@@ -155,3 +134,4 @@ export class S3StorageAdapter implements StorageAdapter {
     }
   }
 }
+
