@@ -27,12 +27,6 @@ const user = computed(() => {
   }
 })
 
-// {
-//   label: 'Settings',
-//     icon: 'i-lucide-settings',
-//   to: '/settings'
-// },
-
 const items = computed<DropdownMenuItem[][]>(() => {
   const configurationMenuItems: DropdownMenuItem[] = []
 
@@ -41,6 +35,16 @@ const items = computed<DropdownMenuItem[][]>(() => {
       label: 'Users',
       icon: 'i-lucide-users',
       to: '/settings/users'
+    })
+    configurationMenuItems.push({
+      label: 'Tags',
+      icon: 'i-lucide-tags',
+      to: '/settings/tags'
+    })
+    configurationMenuItems.push({
+      label: 'Storage',
+      icon: 'i-lucide-hard-drive',
+      to: '/settings/storage'
     })
   }
 

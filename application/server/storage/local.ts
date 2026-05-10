@@ -1,4 +1,5 @@
 import { readFile as fsReadFile, writeFile as fsWriteFile, mkdir as fsMkdir, existsSync } from 'fs'
+import { rm } from 'fs/promises'
 import { join, dirname } from 'path'
 import { promisify } from 'util'
 import type { StorageAdapter } from './types'
@@ -49,5 +50,12 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   getFullPath(path: string): string {
     return join(this.basePath, path)
+  }
+
+  async deleteDirectory(path: string): Promise<void> {
+    const fullPath = join(this.basePath, path)
+    if (existsSync(fullPath)) {
+      await rm(fullPath, { recursive: true, force: true })
+    }
   }
 }

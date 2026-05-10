@@ -7,6 +7,10 @@ const testCaseId = route.params.id
 
 const { data: testCase, refresh } = await useFetch(`/api/test-cases/${testCaseId}`)
 
+useHead(computed(() => ({
+  title: `${testCase.value?.title || `Test case #${testCaseId}`} — Playwright Dashboard`
+})))
+
 const performanceHints = computed(() => {
   if (!testCase.value) return []
   return getPerformanceHints(testCase.value)
@@ -72,9 +76,18 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
 <template>
   <UDashboardPanel id="test-case-detail">
     <template #header>
-      <UDashboardNavbar title="Test Case Details">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              ...(testCase?.testRun?.project?.id ? [{ label: testCase.testRun.project.name || 'Project', to: `/projects/${testCase.testRun.project.id}` }] : [{ label: 'Project' }]),
+              ...(testCase?.testRun?.id ? [{ label: `Test run #${testCase.testRun.id}`, to: `/test-runs/${testCase.testRun.id}` }] : [{ label: 'Test run' }]),
+              { label: testCase?.title || `Test case #${testCaseId}` }
+            ]"
+          />
         </template>
         <template #right>
           <UButton
@@ -89,20 +102,11 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton
-          :to="`/test-runs/${testCase?.testRun?.id}`"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to Test Run
-        </UButton>
-
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
               <h2 class="text-xl font-semibold">
-                Test Case #{{ testCase?.id }}
+                Test case #{{ testCase?.id }}
               </h2>
               <UBadge v-if="testCase" :color="getStatusColor(testCase.status)" size="lg">
                 {{ testCase.status }}
@@ -154,7 +158,7 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
               </div>
               <div v-if="testCase?.slowestStep">
                 <p class="text-sm text-gray-500">
-                  Slowest Step
+                  Slowest step
                 </p>
                 <p class="font-medium text-orange-600">
                   {{ testCase.slowestStep }}
@@ -167,7 +171,7 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
 
             <div v-if="testCase?.error" class="pt-4 border-t">
               <p class="text-sm text-gray-500 mb-2">
-                Error Details
+                Error details
               </p>
               <pre class="text-sm bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 p-4 rounded overflow-x-auto">{{ testCase.error }}</pre>
             </div>
@@ -237,7 +241,7 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-gauge" class="w-5 h-5 text-primary" />
               <h3 class="text-lg font-medium">
-                Browser Performance (Web Vitals)
+                Browser performance (Web Vitals)
               </h3>
             </div>
           </template>
@@ -336,7 +340,7 @@ const groupedNetworkRequests = computed<GroupedRequest[]>(() => {
             <div class="flex items-center gap-2">
               <UIcon name="i-lucide-network" class="w-5 h-5 text-primary" />
               <h3 class="text-lg font-medium">
-                Network Requests
+                Network requests
               </h3>
             </div>
           </template>

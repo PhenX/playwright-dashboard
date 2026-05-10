@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, index, primaryKey } from 'drizzle-orm/sqlite-core'
 
 // Projects table
 export const projects = sqliteTable('projects', {
@@ -67,6 +67,19 @@ export const testRunsCases = sqliteTable('test_runs_cases', {
   testCaseIdIdx: index('idx_test_runs_cases_test_case_id').on(table.testCaseId)
 }))
 
+// Reports table - stores multiple report types per test run
+export const reports = sqliteTable('reports', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  testRunId: integer('test_run_id').notNull().references(() => testRuns.id),
+  type: text('type').notNull(), // 'html', 'monocart', 'blob', etc.
+  label: text('label').notNull(), // Display label e.g. 'HTML Report', 'Monocart Report'
+  path: text('path').notNull(), // Relative path in storage (for browsable) or file path (for blob)
+  size: integer('size'), // File/directory size in bytes
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
+}, table => ({
+  testRunIdIdx: index('idx_reports_test_run_id').on(table.testRunId)
+}))
+
 // Traces table (if exists, keeping for reference)
 export const traces = sqliteTable('traces', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -75,6 +88,25 @@ export const traces = sqliteTable('traces', {
   createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
 }, table => ({
   testRunsCaseIdIdx: index('idx_traces_test_runs_case_id').on(table.testRunsCaseId)
+}))
+
+// Tags table - for labeling projects
+export const tags = sqliteTable('tags', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  text: text('text').notNull().unique(),
+  color: text('color').notNull().default('neutral'),
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
+})
+
+// Project tags junction table
+export const projectTags = sqliteTable('project_tags', {
+  projectId: integer('project_id').notNull().references(() => projects.id, { onDelete: 'cascade' }),
+  tagId: integer('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' })
+}, table => ({
+  pk: primaryKey({ columns: [table.projectId, table.tagId] }),
+  projectIdIdx: index('idx_project_tags_project_id').on(table.projectId),
+  tagIdIdx: index('idx_project_tags_tag_id').on(table.tagId)
 }))
 
 // Users table - for authentication
@@ -88,6 +120,21 @@ export const users = sqliteTable('users', {
   updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date())
 })
 
+// API keys table - for reporter/CI authentication
+export const apiKeys = sqliteTable('api_keys', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  userId: integer('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(), // Human-readable label, e.g. "CI pipeline"
+  keyHash: text('key_hash').notNull().unique(), // SHA-256 hash of the full key
+  keyPrefix: text('key_prefix').notNull(), // First 8 chars after "pd_" prefix – shown in UI
+  createdAt: integer('created_at', { mode: 'timestamp' }).notNull().$defaultFn(() => new Date()),
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
+  expiresAt: integer('expires_at', { mode: 'timestamp' })
+}, table => ({
+  userIdIdx: index('idx_api_keys_user_id').on(table.userId),
+  keyHashIdx: index('idx_api_keys_key_hash').on(table.keyHash)
+}))
+
 // Type exports for TypeScript
 export type Project = typeof projects.$inferSelect
 export type NewProject = typeof projects.$inferInsert
@@ -99,5 +146,13 @@ export type TestRunsCase = typeof testRunsCases.$inferSelect
 export type NewTestRunsCase = typeof testRunsCases.$inferInsert
 export type Trace = typeof traces.$inferSelect
 export type NewTrace = typeof traces.$inferInsert
+export type Report = typeof reports.$inferSelect
+export type NewReport = typeof reports.$inferInsert
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
+export type ApiKey = typeof apiKeys.$inferSelect
+export type NewApiKey = typeof apiKeys.$inferInsert
+export type Tag = typeof tags.$inferSelect
+export type NewTag = typeof tags.$inferInsert
+export type ProjectTag = typeof projectTags.$inferSelect
+export type NewProjectTag = typeof projectTags.$inferInsert

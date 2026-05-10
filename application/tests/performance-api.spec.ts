@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-test.describe('Performance API Tests', () => {
+test.describe.serial('Performance API Tests', () => {
   let projectId: number
   let testRunId: number
   let networkTestRunId: number

@@ -10,13 +10,15 @@ const { data: project } = await useFetch<ProjectDetails>(`/api/projects/${projec
 const { data: performanceData, refresh: refreshPerformance } = await useFetch<PerformanceTrendPoint[]>(`/api/projects/${projectId}/performance`)
 const { data: slowTests, refresh: refreshSlowTests } = await useFetch<SlowTest[]>(`/api/projects/${projectId}/slow-tests`)
 
+useHead(computed(() => ({ title: `${project.value?.label || project.value?.name || 'Project'} — Performance — Playwright Dashboard` })))
+
 const UBadge = resolveComponent('UBadge')
 
 // Slow tests table columns
 const slowTestsColumns: TableColumn<SlowTest>[] = [
   {
     accessorKey: 'title',
-    header: createSortHeader<SlowTest>('Test Case'),
+    header: createSortHeader<SlowTest>('Test case'),
     cell: ({ row }) => {
       return h('div', {}, [
         h('div', { class: 'font-medium' }, row.getValue('title')),
@@ -26,7 +28,7 @@ const slowTestsColumns: TableColumn<SlowTest>[] = [
   },
   {
     accessorKey: 'avgDuration',
-    header: createSortHeader<SlowTest>('Avg Duration'),
+    header: createSortHeader<SlowTest>('Avg duration'),
     cell: ({ row }) => formatDuration(row.getValue('avgDuration'))
   },
   {
@@ -194,7 +196,7 @@ const comparisonSummary = computed(() => {
 const comparisonColumns: TableColumn<ComparisonRow>[] = [
   {
     accessorKey: 'title',
-    header: createSortHeader<ComparisonRow>('Test Case'),
+    header: createSortHeader<ComparisonRow>('Test case'),
     cell: ({ row }) => h('span', { class: 'font-medium' }, row.getValue('title'))
   },
   {
@@ -246,9 +248,17 @@ function refresh() {
 <template>
   <UDashboardPanel id="project-performance">
     <template #header>
-      <UDashboardNavbar :title="`${project?.label || project?.name || 'Project'} — Performance`">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              { label: project?.label || project?.name || 'Project', to: `/projects/${projectId}` },
+              { label: 'Performance' }
+            ]"
+          />
         </template>
         <template #right>
           <UButton
@@ -263,20 +273,11 @@ function refresh() {
 
     <template #body>
       <div class="p-4 space-y-6">
-        <UButton
-          :to="`/projects/${projectId}`"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to Project
-        </UButton>
-
         <!-- Performance Trend Chart -->
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold">
-              Performance Trend
+            <h2>
+              Performance trend
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Duration metrics over time
@@ -290,7 +291,7 @@ function refresh() {
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
-              Slowest Tests
+              Slowest tests
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Top 20 slowest test cases across recent runs
@@ -319,7 +320,7 @@ function refresh() {
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
-              Run Comparison
+              Run comparison
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Compare two test runs side-by-side to see performance changes

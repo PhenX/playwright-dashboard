@@ -15,7 +15,7 @@ export interface DashboardReporterOptions {
   projectName?: string;
 
   /**
-   * Whether to upload HTML report
+   * Whether to upload the Playwright HTML report
    * @default true
    */
   uploadReport?: boolean;
@@ -25,6 +25,30 @@ export interface DashboardReporterOptions {
    * @default true
    */
   uploadTraces?: boolean;
+
+  /**
+   * Additional reports to upload alongside (or instead of) the default HTML report.
+   * Each entry specifies a report type and optionally a custom directory and display label.
+   *
+   * Built-in types with auto-detected default directories:
+   *  - `'html'`       → `playwright-report/`   (same as uploadReport)
+   *  - `'monocart'`   → `monocart-report/`
+   *  - `'blob'`       → `blob-report/`          (stored as a downloadable archive)
+   *
+   * @example
+   * reports: [
+   *   { type: 'monocart' },
+   *   { type: 'blob', dir: 'blob-report', label: 'Blob Archive' },
+   * ]
+   */
+  reports?: Array<{
+    /** Report type identifier (e.g. 'html', 'monocart', 'blob') */
+    type: string;
+    /** Path to the report output directory (overrides the default for this type) */
+    dir?: string;
+    /** Custom display label shown in the dashboard UI */
+    label?: string;
+  }>;
 
   /**
    * Project description
@@ -71,6 +95,34 @@ export interface DashboardReporterOptions {
   collectPerformanceMetrics?: boolean;
 
   /**
+   * API key for authenticating with the dashboard server.
+   *
+   * **Preferred over `username`/`password`** for CI environments.
+   * Generate a key in the dashboard UI under Settings → Users → API keys.
+   * The key is sent as an `Authorization: Bearer <key>` header on every request.
+   *
+   * Store the key in a CI secret (e.g. `DASHBOARD_API_KEY`) and reference it here:
+   * ```typescript
+   * apiKey: process.env.DASHBOARD_API_KEY,
+   * ```
+   */
+  apiKey?: string;
+
+  /**
+   * Username for authenticating with the dashboard server.
+   * Use `apiKey` instead when possible.
+   * Required when the dashboard has authentication enabled and `apiKey` is not set.
+   * The user must have the **reporter** role or higher.
+   */
+  username?: string;
+
+  /**
+   * Password for authenticating with the dashboard server.
+   * Used together with `username` when authentication is enabled.
+   */
+  password?: string;
+
+  /**
    * Enable verbose logging
    * @default false
    */
@@ -89,7 +141,7 @@ export interface DashboardReporterOptions {
  *
  * export default defineConfig({
  *   reporter: [
- *     ['playwright-dashboard-reporter', {
+ *     ['@phenx/playwright-dashboard-reporter', {
  *       serverUrl: 'http://localhost:3000',
  *       projectName: 'my-project',
  *       uploadReport: true
@@ -117,7 +169,7 @@ export default PlaywrightDashboardReporter;
  * ```typescript
  * // fixtures.ts
  * import { test as base } from '@playwright/test';
- * import { dashboardFixtures } from 'playwright-dashboard-reporter/fixtures';
+ * import { dashboardFixtures } from '@phenx/playwright-dashboard-reporter/fixtures';
  *
  * export const test = base.extend(dashboardFixtures);
  * export { expect } from '@playwright/test';

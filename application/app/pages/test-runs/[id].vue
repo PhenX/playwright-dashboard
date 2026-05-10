@@ -1,13 +1,37 @@
 <script setup lang="ts">
-import { h, resolveComponent } from 'vue'
+import { h, resolveComponent, computed } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
-import type { TestRunDetails, TestCaseResult, EndpointSummary } from '~~/types/api'
-import { formatBytes, getFileApiPath } from '~/utils'
+import type { TestRunDetails, TestCaseResult, EndpointSummary, ReportInfo } from '~~/types/api'
 
 const route = useRoute()
 const runId = route.params.id
 
 const { data: testRun, refresh } = await useFetch<TestRunDetails>(`/api/test-runs/${runId}`)
+
+useHead(computed(() => ({
+  title: `Test run #${runId}${testRun.value?.project ? ` — ${testRun.value.project.name}` : ''} — Playwright Dashboard`
+})))
+
+const toast = useToast()
+const isDeleteConfirmOpen = ref(false)
+const deleting = ref(false)
+
+async function handleDeleteRun() {
+  isDeleteConfirmOpen.value = false
+  deleting.value = true
+  try {
+    await $fetch(`/api/test-runs/${runId}`, { method: 'DELETE' })
+    toast.add({ title: 'Test run deleted', color: 'success' })
+    await navigateTo(`/projects/${testRun.value?.project?.id}`)
+  } catch (error: unknown) {
+    const errorMessage = error && typeof error === 'object' && 'data' in error
+      ? (error.data as { message?: string })?.message
+      : undefined
+    toast.add({ title: 'Delete failed', description: errorMessage || 'An error occurred', color: 'error' })
+  } finally {
+    deleting.value = false
+  }
+}
 
 // Load network requests data lazily (not during SSR) to avoid blocking page load
 const { data: networkEndpoints, pending: loadingEndpoints } = await useFetch<EndpointSummary[]>(
@@ -17,10 +41,35 @@ const { data: networkEndpoints, pending: loadingEndpoints } = await useFetch<End
 
 const UBadge = resolveComponent('UBadge')
 
+// Merge reports from the new `reports` table with the legacy reportPath field
+const allReports = computed<ReportInfo[]>(() => {
+  if (!testRun.value) return []
+  const list: ReportInfo[] = []
+
+  // New reports from the reports table
+  if (testRun.value.reports && testRun.value.reports.length > 0) {
+    list.push(...testRun.value.reports)
+    return list
+  }
+
+  // Backward compat: fall back to the legacy reportPath field
+  if (testRun.value.reportPath) {
+    list.push({
+      id: 0,
+      type: 'html',
+      label: 'HTML Report',
+      path: testRun.value.reportPath,
+      size: testRun.value.reportSize
+    })
+  }
+
+  return list
+})
+
 const testCasesColumns: TableColumn<TestCaseResult>[] = [
   {
     accessorKey: 'title',
-    header: createSortHeader<TestCaseResult>('Test Case'),
+    header: createSortHeader<TestCaseResult>('Test case'),
     cell: ({ row }) => {
       return h('a', {
         href: `/test-cases/${row.original.id}`,
@@ -55,7 +104,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
   },
   {
     accessorKey: 'slowestStep',
-    header: createSortHeader<TestCaseResult>('Slowest Step'),
+    header: createSortHeader<TestCaseResult>('Slowest step'),
     cell: ({ row }) => {
       const step = row.getValue('slowestStep') as string | null
       const stepDuration = row.original.slowestStepDuration
@@ -84,7 +133,7 @@ const testCasesColumns: TableColumn<TestCaseResult>[] = [
           to: `/test-cases/${row.original.id}`,
           size: 'sm',
           variant: 'outline'
-        }, () => 'View Details')
+        }, () => 'View details')
       )
     }
   }
@@ -148,9 +197,17 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
 <template>
   <UDashboardPanel id="test-run-detail">
     <template #header>
-      <UDashboardNavbar title="Test Run Details">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              ...(testRun?.project?.id ? [{ label: testRun.project.label || testRun.project.name || 'Project', to: `/projects/${testRun.project.id}` }] : [{ label: 'Project' }]),
+              { label: `Test run #${runId}` }
+            ]"
+          />
         </template>
         <template #right>
           <UButton
@@ -159,26 +216,26 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
             label="Refresh"
             @click="() => refresh()"
           />
+          <UButton
+            icon="i-lucide-trash-2"
+            size="md"
+            color="error"
+            variant="soft"
+            label="Delete"
+            :loading="deleting"
+            @click="isDeleteConfirmOpen = true"
+          />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton
-          :to="`/projects/${testRun?.project?.id}`"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to Project
-        </UButton>
-
         <UCard>
           <template #header>
             <div class="flex justify-between items-center">
               <h2 class="text-xl font-semibold">
-                Test Run #{{ testRun?.id }}
+                Test run #{{ testRun?.id }}
               </h2>
               <UBadge v-if="testRun" :color="getStatusColor(testRun.status)" size="lg">
                 {{ testRun.status }}
@@ -193,12 +250,12 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                   Project
                 </p>
                 <p class="font-medium">
-                  {{ testRun?.project?.name }}
+                  {{ testRun?.project?.label ?? testRun?.project?.name }}
                 </p>
               </div>
               <div>
                 <p class="text-sm text-gray-500">
-                  Total Tests
+                  Total tests
                 </p>
                 <p class="font-medium">
                   {{ testRun?.totalTests }}
@@ -238,7 +295,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               </div>
               <div v-if="testRun?.avgTestDuration">
                 <p class="text-sm text-gray-500">
-                  Avg Test Duration
+                  Avg test duration
                 </p>
                 <p class="font-medium">
                   {{ formatDuration(testRun.avgTestDuration) }}
@@ -246,7 +303,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               </div>
               <div v-if="testRun?.p90TestDuration">
                 <p class="text-sm text-gray-500">
-                  P90 Test Duration
+                  P90 test duration
                 </p>
                 <p class="font-medium text-orange-600">
                   {{ formatDuration(testRun.p90TestDuration) }}
@@ -254,7 +311,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               </div>
               <div>
                 <p class="text-sm text-gray-500">
-                  Start Time
+                  Start time
                 </p>
                 <p class="font-medium">
                   {{ testRun?.startTime ? new Date(testRun.startTime).toLocaleString() : 'N/A' }}
@@ -262,25 +319,11 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               </div>
             </div>
 
-            <div v-if="testRun?.reportPath" class="pt-4 border-t">
+            <div v-if="allReports.length > 0" class="pt-4 border-t">
               <p class="text-sm text-gray-500 mb-2">
-                HTML Report
+                Reports
               </p>
-              <div class="flex items-center gap-2 mb-2">
-                <code class="text-sm bg-gray-100 dark:bg-gray-800 p-2 rounded flex-1">{{ testRun.reportPath }}</code>
-                <UButton
-                  :to="`/api/files/${getFileApiPath(testRun.reportPath)}`"
-                  target="_blank"
-                  size="sm"
-                  icon="i-lucide-external-link"
-                >
-                  View Report
-                </UButton>
-              </div>
-              <div v-if="testRun?.reportSize" class="text-sm text-gray-600">
-                <span class="text-gray-500">Report Size (decompressed):</span>
-                <span class="ml-2 font-medium">{{ formatBytes(testRun.reportSize) }}</span>
-              </div>
+              <RunReports :reports="allReports" />
             </div>
 
             <!-- Metadata Section -->
@@ -302,7 +345,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                 <!-- Related Issue -->
                 <div v-if="testRun.metadata.relatedIssue">
                   <p class="text-xs text-gray-500 uppercase">
-                    Related Issue
+                    Related issue
                   </p>
                   <p class="text-sm">
                     {{ testRun.metadata.relatedIssue }}
@@ -312,7 +355,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                 <!-- CI Info -->
                 <div v-if="testRun.metadata.ci" class="space-y-2">
                   <p class="text-xs text-gray-500 uppercase">
-                    CI Information
+                    CI information
                   </p>
                   <div class="grid grid-cols-2 gap-2 text-sm">
                     <div v-if="testRun.metadata.ci.provider">
@@ -343,7 +386,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                 <!-- SCM Info -->
                 <div v-if="testRun.metadata.scm" class="space-y-2">
                   <p class="text-xs text-gray-500 uppercase">
-                    Source Control
+                    Source control
                   </p>
                   <div class="space-y-1 text-sm">
                     <div v-if="testRun.metadata.scm.commit">
@@ -385,7 +428,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
                 <!-- Custom Data -->
                 <div v-if="testRun.metadata.customData">
                   <p class="text-xs text-gray-500 uppercase mb-2">
-                    Custom Data
+                    Custom data
                   </p>
                   <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded text-xs font-mono overflow-x-auto">
                     <pre>{{ JSON.stringify(testRun.metadata.customData, null, 2) }}</pre>
@@ -399,7 +442,7 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
         <UCard>
           <template #header>
             <h3 class="text-lg font-medium">
-              Test Cases
+              Test cases
             </h3>
           </template>
 
@@ -428,11 +471,11 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
               <UIcon name="i-lucide-network" class="w-5 h-5 text-primary" />
               <div>
                 <h3 class="text-lg font-medium">
-                  Slow API Endpoints
+                  Slow API endpoints
                 </h3>
                 <p class="text-sm text-gray-500 mt-0.5">
                   Network requests grouped by route and HTTP method — requires
-                  <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">playwright-dashboard-reporter/fixtures</code>
+                  <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">@phenx/playwright-dashboard-reporter/fixtures</code>
                 </p>
               </div>
             </div>
@@ -458,11 +501,39 @@ const endpointColumns: TableColumn<EndpointSummary>[] = [
 
           <div v-else class="text-center py-8 text-gray-500">
             No network request data. Add the
-            <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">playwright-dashboard-reporter/fixtures</code>
+            <code class="text-xs bg-gray-100 dark:bg-gray-800 px-1 rounded">@phenx/playwright-dashboard-reporter/fixtures</code>
             to your Playwright config to start collecting endpoint timing.
           </div>
         </UCard>
       </div>
     </template>
   </UDashboardPanel>
+
+  <!-- Delete Confirm Dialog -->
+  <ClientOnly>
+    <UModal :open="isDeleteConfirmOpen" title="Delete test run" @update:open="isDeleteConfirmOpen = $event">
+      <template #body>
+        <p>
+          Are you sure you want to delete <strong>Test Run #{{ testRun?.id }}</strong>?
+          This will also remove all associated test results, reports, and traces.
+          This action cannot be undone.
+        </p>
+      </template>
+      <template #footer>
+        <UButton
+          color="neutral"
+          variant="ghost"
+          label="Cancel"
+          @click="isDeleteConfirmOpen = false"
+        />
+        <UButton
+          color="error"
+          label="Delete"
+          icon="i-lucide-trash-2"
+          :loading="deleting"
+          @click="handleDeleteRun"
+        />
+      </template>
+    </UModal>
+  </ClientOnly>
 </template>

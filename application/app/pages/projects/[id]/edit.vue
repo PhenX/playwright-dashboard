@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
-import type { ProjectDetails } from '~~/types/api'
+import type { ProjectDetails, TagsResponse, TagInfo } from '~~/types/api'
 
 const route = useRoute()
 const router = useRouter()
@@ -8,11 +8,18 @@ const toast = useToast()
 const projectId = route.params.id
 
 const { data: project } = await useFetch<ProjectDetails>(`/api/projects/${projectId}`)
+const { data: tagsData, refresh: refreshTags } = await useFetch<TagsResponse>('/api/tags')
+
+useHead(computed(() => ({ title: `Edit ${project.value?.label || project.value?.name || 'Project'} — Playwright Dashboard` })))
+
+const allTags = computed(() => tagsData.value?.tags || [])
 
 const state = ref({
   label: project.value?.label || '',
   description: project.value?.description || ''
 })
+
+const selectedTags = ref<TagInfo[]>(project.value?.tags || [])
 
 const schema = z.object({
   label: z.string().optional(),
@@ -25,14 +32,13 @@ async function onSubmit() {
   try {
     saving.value = true
 
-    const payload = {
-      label: state.value.label || null,
-      description: state.value.description || null
-    }
-
     await $fetch(`/api/projects/${projectId}`, {
       method: 'PUT',
-      body: payload
+      body: {
+        label: state.value.label || null,
+        description: state.value.description || null,
+        tagIds: selectedTags.value.map(t => t.id)
+      }
     })
 
     toast.add({
@@ -41,7 +47,6 @@ async function onSubmit() {
       color: 'success'
     })
 
-    // Navigate back to project page
     await router.push(`/projects/${projectId}`)
   } catch (error) {
     console.error('Error updating project:', error)
@@ -63,28 +68,27 @@ function onCancel() {
 <template>
   <UDashboardPanel id="project-edit">
     <template #header>
-      <UDashboardNavbar :title="`Edit ${project?.name || 'Project'}`">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              { label: project?.label || project?.name || 'Project', to: `/projects/${projectId}` },
+              { label: 'Edit' }
+            ]"
+          />
         </template>
       </UDashboardNavbar>
     </template>
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton
-          :to="`/projects/${projectId}`"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to Project
-        </UButton>
-
         <UCard>
           <template #header>
-            <h2 class="text-xl font-semibold">
-              Edit Project Settings
+            <h2>
+              Edit project settings
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Project Name: <span class="font-medium">{{ project?.name }}</span>
@@ -100,7 +104,7 @@ function onCancel() {
             class="space-y-4"
             @submit="onSubmit"
           >
-            <UFormField label="Display Label" name="label" description="A friendly name to display in the UI (defaults to project name if not set)">
+            <UFormField label="Display label" name="label" description="A friendly name to display in the UI (defaults to project name if not set)">
               <UInput v-model="state.label" placeholder="Enter display label" />
             </UFormField>
 
@@ -108,9 +112,17 @@ function onCancel() {
               <UTextarea v-model="state.description" placeholder="Enter project description" :rows="3" />
             </UFormField>
 
+            <UFormField label="Tags" name="tags" description="Select existing tags or type a new name and press Enter to create one.">
+              <TagsSelect
+                v-model="selectedTags"
+                :all-tags="allTags"
+                @tag-created="refreshTags()"
+              />
+            </UFormField>
+
             <div class="flex gap-2 pt-4">
               <UButton type="submit" :loading="saving">
-                Save Changes
+                Save changes
               </UButton>
               <UButton variant="outline" @click="onCancel">
                 Cancel

@@ -108,6 +108,11 @@ The repository is organized into three main parts:
 - **Nuxt conventions**: Follow Nuxt 4 file-based routing and auto-imports
 - **UI Components**: Use Nuxt UI components (@nuxt/ui)
 
+## UI best practices
+- Do not capitalize every word in the UI. Use sentence case for better readability (e.g., "Test runs" instead of "Test Runs").
+- When displaying dates and times, use relative formats (e.g., "5 minutes ago") instead of absolute timestamps for better user experience, with the full timestamp, human-readable format, and timezone available on hover for clarity. (use date-fns)
+- When displaying durations, use human-readable formats (e.g., "2m 30s" instead of "150000 ms") for better readability, with the exact duration in milliseconds available on hover for precision. (use date-fns)
+
 ## Environment Configuration
 The application uses minimal environment configuration:
 
@@ -255,9 +260,45 @@ curl -X POST http://localhost:3000/api/test-runs/submit \
 - **HTML report missing**: Check that Playwright is generating reports with HTML reporter: `reporter: [['html', { outputFolder: 'playwright-report' }]]`
 
 ### Reporter Issues
-- **Reporter not found**: Run `npm link` in `reporter/` directory, then `npm link playwright-dashboard-reporter` in your test project
+- **Reporter not found**: Run `npm link` in `reporter/` directory, then `npm link @phenx/playwright-dashboard-reporter` in your test project
 - **Uploads failing**: Verify `serverUrl` in reporter config points to running dashboard
 - **Authentication errors**: This dashboard has no authentication; check network connectivity
+
+## Maintaining documentation
+
+The project has two documentation surfaces that must stay in sync with code changes:
+
+1. **`docs/`** — VitePress documentation site published to https://phenx.github.io/playwright-dashboard.  
+   Each page covers a specific topic:
+   - `docs/getting-started.md` — requirements, quick-start, first API call, dev commands
+   - `docs/reporter.md` — reporter options, multiple reports, fixtures, metadata collection
+   - `docs/api.md` — all REST API endpoints with request/response examples
+   - `docs/authentication.md` — roles, enabling auth, user management
+   - `docs/storage.md` — local and S3 storage config, DB schema management
+   - `docs/deployment.md` — Docker, Docker Compose, Kubernetes, production build
+
+2. **`README.md`** — concise project landing page; links out to the docs site.
+
+### When to update docs
+
+Update the relevant `docs/` page(s) **in the same commit** as your code change whenever you:
+
+- Add, remove, or change an **API endpoint** (path, method, request/response shape) → `docs/api.md`
+- Add, remove, or change a **reporter option** or fixture behaviour → `docs/reporter.md`
+- Change **authentication** behaviour, roles, or setup steps → `docs/authentication.md`
+- Change **storage** configuration, environment variables, or DB migration workflow → `docs/storage.md`
+- Change **deployment** steps, Docker image tags, environment variables, or compose/k8s examples → `docs/deployment.md`
+- Change **requirements** (Node.js version, dependencies) or the **quick-start** flow → `docs/getting-started.md`
+- Add or remove a major **feature** → `docs/index.md` (hero features list) and the relevant detail page
+
+Update `README.md` only when the top-level feature list or the quick-start Docker commands change.
+
+### What does NOT require a doc update
+
+- Internal refactors with no user-visible effect
+- Test-only changes
+- Dependency bumps with no API/behaviour change
+- Bug fixes that restore already-documented behaviour
 
 ## Important Notes
 - Database is auto-initialized on first API call

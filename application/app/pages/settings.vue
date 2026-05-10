@@ -1,15 +1,33 @@
 <script setup lang="ts">
 import type { NavigationMenuItem } from '@nuxt/ui'
 
-const links = [[{
+useHead({ title: 'Settings — Playwright Dashboard' })
+
+/*
+{
   label: 'General',
   icon: 'i-lucide-user',
   to: '/settings',
   exact: true
+},
+ */
+
+const links = [[{
+  label: 'Users',
+  icon: 'i-lucide-users',
+  to: '/settings/users'
+}, {
+  label: 'Tags',
+  icon: 'i-lucide-tags',
+  to: '/settings/tags'
+}, {
+  label: 'Storage',
+  icon: 'i-lucide-hard-drive',
+  to: '/settings/storage'
 }], [{
   label: 'Documentation',
   icon: 'i-lucide-book-open',
-  to: 'https://ui.nuxt.com/docs/getting-started/installation/nuxt',
+  to: 'https://github.com/PhenX/playwright-dashboard',
   target: '_blank'
 }]] satisfies NavigationMenuItem[][]
 </script>
@@ -17,9 +35,10 @@ const links = [[{
 <template>
   <UDashboardPanel id="settings" :ui="{ body: 'lg:py-12' }">
     <template #header>
-      <UDashboardNavbar title="Settings">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb :items="[{ label: 'Home', icon: 'i-lucide-house', to: '/' }, { label: 'Settings' }]" />
         </template>
       </UDashboardNavbar>
 

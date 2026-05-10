@@ -9,8 +9,46 @@ export type {
   TestRun as DbTestRun,
   TestCase as DbTestCase,
   TestRunsCase as DbTestRunsCase,
-  User as DbUser
+  User as DbUser,
+  Tag as DbTag
 } from '../server/database/schema'
+
+// ============================================================================
+// Report types (API responses)
+// ============================================================================
+
+/**
+ * Report attached to a test run
+ */
+export interface ReportInfo {
+  id: number
+  type: string
+  label: string
+  path: string
+  size?: number | null
+}
+
+// ============================================================================
+// Tag types (API responses)
+// ============================================================================
+
+/**
+ * Tag used to label projects
+ */
+export interface TagInfo {
+  id: number
+  text: string
+  color: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+/**
+ * Tags response from API
+ */
+export interface TagsResponse {
+  tags: TagInfo[]
+}
 
 // ============================================================================
 // Period and Range types (used for filtering and date range selection)
@@ -35,6 +73,7 @@ export interface ProjectWithStats {
   name: string
   label?: string | null
   description?: string | null
+  tags?: TagInfo[]
   createdAt: Date
   updatedAt: Date
   // Statistics added by API
@@ -50,6 +89,7 @@ export interface ProjectWithStats {
     totalTests: number
     reportPath?: string | null
     reportSize?: number | null
+    reports?: ReportInfo[]
     avgTestDuration?: number | null
     p90TestDuration?: number | null
   } | null
@@ -66,6 +106,7 @@ export interface ProjectWithTestRuns {
   label?: string | null
   description?: string | null
   color?: string | null
+  tags?: TagInfo[]
   createdAt: Date
   updatedAt: Date
   testRuns: TestRunSummary[]
@@ -80,6 +121,7 @@ export interface ProjectDetails {
   label?: string | null
   description?: string | null
   color?: string | null
+  tags?: TagInfo[]
 }
 
 // ============================================================================
@@ -104,6 +146,7 @@ export interface TestRunSummary {
   p90TestDuration?: number | null
   reportPath?: string | null
   reportSize?: number | null
+  reports?: ReportInfo[]
   createdAt: Date
 }
 
@@ -133,6 +176,7 @@ export interface TestRunDetails {
     name: string
     label?: string | null
   }
+  reports?: ReportInfo[]
   testCases?: TestCaseResult[]
 }
 
@@ -293,6 +337,56 @@ export interface UserDetails {
 export interface UsersResponse {
   users: UserDetails[]
   authEnabled: boolean
+}
+
+// ============================================================================
+// API key types
+// ============================================================================
+
+/**
+ * API key summary (key hash/plaintext is never returned after creation)
+ */
+export interface ApiKeySummary {
+  id: number
+  name: string
+  keyPrefix: string
+  createdAt: Date
+  lastUsedAt?: Date | null
+  expiresAt?: Date | null
+}
+
+/**
+ * Response from GET /api/users/[id]/api-keys
+ */
+export interface ApiKeysResponse {
+  apiKeys: ApiKeySummary[]
+}
+
+/**
+ * Response from POST /api/users/[id]/api-keys – key is shown ONCE
+ */
+export interface CreateApiKeyResponse {
+  key: string
+  prefix: string
+  name: string
+}
+
+// ============================================================================
+// Admin types
+// ============================================================================
+
+/**
+ * Storage statistics returned by GET /api/admin/stats
+ */
+export interface AdminStats {
+  totalProjects: number
+  totalRuns: number
+  totalTestCases: number
+  totalRunsCases: number
+  totalTraces: number
+  totalReports: number
+  reportSizeFromDb: number
+  storageSizeOnDisk: number | null
 }
 
 // ============================================================================

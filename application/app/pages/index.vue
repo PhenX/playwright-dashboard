@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import type { ProjectWithStats, TestRunForChart } from '~~/types/api'
 
+useHead({ title: 'Playwright Dashboard' })
+
 const { data: projects } = await useFetch<ProjectWithStats[]>('/api/projects')
 
 const stats = computed(() => {
@@ -17,16 +19,16 @@ const stats = computed(() => {
   )[0]
 
   const statItems: { label: string, value: string | number, icon: string }[] = [
-    { label: 'Total Projects', value: totalProjects, icon: 'i-lucide-folder' },
-    { label: 'Total Test Runs', value: totalRuns, icon: 'i-lucide-play-circle' },
-    { label: 'Active Projects', value: recentRuns, icon: 'i-lucide-activity' },
-    { label: 'Passing Projects', value: passedRuns, icon: 'i-lucide-check-circle' },
-    { label: 'Flaky Tests', value: totalFlakyTests, icon: 'i-lucide-alert-triangle' }
+    { label: 'Total projects', value: totalProjects, icon: 'i-lucide-folder' },
+    { label: 'Total test runs', value: totalRuns, icon: 'i-lucide-play-circle' },
+    { label: 'Active projects', value: recentRuns, icon: 'i-lucide-activity' },
+    { label: 'Passing projects', value: passedRuns, icon: 'i-lucide-check-circle' },
+    { label: 'Flaky tests', value: totalFlakyTests, icon: 'i-lucide-alert-triangle' }
   ]
 
   if (slowestProject) {
     statItems.push({
-      label: 'Slowest Project',
+      label: 'Slowest project',
       value: slowestProject.label || slowestProject.name,
       icon: 'i-lucide-gauge'
     })
@@ -66,9 +68,10 @@ const allTestRuns = computed(() => {
 <template>
   <UDashboardPanel id="home">
     <template #header>
-      <UDashboardNavbar title="Playwright Dashboard">
+      <UDashboardNavbar>
         <template #leading>
           <UDashboardSidebarCollapse />
+          <UBreadcrumb :items="[{ label: 'Home', icon: 'i-lucide-house', to: '/' }]" />
         </template>
       </UDashboardNavbar>
     </template>
@@ -98,7 +101,7 @@ const allTestRuns = computed(() => {
         <UCard v-if="allTestRuns.length > 0">
           <template #header>
             <h2 class="text-xl font-semibold">
-              Test Results Trend
+              Test results trend
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Overview of test results across all projects
@@ -113,10 +116,10 @@ const allTestRuns = computed(() => {
           <template #header>
             <div class="flex justify-between items-center">
               <h2 class="text-xl font-semibold">
-                Recent Projects
+                Recent projects
               </h2>
               <UButton to="/projects" variant="outline" size="sm">
-                View All
+                View all
               </UButton>
             </div>
           </template>
@@ -125,8 +128,16 @@ const allTestRuns = computed(() => {
             <div v-for="project in recentProjects" :key="project.id" class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded">
               <div>
                 <NuxtLink :to="`/projects/${project.id}`" class="font-medium text-primary hover:underline">
-                  {{ project.name }}
+                  {{ project.label || project.name }}
                 </NuxtLink>
+                <div v-if="project.tags && project.tags.length > 0" class="flex flex-wrap gap-1 mt-1">
+                  <TagBadge
+                    v-for="tag in project.tags"
+                    :key="tag.id"
+                    :text="tag.text"
+                    :color="tag.color"
+                  />
+                </div>
                 <p class="text-sm text-gray-600">
                   {{ project.totalRuns }} test runs
                 </p>
@@ -146,7 +157,7 @@ const allTestRuns = computed(() => {
         <UCard>
           <template #header>
             <h2 class="text-xl font-semibold">
-              Getting Started
+              Getting started
             </h2>
           </template>
 

@@ -2,15 +2,38 @@
 import { h, resolveComponent } from 'vue'
 import type { TableColumn } from '@nuxt/ui'
 import type { ProjectWithTestRuns, TestRunSummary } from '~~/types/api'
-import { formatBytes, getFileApiPath } from '~/utils'
 
 const route = useRoute()
 const projectId = route.params.id
 
 const { data: project, refresh } = await useFetch<ProjectWithTestRuns>(`/api/projects/${projectId}`)
 
+useHead(computed(() => ({ title: `${project.value?.label || project.value?.name || 'Project'} — Playwright Dashboard` })))
+
+const toast = useToast()
+const deletingRunId = ref<number | null>(null)
+const confirmDeleteRunId = ref<number | null>(null)
+
+async function handleDeleteRun(runId: number) {
+  confirmDeleteRunId.value = null
+  deletingRunId.value = runId
+  try {
+    await $fetch(`/api/test-runs/${runId}`, { method: 'DELETE' })
+    toast.add({ title: 'Test run deleted', color: 'success' })
+    await refresh()
+  } catch (error: unknown) {
+    const errorMessage = error && typeof error === 'object' && 'data' in error
+      ? (error.data as { message?: string })?.message
+      : undefined
+    toast.add({ title: 'Delete failed', description: errorMessage || 'An error occurred', color: 'error' })
+  } finally {
+    deletingRunId.value = null
+  }
+}
+
 const UBadge = resolveComponent('UBadge')
 const TestStatusBar = resolveComponent('TestStatusBar')
+const RunReports = resolveComponent('RunReports')
 
 const runsColumns: TableColumn<TestRunSummary>[] = [
   {
@@ -59,22 +82,13 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
     }
   },
   {
-    accessorKey: 'reportSize',
-    header: 'Report',
-    cell: ({ row }) => {
-      const size = row.getValue('reportSize') as number | undefined
-      const reportPath = row.original.reportPath
-      if (!reportPath) return size != null ? formatBytes(size) : ''
-      const UButton = resolveComponent('UButton')
-      const sizeLabel = size != null ? ` (${formatBytes(size)})` : ''
-      return h(UButton, {
-        to: `/api/files/${getFileApiPath(reportPath)}`,
-        target: '_blank',
-        size: 'xs',
-        variant: 'outline',
-        icon: 'i-lucide-external-link'
-      }, () => `HTML${sizeLabel}`)
-    }
+    accessorKey: 'reports',
+    header: 'Reports',
+    cell: ({ row }) => h(RunReports, {
+      reports: row.original.reports,
+      legacyPath: row.original.reportPath,
+      legacySize: row.original.reportSize
+    })
   },
   {
     accessorKey: 'actions',
@@ -86,7 +100,17 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
           to: `/test-runs/${row.original.id}`,
           size: 'sm',
           variant: 'outline'
-        }, () => 'View')
+        }, () => 'View'),
+        h(UButton, {
+          size: 'sm',
+          color: 'error',
+          variant: 'soft',
+          icon: 'i-lucide-trash-2',
+          loading: deletingRunId.value === row.original.id,
+          onClick: () => {
+            confirmDeleteRunId.value = row.original.id
+          }
+        }, () => 'Delete')
       ])
     }
   }
@@ -96,8 +120,18 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
 <template>
   <UDashboardPanel id="project-detail">
     <template #header>
-      <UDashboardNavbar :title="project?.label || project?.name || 'Project Details'">
-        <template #trailing>
+      <UDashboardNavbar>
+        <template #leading>
+          <UDashboardSidebarCollapse />
+          <UBreadcrumb
+            :items="[
+              { label: 'Home', icon: 'i-lucide-house', to: '/' },
+              { label: 'Projects', to: '/projects' },
+              { label: project?.label || project?.name || 'Project' }
+            ]"
+          />
+        </template>
+        <template #right>
           <UButton
             :to="`/projects/${projectId}/edit`"
             icon="i-lucide-pencil"
@@ -112,7 +146,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
             size="sm"
             variant="outline"
           >
-            View Test Cases
+            View test cases
           </UButton>
           <UButton
             :to="`/projects/${projectId}/performance`"
@@ -122,11 +156,6 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
           >
             Performance
           </UButton>
-        </template>
-        <template #leading>
-          <UDashboardSidebarCollapse />
-        </template>
-        <template #right>
           <UButton
             icon="i-lucide-refresh-cw"
             size="md"
@@ -139,24 +168,24 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
 
     <template #body>
       <div class="p-4 space-y-4">
-        <UButton
-          to="/projects"
-          icon="i-lucide-arrow-left"
-          variant="ghost"
-          size="sm"
-        >
-          Back to Projects
-        </UButton>
-
         <p v-if="project?.description" class="text-gray-600 mt-2">
           {{ project.description }}
         </p>
+
+        <div v-if="project?.tags && project.tags.length > 0" class="flex flex-wrap gap-1 mt-2">
+          <TagBadge
+            v-for="tag in project.tags"
+            :key="tag.id"
+            :text="tag.text"
+            :color="tag.color"
+          />
+        </div>
 
         <!-- Test Runs Trend Chart -->
         <UCard v-if="project?.testRuns && project.testRuns.length > 0">
           <template #header>
             <h2>
-              Test Results Trend
+              Test results trend
             </h2>
             <p class="text-sm text-gray-600 mt-1">
               Test run statistics over time for {{ project?.label || project?.name }}
@@ -169,7 +198,7 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
         <UCard>
           <template #header>
             <h2>
-              Test Runs
+              Test runs
             </h2>
           </template>
           <UTable
@@ -192,4 +221,36 @@ const runsColumns: TableColumn<TestRunSummary>[] = [
       </div>
     </template>
   </UDashboardPanel>
+
+  <!-- Delete Run Confirm Dialog -->
+  <ClientOnly>
+    <UModal
+      :open="confirmDeleteRunId !== null"
+      title="Delete test run"
+      @update:open="val => { if (!val) confirmDeleteRunId = null }"
+    >
+      <template #body>
+        <p>
+          Are you sure you want to delete <strong>Run #{{ confirmDeleteRunId }}</strong>?
+          This will also remove all associated test results, reports, and traces.
+          This action cannot be undone.
+        </p>
+      </template>
+      <template #footer>
+        <UButton
+          color="neutral"
+          variant="ghost"
+          label="Cancel"
+          @click="confirmDeleteRunId = null"
+        />
+        <UButton
+          color="error"
+          label="Delete"
+          icon="i-lucide-trash-2"
+          :loading="deletingRunId === confirmDeleteRunId"
+          @click="handleDeleteRun(confirmDeleteRunId!)"
+        />
+      </template>
+    </UModal>
+  </ClientOnly>
 </template>
