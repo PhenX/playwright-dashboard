@@ -49,6 +49,9 @@ export default defineNuxtConfig({
     // a SPA (ssr: false) causes Rollup to look for client.precomputed.mjs
     // inside the cache directory, which doesn't exist, breaking the build.
     buildCache: !isDemo,
+    // Enable payloadExtraction in demo mode so that the statically generated
+    // HTML pages can be hydrated with fixture data embedded during prerender,
+    // avoiding extra network round-trips in the SPA.
     payloadExtraction: isDemo,
   },
 
