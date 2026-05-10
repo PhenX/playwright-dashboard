@@ -9,17 +9,17 @@ const __dirname = dirname(__filename)
 const isDemo = process.env.NUXT_PUBLIC_DEMO_MODE === 'true'
 
 export default defineNuxtConfig({
-  ssr: isDemo ? false : undefined,
-  app: isDemo ? { baseURL: '/playwright-dashboard/' } : {},
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
     '@vueuse/nuxt'
   ],
+  ssr: isDemo ? false : undefined,
 
   devtools: {
     enabled: true
   },
+  app: isDemo ? { baseURL: '/playwright-dashboard/' } : {},
 
   css: ['~/assets/css/main.css'],
 
@@ -95,5 +95,5 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
-  }
+  },
 })

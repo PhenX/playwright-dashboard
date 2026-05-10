@@ -14,6 +14,8 @@ const DEMO_API_MAP: Record<string, string> = {
   '/api/projects/3/test-cases': '/demo/api/projects/3/test-cases.json',
   '/api/projects/3/performance': '/demo/api/projects/3/performance.json',
   '/api/projects/3/slow-tests': '/demo/api/projects/3/slow-tests.json',
+  '/api/tags': '/demo/api/tags.json',
+  '/api/admin/stats': '/demo/api/admin/stats.json',
   '/api/test-runs/1': '/demo/api/test-runs/1.json',
   '/api/test-runs/1/network-requests': '/demo/api/test-runs/1/network-requests.json',
   '/api/test-runs/2': '/demo/api/test-runs/2.json',
