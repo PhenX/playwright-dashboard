@@ -21,6 +21,21 @@ import { join } from 'path'
 // ----------------------------------------------------------------------------
 
 test.describe('Demo generate configuration', () => {
+  test('generate:demo script uses cross-env for cross-platform env variable support', () => {
+    const packageJsonPath = join(process.cwd(), 'package.json')
+    expect(existsSync(packageJsonPath)).toBe(true)
+
+    const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+
+    // On Windows, `KEY=value cmd` syntax does not work; cross-env is required
+    // so that NUXT_PUBLIC_DEMO_MODE is correctly passed on all platforms.
+    // Without cross-env, isDemo stays false on Windows and every prerendered
+    // route returns 500 because the SSR server tries to access the database.
+    expect(pkg.scripts['generate:demo']).toContain('cross-env')
+    expect(pkg.scripts['generate:demo']).toContain('NUXT_PUBLIC_DEMO_MODE=true')
+    expect(pkg.devDependencies['cross-env']).toBeDefined()
+  })
+
   test('nuxt.config.ts uses memory storage driver for demo prerender cache', () => {
     const configPath = join(process.cwd(), 'nuxt.config.ts')
     expect(existsSync(configPath)).toBe(true)

@@ -8,7 +8,7 @@
   "scripts": {
     "build": "nuxt build",
     "generate": "nuxt generate",
-    "generate:demo": "NUXT_PUBLIC_DEMO_MODE=true nuxt generate",
+    "generate:demo": "cross-env NUXT_PUBLIC_DEMO_MODE=true nuxt generate",
     "dev": "nuxt dev",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
@@ -43,6 +43,7 @@
     "@nuxt/eslint": "^1.10.0",
     "@playwright/test": "^1.58.0",
     "@types/node": "^25.6.0",
+    "cross-env": "^10.1.0",
     "eslint": "^10.2.0",
     "form-data": "^4.0.0",
     "monocart-reporter": "^2.10.1",
