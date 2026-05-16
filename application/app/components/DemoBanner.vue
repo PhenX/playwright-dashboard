@@ -5,7 +5,9 @@ const config = useRuntimeConfig()
 const bannerEl = useTemplateRef<HTMLElement>('banner')
 
 if (config.public.demoMode) {
-  useResizeObserver(bannerEl, ([entry]) => {
+  useResizeObserver(bannerEl, (entries) => {
+    const entry = entries[0]
+    if (!entry) return
     document.documentElement.style.setProperty('--demo-banner-height', `${entry.contentRect.height}px`)
   })
 
