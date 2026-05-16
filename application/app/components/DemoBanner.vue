@@ -4,7 +4,7 @@ const config = useRuntimeConfig()
 
 <template>
   <div v-if="config.public.demoMode" class="demo-banner">
-    ⚠️ Demo mode — showing sample data. Deploy your own instance for live data.
+    ⚠️ <strong>Demo mode</strong> — showing sample data only. Forms, actions, and file uploads are disabled. <a href="https://github.com/PhenX/playwright-dashboard" target="_blank" class="underline">Deploy your own instance</a> for live data.
   </div>
 </template>
 
@@ -17,9 +17,6 @@ const config = useRuntimeConfig()
   font-size: 0.875rem;
   font-weight: 500;
   border-bottom: 1px solid #fcd34d;
-  position: sticky;
-  top: 0;
-  z-index: 50;
 }
 
 .dark .demo-banner {
