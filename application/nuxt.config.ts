@@ -6,16 +6,20 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
+const isDemo = process.env.NUXT_PUBLIC_DEMO_MODE === 'true'
+
 export default defineNuxtConfig({
   modules: [
     '@nuxt/eslint',
     '@nuxt/ui',
     '@vueuse/nuxt'
   ],
+  ssr: isDemo ? false : undefined,
 
   devtools: {
     enabled: true
   },
+  app: isDemo ? { baseURL: '/playwright-dashboard/demo/' } : {},
 
   css: ['~/assets/css/main.css'],
 
@@ -29,7 +33,8 @@ export default defineNuxtConfig({
       return process.env.NUXT_AUTH_SECRET || 'default-secret-change-in-production-use-random-string'
     })(),
     public: {
-      authEnabled: process.env.NUXT_AUTH_ENABLED === 'true'
+      authEnabled: process.env.NUXT_AUTH_ENABLED === 'true',
+      demoMode: process.env.NUXT_PUBLIC_DEMO_MODE === 'true'
     }
   },
 
@@ -40,12 +45,27 @@ export default defineNuxtConfig({
   },
 
   experimental: {
-    buildCache: true
+    // Disable buildCache in demo mode: restoring an SSR cache when generating
+    // a SPA (ssr: false) causes Rollup to look for client.precomputed.mjs
+    // inside the cache directory, which doesn't exist, breaking the build.
+    buildCache: !isDemo,
+    // Enable payloadExtraction in demo mode so that the statically generated
+    // HTML pages can be hydrated with fixture data embedded during prerender,
+    // avoiding extra network round-trips in the SPA.
+    payloadExtraction: isDemo,
   },
 
   compatibilityDate: '2025-02-23',
 
   nitro: {
+    // In demo mode, override the "internal:nuxt:prerender" storage driver with the
+    // built-in memory driver. On Windows, @nuxt/nitro-server registers this driver
+    // using pathToFileURL() which produces a "file:///C:/..." URL that Rollup cannot
+    // resolve. The module is then treated as an unresolvable external, fails to load
+    // at runtime, and every prerender request returns 500. Using memory avoids the
+    // Windows file-URL resolution issue entirely (and is equivalent for a single build
+    // run since the prerender cache is discarded after each generate anyway).
+    storage: isDemo ? { 'internal:nuxt:prerender': { driver: 'memory' } } : undefined,
     experimental: {
       // Windows-only workaround to avoid Nitro build issues caused by ESM/CJS externals
       // resolution on Windows. Enabling legacyExternals here keeps dependency resolution
@@ -78,5 +98,5 @@ export default defineNuxtConfig({
         braceStyle: '1tbs'
       }
     }
-  }
+  },
 })

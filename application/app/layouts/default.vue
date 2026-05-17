@@ -152,7 +152,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <UDashboardGroup unit="rem">
+  <UDashboardGroup unit="rem" style="top: var(--demo-banner-height, 0px)">
     <UDashboardSidebar
       id="default"
       v-model:open="open"

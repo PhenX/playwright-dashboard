@@ -31,6 +31,7 @@ test-results/
 playwright-report/
 monocart-report/
 blob-report/
+
 .test-temp/
 .test-temp-zstd/
 .test-temp-gzip/

@@ -7,6 +7,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
   const { authState, fetchUser } = useAuth()
   const config = useRuntimeConfig()
 
+  // Skip auth check in demo mode
+  if (config.public.demoMode) {
+    return
+  }
+
   // Check if auth is enabled
   if (!config.public.authEnabled) {
     return
