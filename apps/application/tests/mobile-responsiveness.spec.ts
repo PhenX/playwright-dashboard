@@ -228,7 +228,8 @@ test.describe('Mobile responsiveness', () => {
       });
 
       // Non-baseline screenshot (attached to the report) for a quick visual
-      // sanity check of the two highest-traffic pages at this viewport.
+      // sanity check of the highest-traffic and the two reworked failure pages
+      // at this viewport.
       test('screenshot: home and run detail', async ({ page }, testInfo) => {
         await page.goto('/');
         await waitForHydration(page);
@@ -237,6 +238,24 @@ test.describe('Mobile responsiveness', () => {
         await page.goto(`/test-runs/${runId}`);
         await waitForHydration(page);
         await testInfo.attach(`run-detail-${name}`, { body: await page.screenshot(), contentType: 'image/png' });
+      });
+
+      test('screenshot: the failure pages', async ({ page }, testInfo) => {
+        await page.goto(`/test-run-cases/${testRunCaseId}`);
+        await waitForHydration(page);
+        await expectNoHorizontalOverflow(page, 'execution detail (situation block)');
+        await testInfo.attach(`execution-detail-${name}`, {
+          body: await page.screenshot({ fullPage: true }),
+          contentType: 'image/png',
+        });
+
+        await page.goto(`/failure-clusters/${clusterId}`);
+        await waitForHydration(page);
+        await expectNoHorizontalOverflow(page, 'failure cluster detail (situation block)');
+        await testInfo.attach(`failure-cluster-detail-${name}`, {
+          body: await page.screenshot({ fullPage: true }),
+          contentType: 'image/png',
+        });
       });
     });
   }

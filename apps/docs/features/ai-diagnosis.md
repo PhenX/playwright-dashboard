@@ -71,8 +71,9 @@ long the cluster was open. Three verdicts, because they are not the same claim:
 | **Diagnosis verified** | The commits since the last failing run touched a file the [suggested patch](#what-a-diagnosis-contains) named — the change Piwi pointed at is the change that fixed it. |
 | **Regressed** | A fix was recorded, and the cluster is failing again. A fix that didn't hold is worth knowing about. |
 
-The verdict appears on the cluster page, under the signature, with the run the fix landed in, the commit, and how long
-the cluster stayed open. The project's **Failure clusters** tab shows it beside the triage status — deliberately as a
+The verdict rides the cluster page's [state line](./failure-clusters#the-state-line), a sentence naming the run the fix
+landed in, the commit, and how long the cluster stayed open. The project's **Failure clusters** tab shows it beside the
+triage status — deliberately as a
 second badge rather than folded into the first, because the two answer different questions: the status is what a person
 declared, the verdict is what the runs showed. A cluster somebody marked *resolved* that is quietly failing again shows
 both, and that disagreement is the point.
@@ -178,8 +179,8 @@ A diagnosis is grounded in your actual run — it is not a generic "ask AI" butt
 - **Suggested fix** and **prevention tips**
 
 <figure>
-  <img src="/screenshots/ai-diagnosis.png" alt="The AI diagnosis card at the foot of a failure cluster page">
-  <figcaption>The AI diagnosis at the foot of a cluster page — category, confidence, root cause, the evidence it relied on, and a suggested fix — grounded in the same error and evidence the page shows above it.</figcaption>
+  <img src="/screenshots/ai-diagnosis.png" alt="The AI diagnosis in the toolbox of a failure cluster page">
+  <figcaption>The AI diagnosis in a cluster page's toolbox — category, confidence, root cause, the evidence it relied on, and a suggested fix — grounded in the evidence shown above it.</figcaption>
 </figure>
 
 ## Diagnosing one execution

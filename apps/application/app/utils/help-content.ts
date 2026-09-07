@@ -233,11 +233,6 @@ export const HELP_TOPICS = {
     text: 'One block that answers three questions: what broke (the headline, built from the Playwright error itself), what is most likely behind it (the story that chains the deterministic clues, or the diagnosis when one completed), what is going on (since when, on which commit, in how many other tests, who owns it — one sentence), and what to do next (one action chosen by a policy). Every clue, the raw error and the rest of the facts are one click away.',
     doc: 'features/evidence#one-execution-diagnosis-first',
   },
-  'case.fix': {
-    title: 'Fix',
-    text: 'Everything to do about this failure in one place — the locator fix for a broken locator, a pointer to the cluster’s fix plan, the diagnosis, how to verify a fix, and the tests this failure blocked. Each part shows only when it applies.',
-    doc: 'features/fix-plans',
-  },
   'case.evidence': {
     title: 'Evidence',
     text: 'Everything captured for this execution, one tab per view: the failure timeline (steps, network and console on one clock), the screenshot and video with the visual and page diffs, the test source, the network requests, the console output, the app state at the end, and the browser performance. The tab opens on the view the story points at; the raw page structure — the accessibility tree and the failure-time DOM — folds behind Page structure at the bottom of the Screen tab. An empty tab says whether the evidence was never captured, captured with nothing to show, or does not apply.',
@@ -247,11 +242,6 @@ export const HELP_TOPICS = {
     title: 'More ways to fix',
     text: 'Every other way to fix, verify or reproduce this failure, each folded to one line: the diagnosis, the locator fix, the verify command, the local reproduce-and-bisect recipe, the clusters fixed before, the tests this failure blocked, and the whole fix plan as Markdown (the same plan get_fix_plan returns to an AI agent via the MCP server). The section the next step points at opens with the page; open the others as you need them.',
     doc: 'features/fix-plans',
-  },
-  'fix.reproduce': {
-    title: 'Reproduce',
-    text: 'A copy-paste recipe that reproduces the failure locally — check out the failing commit, install the run’s Playwright version and browser, and run exactly the failing test — plus a generated git bisect between the last green and the failing commit to find what broke it. Both come in Linux/macOS and Windows forms. The bisect needs a last-green commit and an SCM connection; without them it says so. In the desktop app, Reproduce here and Find the breaking commit here run the recipe and drive the bisect for you in a throwaway git worktree, without touching your checkout.',
-    doc: 'features/fix-plans#reproduce-and-bisect',
   },
   'case.test-source': {
     title: 'Test source',
@@ -286,11 +276,6 @@ export const HELP_TOPICS = {
     text: 'HTTP requests the page made during the test, with timing and status — useful for spotting failed or slow calls. When the execution has a trace, the Full trace view shows every request (all resource types) with headers, timing phases, a waterfall and capped body previews; sensitive header values are masked. An empty card distinguishes not captured (add the capture fixtures) from captured-but-nothing-happened; with a trace and no fixtures the list is recovered from the trace and marked "derived from the trace".',
     doc: 'features/evidence#trace-powered-deep-views',
   },
-  'case.aria': {
-    title: 'ARIA snapshot',
-    text: 'A snapshot of the accessibility tree at the moment of failure — what assistive tech saw, and useful grounding for AI diagnosis. An empty card says whether it was not captured (add the capture fixtures) or captured with nothing to snapshot; with a trace and no fixtures it is recovered from the trace\'s error context and marked "derived from the trace".',
-    doc: 'features/ai-diagnosis#what-a-diagnosis-contains',
-  },
   'case.attempts': {
     title: 'Attempts',
     text: 'When a test failed then passed on retry, this compares the failing attempt against the passing one and lists what differed — the error that was there then gone, a request that failed on only one attempt, a console error, a slower step, a duration or page-state change. Each difference links to the evidence it came from. That delta is the flakiness fingerprint, and it feeds the root-cause classifier.',
@@ -318,21 +303,6 @@ export const HELP_TOPICS = {
     title: 'Known issue',
     text: 'Pin the Jira ticket, GitHub issue or PR that tracks this cluster. The link’s key travels with the cluster wherever it is listed, so a triaged cluster shows what is already being done about it.',
   },
-  'cluster.fix-plan': {
-    title: 'Fix',
-    text: 'Everything needed to repair this cluster in one place — the AI diagnosis and its validated patch, the recommended locator fix, the command that verifies the fix, and the whole plan as Markdown. Copy it for a ticket, or let an agent fetch the same plan via the get_fix_plan MCP tool.',
-    doc: 'features/fix-plans',
-  },
-  'cluster.fixed-before': {
-    title: 'Fixed before',
-    text: 'Resolved failures that resemble this one — matched on the same error and locator, the same spec or test, and (when embeddings are configured) semantic similarity. Each shows when it was fixed, the resolving commit, how long it stayed open and the triage note, so you can reuse an earlier resolution. "Apply the same triage" copies that note onto this cluster; it never marks a new cluster resolved because an old one was.',
-    doc: 'features/fix-plans#fixed-before',
-  },
-  'cluster.evidence': {
-    title: 'Test evidence',
-    text: 'The concrete artifacts behind this cluster — screenshots, signals and traces from affected tests — gathered for review and AI diagnosis.',
-    doc: 'features/ai-diagnosis#what-a-diagnosis-contains',
-  },
   'cluster.scm': {
     title: 'What changed',
     text: 'Recent commits and diffs around when this failure started, so you can connect the break to the change that caused it.',
@@ -347,11 +317,6 @@ export const HELP_TOPICS = {
     title: 'Commit browser',
     text: 'Browse the repository’s recent commits and inspect each diff to pick a baseline or find the suspect change.',
     doc: 'features/ai-diagnosis#scm-grounded-context',
-  },
-  'cluster.diagnosis': {
-    title: 'AI diagnosis',
-    text: 'Runs the configured AI model over the failure plus its evidence and code changes to propose a root cause and fix.',
-    doc: 'features/ai-diagnosis#enabling-ai-diagnosis',
   },
   'cluster.context-input': {
     title: 'Additional context',
@@ -372,16 +337,6 @@ export const HELP_TOPICS = {
     title: 'AI not configured',
     text: 'Diagnosis needs an AI provider and API key. Configure one in Settings → AI to enable automatic and on-demand analysis.',
     doc: 'features/ai-diagnosis#enabling-ai-diagnosis',
-  },
-  'cluster.confidence': {
-    title: 'Confidence score',
-    text: 'How sure the model is of the top hypothesis (0–100). It is lowered when key evidence is missing or truncated, so treat a low score as “gather more before acting”.',
-    doc: 'features/ai-diagnosis#what-a-diagnosis-contains',
-  },
-  'cluster.hypotheses': {
-    title: 'Other hypotheses',
-    text: 'Alternative root causes the model weighed, ranked by likelihood. Useful when the evidence is ambiguous and the top pick is not conclusive.',
-    doc: 'features/ai-diagnosis#what-a-diagnosis-contains',
   },
   'cluster.coverage': {
     title: 'Data coverage',
@@ -649,12 +604,6 @@ export const HELP_TOPICS = {
   'case.page-diff': {
     title: 'Page diff',
     text: 'Compares the failing page’s ARIA structure against the same test’s last passing (green) sample — same browser, preferring the same environment then branch. Shows what was added, removed, renamed, changed or moved, with unchanged subtrees collapsed and the failing locator’s element highlighted. A green sample is captured about once a day per test, so a baseline appears after the next passing run.',
-  },
-
-  // ── DOM snapshot ─────────────────────────────────────────────────────────
-  'dom-snapshot': {
-    title: 'DOM snapshot',
-    text: 'The page’s HTML around the failing action, rendered from the uploaded Playwright trace — nothing extra is captured. Input values, inline handlers and script bodies are removed; token-shaped strings are masked.',
   },
 
   // ── Page state ───────────────────────────────────────────────────────────

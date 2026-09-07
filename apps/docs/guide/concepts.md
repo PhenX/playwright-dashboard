@@ -87,6 +87,36 @@ Fingerprints deliberately **ignore the failing stack frame**, so the same root c
 different spec files stays one cluster. Full detail:
 [Failure clustering & AI diagnosis](/features/ai-diagnosis).
 
+## Story
+
+The **one explanation** a failure page leads with. When several [clues](/features/evidence#clues)
+(deterministic, rule-based findings) form a known combination, Piwi chains them into a single sentence —
+*"the Pay button stayed disabled because POST /api/checkout/quote was still in flight"* — at the strongest
+member's strength, with every clue folded under it. When no combination matches, the story is the strongest
+clue alone; when a cluster has a completed [AI diagnosis](/features/ai-diagnosis), that leads instead.
+
+## Situation
+
+The **one sentence of context** under the explanation: since when the failure has been happening (and on
+which commit and author), how many other tests share the cause and the cluster they join, whether an earlier
+fix regressed, and who owns it. An exceptional case — a new regression, a pass on retry, an infrastructure
+blip — leads it as a badge. It reads on the execution page and, condensed, in [alerts](/features/notifications).
+
+## Next step
+
+The **one recommended action** a failure page leads with, chosen by a policy rather than offered as a menu —
+apply a diagnosed patch, replace a broken locator, reproduce locally, re-run in CI, mark a cluster resolved.
+The page shows the step, one line on why, and the button to do it; every other action lives in the toolbox.
+The policy and its ordering are on [Fix plans](/features/fix-plans#the-next-step).
+
+## Cluster state
+
+Where a **failure cluster** stands, said in one sentence with one verb next to a coloured dot: *still
+failing*, *fixed and verified — still open*, *stopped failing*, *regressed — the fix did not hold*, *resolved*,
+*ignored*, *snoozed* or *all tests quarantined*. It reconciles the human triage status with the
+machine-observed verdict; when they disagree the state line offers the one action that closes the gap. See
+[Failure clusters](/features/failure-clusters#the-state-line).
+
 ## Baseline (last green run)
 
 Several views answer "what changed?" — run insights, the regression signals on a test, the environment

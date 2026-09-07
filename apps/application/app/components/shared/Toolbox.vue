@@ -81,6 +81,18 @@ function toggle(key: FixSectionKey) {
   openKey.value = openKey.value === key ? null : key;
 }
 
+// A folded summary truncates to one line; mirror its text into the element's
+// `title` so the clipped tail stays readable on hover. The summaries are slot
+// content, so read the rendered text rather than threading a second prop.
+const vTitleFromText = {
+  mounted: (el: HTMLElement) => {
+    el.title = el.textContent?.trim() ?? '';
+  },
+  updated: (el: HTMLElement) => {
+    el.title = el.textContent?.trim() ?? '';
+  },
+};
+
 /** Open a section (a next-step action reveals then scrolls to it). */
 function openSection(key: FixSectionKey) {
   openKey.value = key;
@@ -105,7 +117,7 @@ defineExpose({ openSection });
               class="size-4 shrink-0 text-gray-400"
             />
             <span class="text-sm font-medium shrink-0">{{ s.label }}</span>
-            <span v-if="openKey !== s.key" class="min-w-0 flex-1 truncate text-sm text-muted">
+            <span v-if="openKey !== s.key" v-title-from-text class="min-w-0 flex-1 truncate text-sm text-muted">
               <slot :name="`${s.key}-summary`" />
             </span>
           </button>

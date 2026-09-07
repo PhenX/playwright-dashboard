@@ -75,6 +75,33 @@ const RULES: Rule[] = [
     re: /\b(The one clue|Other clues)\b/,
   },
   {
+    id: 'raw-error',
+    hint: 'the disclosure is "Raw error", not "Show raw error"',
+    re: /Show raw error/i,
+  },
+  {
+    id: 'fix-plan-pointer',
+    hint: 'the pointer sections are gone — the next step leads, and "Fix plan" is only the toolbox export section',
+    re: /Open fix plan|Assembled on the cluster/i,
+  },
+  {
+    id: 'triage-card',
+    hint: 'the state line and its "Triage ▾" menu replaced the Triage card (the menu button and "Triage note" stay)',
+    re: /(?<![-\w])(title|label)\s*[:=]\s*(['"])Triage\2/i,
+  },
+  {
+    id: 'cluster-history-card',
+    hint: 'the occurrence sparkline replaced the cluster History card',
+    re: /(?<![-\w])(title|label)\s*[:=]\s*(['"])History\2/,
+    // The execution page keeps its own recent-executions history block (plan Appendix A).
+    allow: ({ rel }) => rel.includes('test-run-cases/[id].vue'),
+  },
+  {
+    id: 'fix-verified-badge',
+    hint: 'the cluster state sentence carries the verdict; the project badge reads "Verified"',
+    re: /\bFix verified\b/,
+  },
+  {
     id: 'since-last-pass',
     hint: 'the Changes tab replaced "Since last pass"',
     re: /\bSince last pass\b/i,

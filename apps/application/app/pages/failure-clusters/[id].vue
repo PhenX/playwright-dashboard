@@ -197,7 +197,7 @@ const occurrenceAria = computed(() =>
 // The newest known-issue link, shown compactly on the facts line.
 const knownIssue = computed(() => cluster.value?.links?.[0] ?? null);
 
-// ── Show raw error disclosure ────────────────────────────────────────────────
+// ── Raw error disclosure ─────────────────────────────────────────────────────
 const rawErrorEl = ref<HTMLElement | null>(null);
 const rawErrorOpen = ref(false);
 function revealRawError() {
@@ -536,7 +536,7 @@ const { handle: handleNextStepAction } = useNextStepActions({
   },
 });
 
-// Deep link from the execution page's "Open fix plan" — open the fix-plan section.
+// Deep link from the execution page's fix-plan link — open the fix-plan section.
 onMounted(() => {
   if (route.hash === '#fix-plan') nextTick(() => openFixPlan());
 });
