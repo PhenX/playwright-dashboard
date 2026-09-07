@@ -93,17 +93,29 @@ const vTitleFromText = {
   },
 };
 
+const rootEl = ref<HTMLElement | null>(null);
+
 /** Open a section (a next-step action reveals then scrolls to it). */
 function openSection(key: FixSectionKey) {
   openKey.value = key;
 }
 
-defineExpose({ openSection });
+/** Open a section and scroll it into view — the target of a next-step action. */
+function scrollToSection(key: FixSectionKey) {
+  openSection(key);
+  nextTick(() => {
+    rootEl.value
+      ?.querySelector<HTMLElement>(`[data-shot="fix-${key}"]`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+}
+
+defineExpose({ scrollToSection });
 </script>
 
 <template>
   <SectionCard icon="i-lucide-wrench" icon-class="text-primary" title="More ways to fix" :help="help" data-shot="fix">
-    <div class="divide-y divide-default">
+    <div ref="rootEl" class="divide-y divide-default">
       <section v-for="s in active" :key="s.key" class="first:pt-0 last:pb-0" :data-shot="`fix-${s.key}`">
         <div class="flex items-center justify-between gap-2 py-3">
           <button
