@@ -32,10 +32,12 @@ export interface NextStepActionHandlers {
   reproRecipe: () => ReproRecipe | null | undefined;
   /** The endpoint the AI prompt is copied from (`?format=prompt` is appended). */
   diagnosisContextEndpoint: () => string;
-  /** Reveal / scroll to the Fix card's diagnosis, reproduce and locator sections. */
-  scrollToDiagnosis: () => void;
-  scrollToReproduce: () => void;
-  scrollToLocatorFix: () => void;
+  /**
+   * Reveal and scroll to a toolbox section. The diagnosis, reproduce and
+   * locator-fix actions all route through this one callback, so a page passes it
+   * once rather than three identical scroll callbacks.
+   */
+  scrollToSection: (key: 'diagnosis' | 'reproduce' | 'locator-fix') => void;
   /** Select the Attempts evidence tab. */
   selectAttemptsTab: () => void;
   /** Set the cluster's triage status. */
@@ -44,8 +46,8 @@ export interface NextStepActionHandlers {
   quarantine: (payload?: Record<string, unknown>) => void | Promise<void>;
   /** Re-run the cluster's tests in CI. */
   rerunInCi: () => void | Promise<void>;
-  /** Open the execution the payload names. */
-  openExecution: (executionId: number) => void | Promise<void>;
+  /** Open the execution the payload names; defaults to navigating to its page. */
+  openExecution?: (executionId: number) => void | Promise<void>;
   /** "What changed" — the cluster page scrolls, the execution page navigates. */
   whatChanged: () => void | Promise<void>;
   /** "Re-diagnose" — scroll to the diagnosis and trigger it (page-specific). */
@@ -70,7 +72,9 @@ export function useNextStepActions(handlers: NextStepActionHandlers) {
     switch (action) {
       case 'open-execution': {
         const id = payload?.executionId;
-        if (typeof id === 'number') await handlers.openExecution(id);
+        if (typeof id !== 'number') break;
+        if (handlers.openExecution) await handlers.openExecution(id);
+        else await navigateTo(`/test-run-cases/${id}`);
         break;
       }
       case 'mark-resolved':
@@ -86,11 +90,11 @@ export function useNextStepActions(handlers: NextStepActionHandlers) {
         handlers.locatorPanel()?.copyRecommendedLocator();
         break;
       case 'pick-from-snapshot':
-        handlers.scrollToLocatorFix();
+        handlers.scrollToSection('locator-fix');
         handlers.locatorPanel()?.openPicker();
         break;
       case 'all-alternatives':
-        handlers.scrollToLocatorFix();
+        handlers.scrollToSection('locator-fix');
         handlers.locatorPanel()?.expandAlternatives();
         break;
       case 'copy-git-apply': {
@@ -118,10 +122,10 @@ export function useNextStepActions(handlers: NextStepActionHandlers) {
       }
       case 'read-diagnosis':
       case 'diagnose':
-        handlers.scrollToDiagnosis();
+        handlers.scrollToSection('diagnosis');
         break;
       case 'reproduce':
-        handlers.scrollToReproduce();
+        handlers.scrollToSection('reproduce');
         break;
       case 'attempts-tab':
         handlers.selectAttemptsTab();

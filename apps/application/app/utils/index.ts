@@ -11,6 +11,47 @@ import {
 import { TEST_PRIORITIES, type TestPriority } from '@piwitests/core/test-meta';
 
 /**
+ * A link that lives inside a sentence keeps the sentence's color and carries a
+ * dotted underline that turns solid on hover — never `text-primary`, which is for
+ * navigation lists and tables. The situation, story, state and what-changed lines
+ * and both failure pages share this one class string.
+ */
+export const SENTENCE_LINK_CLASS = 'underline decoration-dotted underline-offset-2 hover:decoration-solid';
+
+/** The `diagnosis` shape the toolbox's folded summary reads. */
+export interface ToolboxDiagnosisLike {
+  status?: string | null;
+  summary?: string | null;
+  category?: string | null;
+  confidence?: string | null;
+}
+
+/** The Toolbox's one-line Diagnosis summary — the same wording on both failure pages. */
+export function diagnosisSectionSummary(
+  diagnosis: ToolboxDiagnosisLike | null | undefined,
+  aiConfigured: boolean | undefined,
+): string {
+  if (diagnosis?.status === 'completed' && (diagnosis.summary || diagnosis.category)) {
+    const title = diagnosis.summary ?? diagnosis.category ?? 'Diagnosed';
+    return diagnosis.confidence ? `${title} · ${diagnosis.confidence} confidence` : title;
+  }
+  return aiConfigured === false ? 'AI is not configured' : 'Not diagnosed yet';
+}
+
+/** The Toolbox's one-line Reproduce summary. */
+export function reproduceSectionSummary(steps: number, bisectAvailable: boolean): string {
+  return `${steps} commands · Linux/macOS or Windows · ${bisectAvailable ? 'bisect available' : 'bisect not available'}`;
+}
+
+/** The Toolbox's one-line Verify summary — the `-g` grep of the command, then whether CI can re-run. */
+export function verifySectionSummary(command: string, rerunAvailable: boolean, fallbackLabel: string): string {
+  const g = command.match(/-g\s+(".*?"|'.*?'|\S+)/)?.[1];
+  const parts = [g ? `-g ${g}` : fallbackLabel];
+  if (rerunAvailable) parts.push('Re-run in CI');
+  return parts.join(' · ');
+}
+
+/**
  * Narrow a stored priority to the union `TestMetaBadges` takes. The database
  * column is a plain string, so anything unrecognized drops out rather than
  * rendering a badge nobody defined.
