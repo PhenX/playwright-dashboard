@@ -64,26 +64,14 @@ const summary = computed(() => {
     <!-- A resolved diff: the range in one clause, and the way to the card -->
     <template v-else-if="summary">
       <span>{{ summary }}</span>
-      <button
-        type="button"
-        class="underline decoration-dotted underline-offset-2 hover:decoration-solid"
-        @click="emit('see')"
-      >
-        See the changes
-      </button>
+      <button type="button" :class="SENTENCE_LINK_CLASS" @click="emit('see')">See the changes</button>
     </template>
 
     <!-- A hand-picked range whose diff did not resolve: the card holds the picker -->
     <template v-else-if="hasChangesToShow">
       <span>{{ scmStatus.text }}</span>
       <span v-if="scmStatus.detail" class="text-muted">— {{ scmStatus.detail }}</span>
-      <button
-        type="button"
-        class="underline decoration-dotted underline-offset-2 hover:decoration-solid"
-        @click="emit('see')"
-      >
-        Change the range
-      </button>
+      <button type="button" :class="SENTENCE_LINK_CLASS" @click="emit('see')">Change the range</button>
     </template>
 
     <!-- Nothing to diff: why, and the browser where it can work -->

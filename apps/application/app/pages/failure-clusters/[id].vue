@@ -5,9 +5,10 @@ import { parsePlaywrightError } from '#shared/error-parse';
 import type { FailureCluesResult } from '#shared/handlers/test-cases';
 import type { ComponentPublicInstance } from 'vue';
 import type { FailureClusterDetail, TraceInfo } from '~~/types/api';
-import type { FixPlan, FixedBeforeMatch as FixedBeforeMatchType } from '#shared/fix-plan.types';
+import type { FixPlan } from '#shared/fix-plan.types';
 import { fixPlanToMarkdown } from '#shared/fix-plan-markdown';
 import type { FixSectionKey } from '~/components/shared/Toolbox.vue';
+import type { RerunInfo } from '~/composables/useCiRerun';
 import { renderAnsi } from '~/utils';
 import { stripAnsi } from '~/utils/text-format';
 import { buildRetryCommand } from '~/utils/retry-command';
@@ -105,18 +106,9 @@ const { data: cluesData } = await useAsyncData<FailureCluesResult>(
 const clues = computed(() => cluesData.value?.clues ?? []);
 const story = computed(() => cluesData.value?.story ?? null);
 const cluesFailureAt = computed(() => cluesData.value?.failureAt ?? null);
-const topClue = computed(() => clues.value[0] ?? null);
-const topClueSection = computed(() => topClue.value?.citations?.[0]?.section ?? null);
 // The evidence opens on the story: the first member clue's cited section and the
 // story's strength (or the top clue's, when no combination matched).
-const defaultHint = computed<{ section: string | null; strength: 'strong' | 'medium' | 'weak' | null }>(() => {
-  const s = story.value;
-  if (s) {
-    const first = clues.value.find((c) => c.id === s.clueIds[0]) ?? topClue.value;
-    return { section: first?.citations?.[0]?.section ?? null, strength: s.strength };
-  }
-  return { section: topClueSection.value, strength: topClue.value?.strength ?? null };
-});
+const defaultHint = useEvidenceHint(clues, story);
 const hasTrace = computed(() => (execTraces.value?.length ?? 0) > 0);
 const selectedRunId = computed(() => (execution.value as { testRun?: { id?: number } } | null)?.testRun?.id ?? null);
 
@@ -200,13 +192,9 @@ const occurrenceAria = computed(() =>
 // The newest known-issue link, shown compactly on the facts line.
 const knownIssue = computed(() => cluster.value?.links?.[0] ?? null);
 
-// ── Raw error disclosure ─────────────────────────────────────────────────────
-const rawErrorEl = ref<HTMLElement | null>(null);
-const rawErrorOpen = ref(false);
-function revealRawError() {
-  rawErrorOpen.value = true;
-  nextTick(() => rawErrorEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-}
+// The facts line carries the raw-error disclosure; a citation reveals it through
+// the exposed method.
+const factsLine = ref<{ revealRawError: () => void } | null>(null);
 
 // ── Copy summary ─────────────────────────────────────────────────────────────
 const { copyRich } = useCopyRich();
@@ -266,47 +254,10 @@ const affectedRetryCases = computed(() =>
 const retryCommand = computed(() => buildRetryCommand(affectedRetryCases.value));
 const { copy: copyRetry } = useCopy();
 
-interface RerunInfo {
-  available: boolean;
-  reason: string | null;
-  provider: string | null;
-  enabled: boolean;
-  hasToken: boolean;
-  lastDispatch: { provider: string; url: string; args: string; at: number; byName: string | null } | null;
-}
 const { data: rerunInfo, refresh: refreshRerun } = await useFetch<RerunInfo>(
   `/api/failure-clusters/${clusterId}/rerun`,
 );
-const rerunToast = useToast();
-const rerunning = ref(false);
-async function triggerRerun() {
-  rerunning.value = true;
-  try {
-    const res = await $fetch<{ ok: boolean; message?: string; dispatch?: { url: string } }>(
-      `/api/failure-clusters/${clusterId}/rerun`,
-      { method: 'POST' },
-    );
-    if (res.ok && res.dispatch) {
-      rerunToast.add({
-        title: 'CI re-run dispatched',
-        description: 'The affected tests are re-running.',
-        color: 'success',
-      });
-      await refreshRerun();
-    } else {
-      rerunToast.add({
-        title: 'CI re-run not started',
-        description: res.message ?? 'Not available.',
-        color: 'warning',
-      });
-    }
-  } catch (e: unknown) {
-    const message = (e as { data?: { message?: string }; message?: string })?.data?.message ?? 'Dispatch failed.';
-    rerunToast.add({ title: 'CI re-run failed', description: message, color: 'error' });
-  } finally {
-    rerunning.value = false;
-  }
-}
+const { rerunning, triggerRerun } = useCiRerun(clusterId, refreshRerun);
 
 function refresh() {
   refreshCluster();
@@ -334,54 +285,21 @@ const fixSections = computed<FixSectionKey[]>(() => {
 });
 
 // ── Folded one-line summaries for the toolbox sections ───────────────────────
-const diagnosisSummary = computed(() => {
-  const d = cluster.value?.diagnosis;
-  if (d?.status === 'completed' && (d.summary || d.category)) {
-    const title = d.summary ?? d.category ?? 'Diagnosed';
-    return d.confidence ? `${title} · ${d.confidence} confidence` : title;
-  }
-  return aiStatus.value?.configured === false ? 'AI is not configured' : 'Not diagnosed yet';
-});
-const reproduceSummary = computed(() => {
-  const steps = fixPlan.value?.reproduce?.steps?.length ?? 0;
-  const bisect = fixPlan.value?.bisect?.available ? 'bisect available' : 'bisect not available';
-  return `${steps} commands · Linux/macOS or Windows · ${bisect}`;
-});
-const verifySummary = computed(() => {
-  const cmd = fixPlan.value?.verify?.command ?? '';
-  const g = cmd.match(/-g\s+(".*?"|'.*?'|\S+)/)?.[1];
-  const parts = [g ? `-g ${g}` : 'The verify command'];
-  if (rerunInfo.value?.available) parts.push('Re-run in CI');
-  return parts.join(' · ');
-});
+const diagnosisSummary = computed(() => diagnosisSectionSummary(cluster.value?.diagnosis, aiStatus.value?.configured));
+const reproduceSummary = computed(() =>
+  reproduceSectionSummary(fixPlan.value?.reproduce?.steps?.length ?? 0, Boolean(fixPlan.value?.bisect?.available)),
+);
+const verifySummary = computed(() =>
+  verifySectionSummary(fixPlan.value?.verify?.command ?? '', Boolean(rerunInfo.value?.available), 'The verify command'),
+);
 
 // ── Apply the same triage ─────────────────────────────────────────────────────
-// One click copies an earlier resolved cluster's triage note onto this one,
-// prefixed so the history reads as an intentional reuse. The status is left as
-// it is — a new cluster is never marked resolved because an old one was.
-const applyingId = ref<number | null>(null);
-const applyToast = useToast();
-async function applyTriage(match: FixedBeforeMatchType) {
-  if (!cluster.value || applyingId.value != null) return;
-  applyingId.value = match.clusterId;
-  const excerpt = (match.triageNote ?? match.diagnosisTitle ?? match.reason).replace(/\s+/g, ' ').trim().slice(0, 280);
-  const prefix = `Same as cluster #${match.clusterId}: `;
-  const existing = cluster.value.triageNote?.trim();
-  const line = `${prefix}${excerpt}`;
-  const triageNote = existing ? `${existing}\n${line}` : line;
-  try {
-    await $fetch(`/api/failure-clusters/${clusterId}/status`, {
-      method: 'PATCH',
-      body: { status: cluster.value.status, triageNote },
-    });
-    applyToast.add({ title: `Applied triage from cluster #${match.clusterId}`, color: 'success' });
-    refresh();
-  } catch {
-    applyToast.add({ title: 'Could not apply the triage', color: 'error' });
-  } finally {
-    applyingId.value = null;
-  }
-}
+const { applyingId, applyTriage } = useApplyClusterTriage({
+  clusterId: () => clusterId,
+  status: () => cluster.value?.status,
+  currentNote: () => cluster.value?.triageNote,
+  onApplied: () => refresh(),
+});
 
 // The diagnosis panel exposes its context/prompt actions for the page's More menu.
 const diagnosisPanel = ref<{
@@ -443,7 +361,6 @@ const moreMenuItems = computed(() => {
 // ── Section locator ──────────────────────────────────────────────────────────
 // A clue or diagnosis citation reveals the evidence it came from: the evidence
 // tabs handle the tabbed sections, the fix plan and the raw error scroll in place.
-const fixCardEl = ref<HTMLElement | null>(null);
 const scmEl = ref<HTMLElement | null>(null);
 const whatChangedLine = ref<ComponentPublicInstance | null>(null);
 const evidenceTabs = ref<{
@@ -456,19 +373,24 @@ const clusterLocatorPanel = ref<{
   openPicker: () => void;
   expandAlternatives: () => void;
 } | null>(null);
+const toolbox = ref<{ scrollToSection: (k: FixSectionKey) => void } | null>(null);
 
 function scrollToEl(el: HTMLElement | null) {
   el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+function openFixPlan() {
+  toolbox.value?.scrollToSection('fix-plan');
+}
+const scrollToScm = () => scrollToEl(scmEl.value);
 
 const pageSections: Record<string, () => void> = {
-  fixPlan: () => openFixPlan(),
-  sampleError: revealRawError,
-  executionError: revealRawError,
-  scmInvestigation: () => scmEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-  selectedCommits: () => scmEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-  topSuspectedCommit: () => scmEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-  failingAction: () => scmEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+  fixPlan: openFixPlan,
+  sampleError: () => factsLine.value?.revealRawError(),
+  executionError: () => factsLine.value?.revealRawError(),
+  scmInvestigation: scrollToScm,
+  selectedCommits: scrollToScm,
+  topSuspectedCommit: scrollToScm,
+  failingAction: scrollToScm,
 };
 provide(clusterSectionLocatorKey, {
   canLocate: (id: string) => id in pageSections || id in EVIDENCE_SECTION_TAB,
@@ -482,34 +404,8 @@ provide(clusterSectionLocatorKey, {
 // The next-step line stays presentation-only; the page owns the wiring through
 // the shared composable, reusing the same panels the toolbox does. Page-specific
 // targets are callbacks.
-const nextStepToast = useToast();
 const { quarantineOne } = useQuarantine(() => cluster.value?.project?.id ?? null);
-
-/** Open a toolbox section and scroll to it (its body is otherwise folded away). */
-const toolbox = ref<{ openSection: (k: string) => void } | null>(null);
-function scrollToFixSection(key: 'diagnosis' | 'reproduce' | 'locator-fix' | 'fix-plan') {
-  toolbox.value?.openSection(key);
-  nextTick(() => {
-    const el = import.meta.client ? document.querySelector<HTMLElement>(`[data-shot="fix-${key}"]`) : null;
-    scrollToEl(el ?? fixCardEl.value);
-  });
-}
-function openFixPlan() {
-  scrollToFixSection('fix-plan');
-}
-
-async function setClusterStatus(status: 'open' | 'resolved') {
-  try {
-    await $fetch(`/api/failure-clusters/${clusterId}/status`, { method: 'PATCH', body: { status } });
-    nextStepToast.add({
-      title: status === 'resolved' ? 'Cluster marked resolved' : 'Cluster reopened',
-      color: 'success',
-    });
-    refresh();
-  } catch {
-    nextStepToast.add({ title: 'Could not update the cluster', color: 'error' });
-  }
-}
+const { setClusterStatus } = useClusterTriage(clusterId, { onSaved: () => refresh() });
 
 const { handle: handleNextStepAction } = useNextStepActions({
   clusterId: () => clusterId,
@@ -518,9 +414,7 @@ const { handle: handleNextStepAction } = useNextStepActions({
   locatorPanel: () => clusterLocatorPanel.value,
   reproRecipe: () => fixPlan.value?.reproduce ?? null,
   diagnosisContextEndpoint: () => `/api/failure-clusters/${clusterId}/context`,
-  scrollToDiagnosis: () => scrollToFixSection('diagnosis'),
-  scrollToReproduce: () => scrollToFixSection('reproduce'),
-  scrollToLocatorFix: () => scrollToFixSection('locator-fix'),
+  scrollToSection: (k) => toolbox.value?.scrollToSection(k),
   selectAttemptsTab: () => evidenceTabs.value?.selectTab('attempts'),
   setClusterStatus,
   quarantine: async () => {
@@ -530,12 +424,9 @@ const { handle: handleNextStepAction } = useNextStepActions({
     }
   },
   rerunInCi: () => triggerRerun(),
-  openExecution: (id) => {
-    navigateTo(`/test-run-cases/${id}`);
-  },
   whatChanged: () => scrollToEl(scmEl.value ?? whatChangedLine.value?.$el ?? null),
   reDiagnose: () => {
-    scrollToFixSection('diagnosis');
+    toolbox.value?.scrollToSection('diagnosis');
     diagnosisPanel.value?.reDiagnose?.();
   },
 });
@@ -597,10 +488,7 @@ const breadcrumbItems = computed(() => [
               </template>
               <template v-if="cluster.project">
                 <span aria-hidden="true">·</span>
-                <NuxtLink
-                  :to="`/projects/${cluster.project.id}?tab=failure-clusters`"
-                  class="underline decoration-dotted underline-offset-2 hover:decoration-solid"
-                >
+                <NuxtLink :to="`/projects/${cluster.project.id}?tab=failure-clusters`" :class="SENTENCE_LINK_CLASS">
                   {{ cluster.project.label || cluster.project.name }}
                 </NuxtLink>
               </template>
@@ -614,7 +502,7 @@ const breadcrumbItems = computed(() => [
                 :href="knownIssue.url"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                :class="SENTENCE_LINK_CLASS"
                 :title="knownIssue.title ?? knownIssue.url"
               >
                 {{ knownIssue.key || knownIssue.provider }}
@@ -690,69 +578,14 @@ const breadcrumbItems = computed(() => [
 
           <!-- Line 6: the facts line — Details, Raw error, Copy summary -->
           <template #facts>
-            <div class="flex items-center gap-x-3 gap-y-1 flex-wrap text-xs text-muted">
-              <UPopover>
-                <UButton
-                  size="xs"
-                  variant="ghost"
-                  color="neutral"
-                  trailing-icon="i-lucide-chevron-down"
-                  label="Details"
-                  class="shrink-0"
-                />
-                <template #content>
-                  <div class="p-3 space-y-3 text-sm w-72">
-                    <div class="space-y-1">
-                      <p class="text-xs font-medium text-muted uppercase tracking-wide">Owner</p>
-                      <ClusterOwnerLine :owner="cluster.owner" :project-id="cluster.project?.id ?? null" />
-                    </div>
-                    <div class="space-y-1">
-                      <div class="flex items-center gap-1.5 text-xs">
-                        <UIcon name="i-lucide-link" class="size-3.5 shrink-0 text-gray-400" />
-                        <span class="text-muted uppercase tracking-wide font-medium">Known issue</span>
-                        <HelpHint topic="cluster.known-issue" />
-                      </div>
-                      <EntityLinks
-                        entity-type="failure_cluster"
-                        :entity-id="cluster.id"
-                        :links="cluster.links"
-                        :readonly="!canWrite"
-                        @updated="refresh"
-                      />
-                    </div>
-                  </div>
-                </template>
-              </UPopover>
-
-              <UButton
-                size="xs"
-                variant="ghost"
-                color="neutral"
-                :trailing-icon="rawErrorOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-                label="Raw error"
-                class="shrink-0"
-                :aria-expanded="rawErrorOpen"
-                @click="rawErrorOpen = !rawErrorOpen"
-              />
-
-              <UButton
-                size="xs"
-                variant="ghost"
-                color="neutral"
-                label="Copy summary"
-                class="shrink-0"
-                @click="copyCluster"
-              />
-            </div>
-
-            <div v-if="rawErrorOpen" ref="rawErrorEl" class="mt-2 space-y-2 scroll-mt-4">
-              <div
-                v-if="cluster.sampleError"
-                class="text-xs font-mono whitespace-pre-wrap break-words max-h-96 overflow-y-auto rounded bg-red-50 dark:bg-red-950/20 p-3"
-                v-html="renderAnsi(cluster.sampleError)"
-              />
-              <p v-if="signatureLine" class="font-mono text-xs break-all text-muted">{{ signatureLine }}</p>
-            </div>
+            <ClusterFactsLine
+              ref="factsLine"
+              :cluster="cluster"
+              :can-write="canWrite"
+              :signature-line="signatureLine"
+              @refresh="refresh"
+              @copy="copyCluster"
+            />
           </template>
         </SituationBlock>
 
@@ -789,7 +622,7 @@ const breadcrumbItems = computed(() => [
         </div>
 
         <!-- ── More ways to fix ───────────────────────────────────────── -->
-        <div ref="fixCardEl" class="scroll-mt-4">
+        <div class="scroll-mt-4">
           <Toolbox ref="toolbox" :sections="fixSections" :next-step-kind="nextStep?.kind ?? null" help="fix.toolbox">
             <template #diagnosis-summary>{{ diagnosisSummary }}</template>
             <template #locator-fix-summary>Ranked replacement locators from the failing page</template>

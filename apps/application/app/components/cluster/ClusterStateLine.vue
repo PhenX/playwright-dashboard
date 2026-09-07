@@ -63,6 +63,12 @@ async function patchSnooze(option: SnoozeOption | null) {
 
 // ── The one reconcile action ─────────────────────────────────────────────────
 const { releaseOne } = useQuarantine(() => props.cluster.project?.id ?? null);
+// Mark resolved / reopen share the failure pages' triage helper, preserving the
+// existing note through the status PATCH.
+const { setClusterStatus } = useClusterTriage(() => props.cluster.id, {
+  currentNote: () => props.cluster.triageNote,
+  onSaved: () => emit('saved'),
+});
 
 async function runReconcile() {
   if (!props.canWrite || busy.value || !props.state.action) return;
@@ -70,24 +76,23 @@ async function runReconcile() {
   try {
     switch (props.state.action) {
       case 'mark-resolved':
-        await patchStatus('resolved');
-        toast.add({ title: 'Marked resolved', color: 'success' });
+        await setClusterStatus('resolved');
         break;
       case 'reopen':
-        await patchStatus('open');
-        toast.add({ title: 'Cluster reopened', color: 'success' });
+        await setClusterStatus('open');
         break;
       case 'unsnooze':
         await patchSnooze(null);
         toast.add({ title: 'Cluster unsnoozed', color: 'success' });
+        emit('saved');
         break;
       case 'release': {
         const quarantined = (props.cluster.affectedTestCases ?? []).filter((c) => c.quarantined);
         for (const c of quarantined) await releaseOne(c.testCaseId);
+        emit('saved');
         break;
       }
     }
-    emit('saved');
   } catch {
     toast.add({ title: 'Could not update the cluster', color: 'error' });
   } finally {
@@ -175,7 +180,7 @@ const snoozeItems = computed(() => [
         <NuxtLink
           v-if="part.kind === 'run' && part.href"
           :to="part.href"
-          class="underline decoration-dotted underline-offset-2 hover:decoration-solid tabular-nums"
+          :class="[SENTENCE_LINK_CLASS, 'tabular-nums']"
           >{{ part.text }}</NuxtLink
         >
         <template v-else>{{ part.text }}</template>
