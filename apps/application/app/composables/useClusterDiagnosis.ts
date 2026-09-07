@@ -38,6 +38,8 @@ export interface ClusterDiagnosisStore {
   imageTokenEstimate: Ref<number>;
   coverage: Ref<DiagnosisContextCoverage | null>;
   scmChanges: Ref<ScmChanges | null>;
+  /** The "What changed" card has something to show: a resolved diff or a hand-picked commit range. */
+  hasChangesToShow: ComputedRef<boolean>;
   contextLoading: Ref<boolean>;
   refreshContext: () => Promise<void>;
 
@@ -66,6 +68,11 @@ function createClusterDiagnosisStore(clusterId: number): ClusterDiagnosisStore {
   const coverage = ref<DiagnosisContextCoverage | null>(null);
   const scmChanges = ref<ScmChanges | null>(null);
   const contextLoading = ref(false);
+  // The "What changed" card — baseline picker, commit browser and diff — opens
+  // only with a resolved diff or a hand-picked commit range. With nothing to
+  // diff, the situation block's line says why, and the first screen spends
+  // nothing on a picker for a diff it does not have.
+  const hasChangesToShow = computed(() => Boolean(scmChanges.value) || selectedCommitShas.value.length > 0);
 
   const diagnosis = ref<FailureDiagnosis | null>(null);
   const posting = ref(false);
@@ -253,6 +260,7 @@ function createClusterDiagnosisStore(clusterId: number): ClusterDiagnosisStore {
     imageTokenEstimate,
     coverage,
     scmChanges,
+    hasChangesToShow,
     contextLoading,
     refreshContext,
     diagnosis,

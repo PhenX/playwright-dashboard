@@ -7,7 +7,8 @@ import { PROJECT } from '#shared/test-project-names';
  * The block carries the state line (the sentence, its one reconcile action and
  * the Triage / Snooze menus) and the occurrence sparkline; the raw error is a
  * "Raw error" disclosure on the facts line; the affected tests are the evidence
- * selector above the tabbed evidence; What changed collapses to one line.
+ * selector above the tabbed evidence; What changed is a line of the block, and
+ * a card below it only with a diff to browse.
  */
 
 // Two cases sharing one fingerprint (identical error, different spec files) so
@@ -127,11 +128,15 @@ test.describe('Failure cluster page layout', () => {
     await expect(page.getByText('TimeoutError: locator.click', { exact: false }).first()).toBeVisible();
   });
 
-  test('what changed collapses to one line when there is no SCM', async ({ page }) => {
+  test('what changed is a line of the block, not a card, when there is no SCM', async ({ page }) => {
     await page.goto(`/failure-clusters/${clusterId}`);
     await waitForHydration(page);
-    // The seeded run has no SCM metadata, so What changed is one line, not a card.
-    await expect(page.getByText(/What changed:/)).toBeVisible();
+    // The seeded run has no SCM metadata, so What changed is a line of the block
+    // saying why there is no diff, and no card.
+    const whatChanged = page.locator('[data-shot="what-changed"]');
+    await expect(whatChanged).toBeVisible();
+    await expect(page.locator('[data-shot="situation-block"]')).toContainText('What changed');
+    await expect(page.getByRole('heading', { name: 'What changed' })).toHaveCount(0);
   });
 
   test('selecting an affected test offers "Move to a new cluster"', async ({ page }) => {

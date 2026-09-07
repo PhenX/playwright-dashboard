@@ -1,38 +1,28 @@
 <script setup lang="ts">
+/**
+ * The "What changed" card of the cluster page: the baseline picker, the commit
+ * browser and the diff between the baseline and the failing run. It renders only
+ * with something to show — a resolved diff or a hand-picked commit range; the
+ * situation block's "What changed" line (`WhatChangedLine`) sums the range up
+ * and, with nothing to diff, says why and offers the browser instead.
+ */
 const {
   clusterId,
   baseCommit,
   selectedCommitShas,
   autoSelectedCommits,
   baseCommitIsPinned,
-  coverage,
   scmChanges,
   contextLoading,
+  hasChangesToShow,
   refreshContext,
 } = useClusterDiagnosis();
 
 const commitBrowserOpen = ref(false);
-
-const { scmStatus } = useScmStatusSummary(coverage);
-
-// A healthy resolve with an empty diff reads "No changes found"; any other
-// state (no baseline, unsupported host, fetch failed) is the block's empty
-// state, shown as the status sentence — never both at once.
-const scmHealthy = computed(
-  () => scmStatus.value.color === 'text-green-500' || scmStatus.value.color === 'text-blue-500',
-);
-
-// The block opens — baseline picker, commit browser and diff — only when there
-// is something to show: a resolved diff or a hand-selected commit range. With
-// nothing (unsupported host, no last passing run, an empty range) it collapses
-// to one line, so *What changed* never spends the first screen on a picker for
-// a diff it does not have.
-const hasOpenBlock = computed(() => Boolean(scmChanges.value) || selectedCommitShas.value.length > 0);
 </script>
 
 <template>
-  <!-- Open: the full card with the baseline picker and the diff, when there are commits or a diff. -->
-  <SectionCard v-if="hasOpenBlock" icon="i-lucide-git-compare-arrows" title="What changed" help="cluster.scm">
+  <SectionCard v-if="hasChangesToShow" icon="i-lucide-git-compare-arrows" title="What changed" help="cluster.scm">
     <div class="space-y-3">
       <div class="pb-2 border-b border-default">
         <div class="flex items-center gap-2 flex-wrap">
@@ -82,19 +72,4 @@ const hasOpenBlock = computed(() => Boolean(scmChanges.value) || selectedCommitS
       @confirm="selectedCommitShas = $event"
     />
   </SectionCard>
-
-  <!-- Collapsed: one line — nothing to diff yet. -->
-  <p v-else class="text-sm text-muted flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-    <span class="font-medium text-toned">What changed:</span>
-    <template v-if="contextLoading && !coverage">
-      <UIcon name="i-lucide-loader-circle" class="size-3.5 animate-spin" />
-      <span>looking for the change that broke this…</span>
-    </template>
-    <template v-else-if="coverage && scmHealthy">no commits in the range</template>
-    <template v-else-if="coverage">
-      <span :class="scmStatus.color">{{ scmStatus.text }}</span>
-      <span v-if="scmStatus.detail" class="text-gray-400">— {{ scmStatus.detail }}</span>
-    </template>
-    <template v-else>not available</template>
-  </p>
 </template>

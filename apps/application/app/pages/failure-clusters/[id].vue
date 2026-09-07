@@ -3,6 +3,7 @@ import { describeCluster, clusterSignatureLine, headlineAddsValue } from '#share
 import { caseHeadline, type FailureVerdict } from '#shared/failure-verdict';
 import { parsePlaywrightError } from '#shared/error-parse';
 import type { FailureCluesResult } from '#shared/handlers/test-cases';
+import type { ComponentPublicInstance } from 'vue';
 import type { FailureClusterDetail, TraceInfo } from '~~/types/api';
 import type { FixPlan, FixedBeforeMatch as FixedBeforeMatchType } from '#shared/fix-plan.types';
 import { fixPlanToMarkdown } from '#shared/fix-plan-markdown';
@@ -22,10 +23,12 @@ const isDemoMode = Boolean(useRuntimeConfig().public.demoMode);
 // Quarantine/triage actions on the cluster are reporter/admin only, matching the endpoint.
 const { canWrite } = useAuth();
 
-// Provide shared diagnosis/investigation state (consumed by ClusterInvestigation
-// and DiagnosisPanel). Must run before the top-level await below so provide()
-// and lifecycle hooks register against the active setup instance.
-provideClusterDiagnosis(clusterId);
+// Provide shared diagnosis/investigation state (consumed by WhatChangedLine,
+// ClusterInvestigation and DiagnosisPanel). Must run before the top-level await
+// below so provide() and lifecycle hooks register against the active setup
+// instance. The page keeps the one flag it renders on: whether the What
+// changed card has anything to show.
+const { hasChangesToShow } = provideClusterDiagnosis(clusterId);
 
 const { data: cluster, refresh: refreshCluster } = await useFetch<FailureClusterDetail>(
   `/api/failure-clusters/${clusterId}`,
@@ -442,6 +445,7 @@ const moreMenuItems = computed(() => {
 // tabs handle the tabbed sections, the fix plan and the raw error scroll in place.
 const fixCardEl = ref<HTMLElement | null>(null);
 const scmEl = ref<HTMLElement | null>(null);
+const whatChangedLine = ref<ComponentPublicInstance | null>(null);
 const evidenceTabs = ref<{
   revealSection: (id: string) => boolean;
   selectTab: (t: string) => void;
@@ -529,7 +533,7 @@ const { handle: handleNextStepAction } = useNextStepActions({
   openExecution: (id) => {
     navigateTo(`/test-run-cases/${id}`);
   },
-  whatChanged: () => scrollToEl(scmEl.value),
+  whatChanged: () => scrollToEl(scmEl.value ?? whatChangedLine.value?.$el ?? null),
   reDiagnose: () => {
     scrollToFixSection('diagnosis');
     diagnosisPanel.value?.reDiagnose?.();
@@ -581,43 +585,39 @@ const breadcrumbItems = computed(() => [
 
     <template #body>
       <div v-if="cluster" class="flex flex-col gap-4 p-4 max-sm:px-0 max-w-6xl mx-auto w-full">
-        <!-- ── One block: identity, name, most likely, occurrences, state, next ── -->
+        <!-- ── One block: identity, name, most likely, occurrences, what changed, state, next ── -->
         <SituationBlock help="cluster.state">
           <!-- Line 1: identity kicker — cluster #, error type, project, owner, known issue -->
           <template #identity>
-            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
-              <span class="font-medium text-highlighted">Failure cluster #{{ clusterId }}</span>
-              <UBadge
-                v-if="cluster.errorType"
-                :color="clusterErrorTypeColor(cluster.errorType)"
-                variant="subtle"
-                size="xs"
-              >
-                {{ cluster.errorType }}
-              </UBadge>
-              <NuxtLink
-                v-if="cluster.project"
-                :to="`/projects/${cluster.project.id}?tab=failure-clusters`"
-                class="hover:text-primary hover:underline"
-              >
-                {{ cluster.project.label || cluster.project.name }}
-              </NuxtLink>
-              <span
-                v-if="cluster.owner"
-                class="inline-flex items-center gap-1"
-                :title="`Owner from ${cluster.owner.source}`"
-              >
-                <UIcon name="i-lucide-user-round" class="size-3.5 shrink-0" />{{ cluster.owner.name }}
-              </span>
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span class="text-highlighted">Failure cluster #{{ clusterId }}</span>
+              <template v-if="cluster.errorType">
+                <span aria-hidden="true">·</span>
+                <span>{{ cluster.errorType }}</span>
+              </template>
+              <template v-if="cluster.project">
+                <span aria-hidden="true">·</span>
+                <NuxtLink
+                  :to="`/projects/${cluster.project.id}?tab=failure-clusters`"
+                  class="underline decoration-dotted underline-offset-2 hover:decoration-solid"
+                >
+                  {{ cluster.project.label || cluster.project.name }}
+                </NuxtLink>
+              </template>
+              <template v-if="cluster.owner">
+                <span aria-hidden="true">·</span>
+                <span :title="`Owner from ${cluster.owner.source}`">{{ cluster.owner.name }}</span>
+              </template>
+              <span v-if="knownIssue" aria-hidden="true">·</span>
               <a
                 v-if="knownIssue"
                 :href="knownIssue.url"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="inline-flex items-center gap-1 text-primary hover:underline"
+                class="underline decoration-dotted underline-offset-2 hover:decoration-solid"
                 :title="knownIssue.title ?? knownIssue.url"
               >
-                <UIcon name="i-lucide-link" class="size-3.5 shrink-0" />{{ knownIssue.key || knownIssue.provider }}
+                {{ knownIssue.key || knownIssue.provider }}
               </a>
             </div>
           </template>
@@ -646,8 +646,8 @@ const breadcrumbItems = computed(() => [
               data-shot="failure-headline"
               class="text-sm text-muted mt-1 flex flex-wrap items-baseline gap-x-2"
             >
-              <span class="min-w-0"><FailureHeadline :parts="clusterVerdict.parts" /></span>
-              <span v-if="headlineProvenance" class="text-xs text-dimmed shrink-0">{{ headlineProvenance }}</span>
+              <span class="min-w-0"><FailureHeadline :parts="clusterVerdict.parts" plain /></span>
+              <span v-if="headlineProvenance" class="text-xs shrink-0">{{ headlineProvenance }}</span>
             </p>
           </template>
 
@@ -656,30 +656,31 @@ const breadcrumbItems = computed(() => [
             <StoryLine :story="story" :clues="clues" :failure-at="cluesFailureAt" :diagnosis="clusterDiagnosis" />
           </template>
 
-          <!-- Line 4b: occurrence sparkline and sentence, then the state line -->
-          <template #state>
-            <div class="space-y-2.5">
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                <OccurrenceSparkline
-                  v-if="occurrenceSeries.length"
-                  :series="occurrenceSeries"
-                  :label="`Occurrences per run — ${occurrenceAria}`"
-                />
-                <span class="text-muted">
-                  {{ occurrenceCountText }}
-                  <ClientOnly
-                    ><template v-if="lastSeenAgo"> · last {{ lastSeenAgo }}</template></ClientOnly
-                  >
-                </span>
-              </div>
-              <ClusterStateLine
-                v-if="clusterState"
-                :cluster="cluster"
-                :state="clusterState"
-                :can-write="canWrite"
-                @saved="refresh"
+          <!-- Occurrences: the sparkline and its sentence -->
+          <template #occurrences>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <OccurrenceSparkline
+                v-if="occurrenceSeries.length"
+                :series="occurrenceSeries"
+                :label="`Occurrences per run — ${occurrenceAria}`"
               />
+              <span>
+                {{ occurrenceCountText }}
+                <ClientOnly
+                  ><template v-if="lastSeenAgo"> · last {{ lastSeenAgo }}</template></ClientOnly
+                >
+              </span>
             </div>
+          </template>
+
+          <!-- What changed: the commits since the last passing run, in one line -->
+          <template #whatChanged>
+            <WhatChangedLine ref="whatChangedLine" @see="scrollToEl(scmEl)" />
+          </template>
+
+          <!-- State: one sentence with one verb, and the control that changes it -->
+          <template v-if="clusterState" #state>
+            <ClusterStateLine :cluster="cluster" :state="clusterState" :can-write="canWrite" @saved="refresh" />
           </template>
 
           <!-- Line 5: the next step -->
@@ -723,23 +724,25 @@ const breadcrumbItems = computed(() => [
                 </template>
               </UPopover>
 
-              <button
-                type="button"
-                class="inline-flex items-center gap-1 text-primary hover:underline shrink-0"
+              <UButton
+                size="xs"
+                variant="ghost"
+                color="neutral"
+                :trailing-icon="rawErrorOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+                label="Raw error"
+                class="shrink-0"
                 :aria-expanded="rawErrorOpen"
                 @click="rawErrorOpen = !rawErrorOpen"
-              >
-                <UIcon :name="rawErrorOpen ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'" class="size-3.5" />
-                Raw error
-              </button>
+              />
 
-              <button
-                type="button"
-                class="inline-flex items-center gap-1 hover:text-primary shrink-0"
+              <UButton
+                size="xs"
+                variant="ghost"
+                color="neutral"
+                label="Copy summary"
+                class="shrink-0"
                 @click="copyCluster"
-              >
-                <UIcon name="i-lucide-clipboard-list" class="size-3.5" />Copy summary
-              </button>
+              />
             </div>
 
             <div v-if="rawErrorOpen" ref="rawErrorEl" class="mt-2 space-y-2 scroll-mt-4">
@@ -753,8 +756,8 @@ const breadcrumbItems = computed(() => [
           </template>
         </SituationBlock>
 
-        <!-- ── What changed: moved up under the block; one line when empty ── -->
-        <div ref="scmEl" class="scroll-mt-4">
+        <!-- ── What changed, in full: the baseline picker, the commits and the diff — only with something to show ── -->
+        <div v-if="hasChangesToShow" ref="scmEl" class="scroll-mt-4">
           <ClusterInvestigation />
         </div>
 

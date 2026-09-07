@@ -168,15 +168,14 @@ const snoozeItems = computed(() => [
 
 <template>
   <div data-shot="cluster-state" class="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-sm">
-    <span class="size-2 rounded-full shrink-0" :class="dotClass" aria-hidden="true" />
-
-    <!-- The sentence as prose, run references linked. -->
-    <span data-shot="cluster-state-sentence" class="min-w-0 text-toned">
+    <!-- The sentence as prose, run references linked; the dot is part of it so it stays on its first line. -->
+    <span data-shot="cluster-state-sentence" class="min-w-0">
+      <span class="inline-block size-2 rounded-full mr-1.5 align-middle" :class="dotClass" aria-hidden="true" />
       <template v-for="(part, i) in state.parts" :key="i">
         <NuxtLink
           v-if="part.kind === 'run' && part.href"
           :to="part.href"
-          class="text-primary hover:underline tabular-nums"
+          class="underline decoration-dotted underline-offset-2 hover:decoration-solid tabular-nums"
           >{{ part.text }}</NuxtLink
         >
         <template v-else>{{ part.text }}</template>
@@ -188,8 +187,8 @@ const snoozeItems = computed(() => [
       <UButton
         v-if="state.action && reconcileLabel"
         size="xs"
-        color="primary"
-        variant="soft"
+        color="neutral"
+        variant="outline"
         :loading="busy"
         @click="runReconcile"
       >
