@@ -1,6 +1,6 @@
 # Legible failure pages — a clarity plan
 
-**Status:** delivered — Phases 0–6 merged to `main` on 2026-09-07 (#504, #506–#510, #512; side finding #503); Phase 7, the dedupe pass, open as #513 — see the Delivery record at the end of §10 · **Scope:** the execution page (`/test-run-cases/:id`), the failure cluster page (`/failure-clusters/:id`), the blocks they share, and the small server changes those blocks need · **Date:** 2026-09-06 · **Builds on:** [`ui-simplification.md`](ui-simplification.md) and [`failure-experience-audit.md`](failure-experience-audit.md)
+**Status:** delivered — Phases 0–7 merged to `main` on 2026-09-07 (#504, #506–#510, #512; side finding #503); Phase 7, the dedupe pass, merged as #513 — see the Delivery record at the end of §10 · **Scope:** the execution page (`/test-run-cases/:id`), the failure cluster page (`/failure-clusters/:id`), the blocks they share, and the small server changes those blocks need · **Date:** 2026-09-06 · **Builds on:** [`ui-simplification.md`](ui-simplification.md) and [`failure-experience-audit.md`](failure-experience-audit.md)
 
 The UI simplification gave both pages one column and one reading order: header → headline → clues → evidence → fix → history. It removed the folded cards, the right column and the jump chips, and it halved the height to the first screenshot. It did not make the pages *legible*. A developer who lands on either page still meets two or three boxes of equal weight before any explanation, three competing explanations of the same failure, a "Fix" card that is a menu rather than an instruction, and — on the cluster page — four status signals that contradict each other. The data is all there; the page still does not say what is wrong or what to do next.
 
@@ -373,7 +373,7 @@ Delivered on 2026-09-06 and 2026-09-07 as a stack of PRs, each built by its own 
 | 4 — the toolbox and the evidence | [#509](https://github.com/PiwiTests/platform/pull/509) `feat(ui): fold the fix toolbox and open the evidence on the story` | `Toolbox` replaces `FixCard`, the evidence default policy, `PageStructureDisclosure` | 2026-09-07 |
 | 5 — mobile, docs, sweep | [#510](https://github.com/PiwiTests/platform/pull/510) `fix(ui): the 390px pass, docs rewrite and vocabulary sweep for the failure pages` | the 390 px pass, the docs rewritten to the three questions, ten help topics pruned, the retired-words test extended | 2026-09-07 |
 | 6 — typography (added) | [#512](https://github.com/PiwiTests/platform/pull/512) `feat(ui): one type scale for the situation block and a What changed line` | four text styles and a labelled list in the block, one accent per screen, *What changed* as a row of the block, the typography rules in `apps/application/AGENTS.md`, `distinctTextStyles` in `app:measure` | 2026-09-07 |
-| 7 — dedupe (added) | [#513](https://github.com/PiwiTests/platform/pull/513) `refactor(ui): dedupe the two failure pages onto shared building blocks` | the summaries, hints, disclosures, facts lines and handlers both pages carry twice, extracted once | open |
+| 7 — dedupe (added) | [#513](https://github.com/PiwiTests/platform/pull/513) `refactor(ui): dedupe the two failure pages onto shared building blocks` | the summaries, hints, disclosures, facts lines and handlers both pages carry twice, extracted once | 2026-09-07 |
 
 **Deviations from the plan.**
 
