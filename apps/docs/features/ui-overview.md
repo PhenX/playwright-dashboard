@@ -132,20 +132,19 @@ them: an **execution** (`/test-run-cases/:id`) answers *"why did this attempt fa
 case** (`/test-cases/:id`) answers *"how has this test behaved over time?"*. Most links from a run land
 on an execution; the test's title links to the test case above it.
 
-A failing execution reads top to bottom in one column: a **header** (status, title, the exceptional
-badges, the failing file and line, and Copy retry command, with a Details popover for the rest), the
-one-line **headline** (with the raw **error** one click away behind *Show raw error*), the **other
-clues**, then one **evidence** card whose content-level tabs — Timeline, Screen, Source, Network,
-Console, State, Performance — hold everything captured, deeper still when a trace is attached. A
-Playwright 1.63 trace with [aria and screen snapshots](./evidence#aria-and-screen-snapshots) adds a
-filmstrip of the page before each step to the Timeline tab, and the before/at-failure screenshots plus
-an in-execution page diff to the Screen tab. Below the
-evidence, the **Fix** card gathers what to do (the locator fix, a fix-plan pointer, the diagnosis, how
-to verify, and the tests this failure blocked) and a **history** block strips this test's recent
-executions with its failing streak. All of it, plus the bundled trace viewer, is described in
-[Failure evidence](./evidence). The header's facts line shows the **attempts** as linked chips when a
-test retried, so "how did this execution get here" is answerable at a glance; every attempt is its own
-execution, and each chip links to that attempt's page while the one you are viewing is ringed.
+A failing execution reads top to bottom in one column, and leads with one **situation block** that
+answers three questions in stacked lines: an **identity** kicker (status, title, marks), the **headline**
+(what broke), **Most likely** (the [story](/guide/concepts#story) or top clue, every clue folded under
+*more*), the **situation** sentence (what's going on), the **Next** step (what to do), and a **facts**
+line — the failing file and line, browser, duration, attempts as linked chips, branch and CI build, with
+a **Details** popover and the verbatim **Raw error** one click away. Below it, one **evidence** card whose
+content-level tabs — Timeline, Screen, Source, Network, Console, State, Performance — hold everything
+captured, opening on the tab the story cites and going deeper when a trace is attached. A Playwright 1.63
+trace with [aria and screen snapshots](./evidence#aria-and-screen-snapshots) adds a filmstrip of the page
+before each step to the Timeline tab, and the before/at-failure screenshots plus an in-execution page diff
+to the Screen tab. After the evidence, the folded **More ways to fix** toolbox holds every other way to
+fix, verify or reproduce, and a **history** block strips this test's recent executions with its failing
+streak. All of it, plus the bundled trace viewer, is described in [Failure evidence](./evidence).
 
 The **test history** page (`/test-cases/:id`) opens on a single facts line under the title — how many
 runs, the pass rate, how many failed, the average duration, the flaky-run count and when it last ran —
@@ -156,9 +155,9 @@ opens the execution, and the **failure clusters** the test belongs to and its **
 
 ## Failure cluster detail
 
-Each cluster (`/failure-clusters/:id`) reads top to bottom in one column. The **header** states the cluster name and one facts line — error kind, occurrences, affected tests, the first- and last-seen runs, the owner and the known-issue link — with **Re-run in CI** (or Copy retry command) as its one action and the rest in a More menu (quarantine all affected tests, show diagnosis context, copy prompt, copy summary). Under it sits the **triage control**: a segmented *Open / Resolved / Ignored* that saves on click, a note, and — once a fix has landed — the **fix verification** badge with its one sentence (which verdict the runs support, the run and commit it landed in, how long the cluster stayed open) and, when triage and fix verification disagree, a one-click reconcile action. See [Did the fix work?](./ai-diagnosis#did-the-fix-work).
+Each cluster (`/failure-clusters/:id`) reads top to bottom in one column and leads with the same **situation block** the execution page uses, plus the cluster-only lines. The **identity** kicker names the cluster, error kind, project, owner and known issue; the **headline** is the cluster's name (its AI title when one exists), with the latest occurrence's headline a smaller second line only when it adds a value. **Most likely** leads with the completed [diagnosis](./ai-diagnosis) when there is one, else the [story or top clue](./evidence#clues). An **occurrence sparkline** shows how often it failed across recent runs (*N occurrences in M tests over D · last X ago*). The **state line** says where the cluster stands in one sentence with one verb next to a coloured dot, offers the one reconcile action when the human status and machine verdict disagree, and carries the **Triage** and **Snooze** menus (see [Did the fix work?](./ai-diagnosis#did-the-fix-work)). The **Next** step and a **facts** line (Details, Raw error, Copy summary) close the block.
 
-Below the header the failure reads as a one-line **headline** built from the cluster's latest occurrence (falling back to its stored sample error), with a **Show raw error** disclosure for the verbatim error and signature, then the deterministic **clues**. The **evidence** is one card whose content-level tabs — Timeline, Screen, Source, Network, Console, State, Performance — hold everything captured for the affected execution you select from the *from:* row on top; **Open execution** links through to that test-run case. Then one **More ways to fix** toolbox folds together what to do about the cluster, each section a single line until you open it (or until the next step opens it for you): the **AI diagnosis** (an SCM-grounded LLM analysis whose cited evidence links back to the matching evidence tab, with a **History** control for its previous versions and a staleness banner that fires only while the failure is still live) — its stored result stays visible even with no provider configured — the **locator fix** for a broken locator (recommendation, provenance and alternatives, shown once), the **verify** command, and the whole **fix plan** as Markdown for a ticket or an agent (see [Fix plans, reproduce & bisect](./fix-plans)). Below the toolbox come **what changed** (the SCM diff since the last green run, with a baseline-commit picker and commit browser), the **affected tests** (a selectable list whose bulk bar moves tests to a new cluster or quarantines them; each row links to its latest execution), and a **history** block with the cluster's occurrences, diagnosis-version count and fix-verification date. Full detail: [AI diagnosis & clustering](./ai-diagnosis).
+Below it, **What changed** (the SCM diff since the last green run, collapsed to one line when there is none) sits above the evidence, and the **Affected tests** list is the evidence selector — selecting a test switches the evidence below to its latest execution and links through with **Open execution**. The **evidence** is one card whose content-level tabs — Timeline, Screen, Source, Network, Console, State, Performance — hold everything captured for the selected execution. After the evidence, the folded **More ways to fix** toolbox holds the **AI diagnosis** and its patch (its stored result stays visible even with no provider configured, with a versions control and a staleness banner that fires only while the failure is still live), the **locator fix**, the **verify** command, **reproduce and bisect**, **fixed before**, and the whole **fix plan** as Markdown for a ticket or an agent. Full detail: [AI diagnosis & clustering](./ai-diagnosis) and [Failure clusters & the inbox](./failure-clusters).
 
 ## Offline export
 

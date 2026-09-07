@@ -13,21 +13,25 @@ A **fix plan** gathers everything Piwi knows about a failure cluster into one an
 
 The same plan is reachable three ways:
 
-- **On the cluster page** — the recommended action leads the page as the **Next** line, the failing tests are the **Affected tests** selector, and the owner is on the identity line. Everything else lives in [**More ways to fix**](#more-ways-to-fix), the folded toolbox below the evidence: the diagnosis and its patch, the locator fix, the verify command, the reproduce recipe, and a **Copy as Markdown** action for a ticket.
+- **On the cluster page** — the recommended action leads as the **Next** line and the failing tests are the **Affected tests** selector; everything else lives in [**More ways to fix**](#more-ways-to-fix), the folded toolbox below the evidence: the diagnosis and its patch, the locator fix, the verify command, the reproduce recipe, and a **Copy as Markdown** action for a ticket.
 - **As Markdown** — `GET /api/failure-clusters/:id/fix-plan?format=markdown` returns the same rendering as plain text, so an export or a script can drop it straight into an issue.
 - **For agents** — the `get_fix_plan` [MCP tool](/features/mcp) returns the structured plan, so a coding agent gets in one call what a person reads on the card.
 
-The last part is what makes it a loop rather than a lookup: the plan states which Playwright command runs exactly the affected tests, and that Piwi will record the fix once they pass — so an agent (or a person) can confirm the work instead of leaving someone to decide whether it landed. Nothing leaves your machine: the dashboard is yours, the model is whichever one you configured (including a local one), and the patch was validated against your own source before you saw it.
+The last part makes it a loop, not a lookup: the plan names the Playwright command that runs exactly the affected tests, and Piwi records the fix once they pass — so the work is confirmed, not guessed at. Nothing leaves your machine: your dashboard, your model, and a patch validated against your own source.
+
+## The next step
+
+Both the cluster and the [execution](./evidence#one-execution-diagnosis-first) page lead with a single **Next** line — one action chosen for you, with a word on why, not a row of equal buttons. A policy picks it from what the page knows, first match wins: open a **blocking** failure, **mark resolved** a verified-but-open cluster, **replace the locator** when [healing](./locator-healing) has one, **apply the diagnosed patch** (or follow the diagnosis when it is stale), **see what changed** when a fix regressed, **compare attempts** on a retry pass, **re-run in CI** for a crash, **diagnose with AI**, else **reproduce locally**. Where the fix is a code change, **Copy retry command** trails it; every other action lives in the toolbox below.
 
 ## More ways to fix
 
-The cluster and [execution](./evidence#one-execution-diagnosis-first) pages end in one **More ways to fix** toolbox — the block that replaced the old Fix card. Each way to fix, verify or reproduce is a section folded to one line (a label and a summary from the page's own data), so no code block opens by default. The section the **Next** step points at opens with the page — a diagnosed fix opens **Diagnosis**, a locator failure opens **Locator fix** — and you unfold the rest as needed.
+Both pages end in one **More ways to fix** toolbox — the block that replaced the old Fix card. Each way to fix, verify or reproduce is a section folded to one line (a label and a one-line summary), so no code block opens by default; the section the next step points at opens with the page, and you unfold the rest as needed.
 
 ## Reproduce and bisect
 
 The fix plan also hands back the two things you do next: a copy-paste recipe that reproduces the failure locally, and a generated `git bisect` that finds the commit that broke it. Both sit in the toolbox's **Reproduce and bisect** section, and travel with the plan through `?format=markdown` and the `get_fix_plan` MCP tool. The exact test command leads; **Show the full recipe ▸** unfolds the checkout, install and bisect.
 
-The **recipe** is the local reproduction, in order: check out the commit the run failed on (`git switch --detach <sha>`), install dependencies, pin Playwright to the version the run used, install the browser it ran on, and run exactly the failing test. Each part degrades on its own — no recorded commit skips the checkout and says so, an unknown Playwright version drops the pin — and the run's environment (label, base URL) is listed beside it. Every command is `git`, `npm` or `npx`, so it is identical on Linux, macOS and Windows; the dashboard still offers a **Linux / macOS** and a **Windows (PowerShell)** tab so a reader copies the form they expect.
+The **recipe** is the local reproduction, in order: check out the commit the run failed on (`git switch --detach <sha>`), install dependencies, pin Playwright to the run's version, install the browser it ran on, and run exactly the failing test. Each part degrades on its own — no recorded commit skips the checkout and says so, an unknown version drops the pin — and the run's environment is listed beside it. Every command is `git`, `npm` or `npx`, identical on Linux, macOS and Windows; the dashboard still offers **Linux / macOS** and **Windows (PowerShell)** tabs.
 
 ```bash
 # Check out the failing commit
@@ -52,11 +56,11 @@ git bisect reset
 
 The bisect needs a **last-green commit** and an **SCM connection**: when Piwi has no commit for the failing run or for the last green run before it, or the two are the same commit, the section says so in one line instead of showing a script. The recipe is always there.
 
-In the [desktop app](/features/desktop#reproducing-a-failure-and-finding-the-breaking-commit) the same section can also do the work for you: **Reproduce here** runs the recipe against the linked folder in a throwaway `git worktree` — your checkout is never touched — and **Find the breaking commit here** drives the whole bisect step by step, with live progress and a stop that stops, then records the first bad commit on the cluster so it shows here and in the fix plan afterwards.
+In the [desktop app](/features/desktop#reproducing-a-failure-and-finding-the-breaking-commit) the same section can do the work for you: **Reproduce here** runs the recipe against the linked folder in a throwaway `git worktree` (your checkout is never touched), and **Find the breaking commit here** drives the whole bisect with live progress, then records the first bad commit on the cluster.
 
 ## Fixed before
 
-An open cluster often isn't new — the same failure, or one close to it, was fixed weeks ago. The fix plan looks back over the project's **resolved** clusters (resolved, or with a verified fix that held) and, when one resembles the open cluster closely enough, shows it in the **Fixed before** section of the toolbox — on the cluster page and on the failing execution's page, and in the `?format=markdown` export and the `get_fix_plan` MCP tool.
+An open cluster often isn't new — the same failure, or one close to it, was fixed weeks ago. The fix plan looks back over the project's **resolved** clusters (resolved, or with a verified fix that held) and, when one resembles the open cluster closely enough, shows it in the **Fixed before** section of the toolbox — on both pages, and in the `?format=markdown` export and the `get_fix_plan` MCP tool.
 
 A match is scored deterministically first — the same fingerprint family (error kind, masked message, masked locator), the same failing locator, the same spec file or test — and then, when an [embedding model](./ai-diagnosis#model-roles) is configured, by semantic similarity of the stored cluster vectors. The top three matches are shown, each with **when** it was resolved, the **commit** that fixed it (linked when the repository host is known), **how long** it stayed open, the triage note, the owner, the earlier diagnosis and its thumbs feedback, and one short reason it matched ("same error and locator", "same spec, similar message (0.91)"). Nothing matches → the section renders nothing, no empty-state noise.
 
