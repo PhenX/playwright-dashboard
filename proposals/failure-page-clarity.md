@@ -1,6 +1,6 @@
 # Legible failure pages — a clarity plan
 
-**Status:** proposal — nothing started · **Scope:** the execution page (`/test-run-cases/:id`), the failure cluster page (`/failure-clusters/:id`), the blocks they share, and the small server changes those blocks need · **Date:** 2026-09-06 · **Builds on:** [`ui-simplification.md`](ui-simplification.md) and [`failure-experience-audit.md`](failure-experience-audit.md)
+**Status:** delivered — Phases 0–6 merged to `main` on 2026-09-07 (#504, #506–#510, #512; side finding #503); Phase 7, the dedupe pass, in progress — see the Delivery record at the end of §10 · **Scope:** the execution page (`/test-run-cases/:id`), the failure cluster page (`/failure-clusters/:id`), the blocks they share, and the small server changes those blocks need · **Date:** 2026-09-06 · **Builds on:** [`ui-simplification.md`](ui-simplification.md) and [`failure-experience-audit.md`](failure-experience-audit.md)
 
 The UI simplification gave both pages one column and one reading order: header → headline → clues → evidence → fix → history. It removed the folded cards, the right column and the jump chips, and it halved the height to the first screenshot. It did not make the pages *legible*. A developer who lands on either page still meets two or three boxes of equal weight before any explanation, three competing explanations of the same failure, a "Fix" card that is a menu rather than an instruction, and — on the cluster page — four status signals that contradict each other. The data is all there; the page still does not say what is wrong or what to do next.
 
@@ -77,6 +77,8 @@ Measured at 1280 × 800 with the script in Appendix C, default state, dev seed. 
 | Wordings of "since when" on the first screen | 3 | 2 | 2 | 1 |
 | Default evidence tab | Screen (page diff) | State | Timeline | the story's tab, else Timeline |
 | Page height | ≈ 3 600 | ≈ 3 600 | ≈ 4 400 | ≤ 2 400 with the toolbox folded |
+
+*Re-measured after delivery: see the Delivery record at the end of §10.*
 
 ---
 
@@ -355,6 +357,46 @@ The 390 px pass (§7); `apps/docs` pages `features/evidence.md` (*One execution,
 | The next-step policy picks a stale patch | row 4 requires `patchValidation.applies === true`; row 5 says the patch is stale | the policy is a pure function with one test per row |
 | Demo and MCP shapes | `app/demo/api/`, `explain_failure`, `get_fix_plan` | additive fields only; `demo-seed-consistency` and the MCP tests extend |
 | Share-link and export renderers | `server/utils/export-*.ts`, the share route | they print the headline and the error today; they gain the situation and next-step lines in Phase 2 and are not blocked by the layout |
+
+
+### Delivery record
+
+Delivered on 2026-09-06 and 2026-09-07 as a stack of PRs, each built by its own session and each shippable alone; the maintainer merged the stack into `main` bottom-up on 2026-09-07 (06:37–06:39 UTC). Two phases were added on the way at the maintainer's request: a typography pass on the first screen (Phase 6) and a dedupe pass over what the phases had left in both pages twice (Phase 7).
+
+| Phase | PR | What shipped | Merged |
+|---|---|---|---|
+| Side finding | [#503](https://github.com/PiwiTests/platform/pull/503) `fix(app): serve seeded demo evidence media from the file endpoint` | the dev seed served 404 for the demo screenshots, videos and traces the evidence tabs need | 2026-09-06 |
+| 0 — measure | [#504](https://github.com/PiwiTests/platform/pull/504) `chore(app): measure detail-page legibility and pin the failure-clue baseline` | `scripts/measure-detail-pages.mjs` (`app:measure`), the clarity scenes, the clue-output baseline tests | 2026-09-06 |
+| 1 — the analysis | [#506](https://github.com/PiwiTests/platform/pull/506) `feat(app): compute the story, situation, cluster state and next step for failure pages` | the story (§4), the situation (§3), the cluster state (§3.2), the next-step policy (§5), the occurrence series; `explain_failure` and the demo mirror | 2026-09-07 |
+| 2 — the execution page | [#507](https://github.com/PiwiTests/platform/pull/507) `feat(ui): one situation block at the top of the execution page` | `SituationBlock`, `StoryLine`, `NextStepLine`; the headline and other-clues cards deleted | 2026-09-07 |
+| 3 — the cluster page | [#508](https://github.com/PiwiTests/platform/pull/508) `feat(ui): the situation block on the failure cluster page` | `ClusterStateLine`, `OccurrenceSparkline`, the affected tests as the evidence selector, *What changed* moved up | 2026-09-07 |
+| 4 — the toolbox and the evidence | [#509](https://github.com/PiwiTests/platform/pull/509) `feat(ui): fold the fix toolbox and open the evidence on the story` | `Toolbox` replaces `FixCard`, the evidence default policy, `PageStructureDisclosure` | 2026-09-07 |
+| 5 — mobile, docs, sweep | [#510](https://github.com/PiwiTests/platform/pull/510) `fix(ui): the 390px pass, docs rewrite and vocabulary sweep for the failure pages` | the 390 px pass, the docs rewritten to the three questions, ten help topics pruned, the retired-words test extended | 2026-09-07 |
+| 6 — typography (added) | [#512](https://github.com/PiwiTests/platform/pull/512) `feat(ui): one type scale for the situation block and a What changed line` | four text styles and a labelled list in the block, one accent per screen, *What changed* as a row of the block, the typography rules in `apps/application/AGENTS.md`, `distinctTextStyles` in `app:measure` | 2026-09-07 |
+| 7 — dedupe (added) | in progress | the summaries, hints, disclosures, facts lines and handlers both pages carry twice, extracted once | — |
+
+**Deviations from the plan.**
+
+- Phase 1: in the next-step policy a clean diagnosis patch outranks *mark resolved* (§5, row 4 before row 2): a verified fix that truly landed leaves a stale patch behind, so a patch that still applies cleanly is the stronger signal.
+- Phase 3: the seeded assertions in `cluster-page-layout.spec.ts` derive the expected state and next step from the API at test time, after a postgres shard shared its database with another spec's mock diagnosis. The environment line under *What changed* (§6.3) was not built; the SCM diff alone answers *why now*.
+- Phase 4: *controls above the fold ≤ 15* was not reached. The fixed navbar counts 8 and the evidence tab strip 8 before the block adds one, so the floor is above 30 (table below).
+- Phase 5: *px to the first evidence view ≤ 700* holds on the execution page and not on the cluster page, where the situation block and the affected-tests selector now sit above the evidence. The same goes for *page height ≤ 2 400*: the execution pages are under 2 200 px, the cluster pages between 2 500 and 3 150 px.
+- Phase 6: *What changed* became a row of the block rather than a line under it. The block's distinct text styles went from 30 to 14 on #37 and from 24 to 11 on #10, a budget the application guide now carries (≤ 15 on the execution page, ≤ 12 on the cluster page).
+
+**§1.5 re-measured** on `main` at `b81f174` (2026-09-07, 1280 × 800, dev seed, `app:measure`), before → after:
+
+| Measure | #37 (execution) | #10 (cluster) | #2 (cluster, locator) | Target |
+|---|---|---|---|---|
+| Interactive controls above the fold | 38 → 32 | 51 → 37 | 49 → 35 | ≤ 15 (floor above 30, see Phase 4) |
+| Help hints above the fold | 3 → 2 | 4 → 2 | 3 → 1 | ≤ 1 |
+| px to the first evidence view | 999 → 498 | 551 → 765 | 724 → 788 | ≤ 700 |
+| Open code blocks (px) | 2 125 → 0 | 692 → 145 | 548 → 0 | ≤ 250 |
+| Words rendered by default | 701 → 370 | 776 → 669 | 873 → 581 | ≤ 400 |
+| Default evidence tab | Screen → Timeline | State → Timeline | Timeline → Timeline | the story's tab, else Timeline |
+| Page height | ≈ 3 600 → 1 781 | ≈ 3 600 → 3 145 | ≈ 4 400 → 2 975 | ≤ 2 400 with the toolbox folded |
+| Distinct text styles in the situation block (new in Phase 6) | 30 → 14 | 24 → 11 | — → 12 | ≤ 15 / ≤ 12 |
+
+The other rows of §1.5 — one explanation on screen, one state sentence with one control, one wording of *since when* — are what Phases 2 and 3 built; `test-run-case-page.spec.ts` and `cluster-page-layout.spec.ts` assert them. The eight reference routes at 1280 × 800 and 390 × 844 are in the body of [#510](https://github.com/PiwiTests/platform/pull/510) (*Final numbers*).
 
 ---
 
