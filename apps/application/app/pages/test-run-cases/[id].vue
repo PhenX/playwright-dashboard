@@ -1119,7 +1119,7 @@ const { handle: handleNextStepAction } = useNextStepActions({
               />
             </template>
 
-            <!-- A pointer to the cluster's full fix plan -->
+            <!-- A link to the cluster's full fix plan -->
             <template v-if="failureCluster" #fix-plan>
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                 <template v-if="failureCluster.diagnosis?.status === 'completed'">
@@ -1135,7 +1135,6 @@ const { handle: handleNextStepAction } = useNextStepActions({
                     {{ failureCluster.diagnosis.confidence }} confidence
                   </UBadge>
                 </template>
-                <span v-else class="text-muted">Assembled on the cluster page.</span>
                 <UButton
                   :to="`/failure-clusters/${failureCluster.id}#fix-plan`"
                   size="xs"
@@ -1144,7 +1143,7 @@ const { handle: handleNextStepAction } = useNextStepActions({
                   trailing-icon="i-lucide-arrow-right"
                   class="px-0"
                 >
-                  Open fix plan
+                  Open on the cluster
                 </UButton>
               </div>
             </template>

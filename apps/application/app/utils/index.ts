@@ -344,7 +344,7 @@ export function fixVerificationBadge(
   switch (verification) {
     case 'diagnosis-verified':
       return {
-        label: 'Fix verified',
+        label: 'Verified',
         color: 'success',
         icon: 'i-lucide-badge-check',
         hint: 'The tests went green and the change touched the files the diagnosis named.',
