@@ -275,7 +275,7 @@ describe('cluster color helpers', () => {
     });
 
     test('only the corroborated verdict claims the fix was verified', () => {
-      expect(fixVerificationBadge('diagnosis-verified')).toMatchObject({ label: 'Fix verified', color: 'success' });
+      expect(fixVerificationBadge('diagnosis-verified')).toMatchObject({ label: 'Verified', color: 'success' });
       // "Stopped failing" must not read as a verified fix — nothing says which
       // change did it.
       expect(fixVerificationBadge('stopped-failing')).toMatchObject({ label: 'Stopped failing', color: 'info' });
