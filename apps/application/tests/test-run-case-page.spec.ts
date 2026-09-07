@@ -105,7 +105,7 @@ test.describe('Test-run-case page', () => {
     await expect(situation).toContainText(/failed in this run/i);
     const nextStep = page.locator('[data-shot="next-step"]');
     await expect(nextStep).toBeVisible();
-    await expect(nextStep).toContainText('Next:');
+    await expect(page.locator('[data-shot="situation-block"]')).toContainText('Next');
 
     // The raw error is a disclosure on the facts line, collapsed by default,
     // and reachable — with its Copy failure action — in one click.
@@ -297,7 +297,7 @@ test.describe('Situation block on seeded cases', () => {
     await waitForHydration(page);
 
     // Most likely — the blocked-by-pending-request story, Strong, 3 clues agree.
-    await expect(page.getByText('Most likely:')).toBeVisible();
+    await expect(page.getByText('Most likely', { exact: true })).toBeVisible();
     await expect(page.getByText('Strong', { exact: true })).toBeVisible();
     await expect(page.getByText(/3 clues agree/)).toBeVisible();
 
@@ -370,6 +370,6 @@ test.describe('Situation block on seeded cases', () => {
     test.skip(!(await (await page.request.get('/api/test-run-cases/13')).ok()), 'no #13');
     await page.goto('/test-run-cases/13');
     await waitForHydration(page);
-    await expect(page.getByText('Most likely:')).toBeVisible();
+    await expect(page.getByText('Most likely', { exact: true })).toBeVisible();
   });
 });

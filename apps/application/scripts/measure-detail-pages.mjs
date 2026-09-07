@@ -113,7 +113,8 @@ function measurePage({ viewportHeight }) {
     fixDiagnosis: y(q('[data-shot="fix-diagnosis"]')),
     fixVerify: y(q('[data-shot="fix-verify"]')),
     fixReproduce: y(q('[data-shot="fix-reproduce"]')),
-    whatChanged: y(headingSection('h3', 'What changed')),
+    whatChanged: y(q('[data-shot="what-changed"]')),
+    changesCard: y(headingSection('h3', 'What changed')),
     affectedTests: y(q('[data-shot="cluster-affected-tests"]')),
     history: y(q('[data-shot="execution-history"], [data-shot="cluster-history"]')),
   };
@@ -145,6 +146,33 @@ function measurePage({ viewportHeight }) {
     .filter((el) => el.children.length === 0 && strengths.has(el.textContent.trim()))
     .map((el) => el.textContent.trim());
 
+  // How many distinct text styles the situation block mixes: every visible text
+  // node's size, weight, family, color, transform and decoration, deduplicated.
+  // The typography rule caps this per page; a rise needs a reason in the PR.
+  const block = panel.querySelector('[data-shot="situation-block"]');
+  const styles = new Set();
+  if (block) {
+    const walker = document.createTreeWalker(block, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (!node.textContent.trim() || !node.parentElement) continue;
+      const cs = getComputedStyle(node.parentElement);
+      if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+      styles.add(
+        [
+          cs.fontSize,
+          cs.fontWeight,
+          cs.fontFamily,
+          cs.color,
+          cs.textTransform,
+          cs.fontStyle,
+          cs.textDecorationLine,
+        ].join('|'),
+      );
+    }
+  }
+  const distinctTextStyles = block ? styles.size : null;
+
   return {
     positions,
     totalScrollHeight,
@@ -157,6 +185,7 @@ function measurePage({ viewportHeight }) {
     words,
     activeTab,
     clueStrengths,
+    distinctTextStyles,
   };
 }
 
@@ -184,6 +213,7 @@ const POSITION_LABELS = [
   ['fixVerify', '· verify'],
   ['fixReproduce', '· reproduce'],
   ['whatChanged', 'what changed'],
+  ['changesCard', '· changes card'],
   ['affectedTests', 'affected tests'],
   ['history', 'history'],
 ];
@@ -205,6 +235,7 @@ function printTable(results, { width, height }) {
     );
     console.log(`  active evidence tab: ${result.activeTab ?? '—'}`);
     console.log(`  clue strengths: ${result.clueStrengths.length ? result.clueStrengths.join(', ') : '—'}`);
+    console.log(`  distinct text styles in the situation block: ${result.distinctTextStyles ?? '—'}`);
   }
 }
 

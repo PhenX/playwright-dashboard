@@ -32,7 +32,8 @@ describe('computeNextStep — one row per rule', () => {
     });
     expect(s.kind).toBe('apply-patch');
     expect(s.title).toContain('src/server/users.ts');
-    expect(s.title).toContain('PAGE_SIZE 50 → 25');
+    // The summary is the "Most likely" line's job; the step names only the work.
+    expect(s.title).not.toContain('PAGE_SIZE 50 → 25');
   });
 
   test('5: a completed diagnosis whose patch is stale or absent', () => {

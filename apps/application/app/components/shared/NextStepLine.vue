@@ -1,19 +1,21 @@
 <script setup lang="ts">
 /**
- * "Next" — the one step the page recommends, from `computeNextStep`: the title in
- * bold, the reason in muted text, the primary action as a button, one secondary
- * action inline (the rest in a small overflow menu, so the first screen keeps
- * its control budget), and — for the steps where a code change is the work — a
- * trailing "then [Copy retry command]". Each action button emits its id and
- * payload; the page turns that into the real behaviour, so this component stays
- * presentation-only and reusable across the execution and cluster pages.
+ * "Next" — the one step the page recommends, from `computeNextStep`: the step as
+ * a sentence, its reason as a meta line, then one row of actions — the primary
+ * action as the block's only solid button, one secondary action inline (the rest
+ * in a small overflow menu, so the first screen keeps its control budget), and,
+ * for the steps where a code change is the work, the retry command to run
+ * afterwards. Each action button emits its id and payload; the page turns that
+ * into the real behaviour, so this component stays presentation-only and
+ * reusable across the execution and cluster pages. The block that renders this
+ * line provides its label.
  */
 import type { DropdownMenuItem } from '@nuxt/ui';
 import type { NextStep, NextStepKind } from '#shared/next-step';
 
 const props = defineProps<{
   nextStep: NextStep;
-  /** The retry command, shown as the trailing "then" on code-change steps. */
+  /** The retry command, offered after the code-change steps. */
   retryCommand?: string | null;
 }>();
 
@@ -36,15 +38,10 @@ const { copy: copyRetryCmd, copied: retryCopied } = useCopy();
 </script>
 
 <template>
-  <div data-shot="next-step" class="text-sm space-y-1.5">
-    <p class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
-      <span class="shrink-0 inline-flex items-center gap-1 font-medium text-primary">
-        <UIcon name="i-lucide-play" class="size-3.5" />Next:
-      </span>
-      <span class="font-semibold text-highlighted">{{ nextStep.title }}</span>
-    </p>
+  <div data-shot="next-step" class="space-y-1">
+    <p>{{ nextStep.title }}</p>
     <p v-if="nextStep.why" class="text-xs text-muted">{{ nextStep.why }}</p>
-    <div class="flex flex-wrap items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2 pt-1">
       <UButton
         size="xs"
         color="primary"
@@ -75,9 +72,9 @@ const { copy: copyRetryCmd, copied: retryCopied } = useCopy();
         <span class="text-xs text-muted">then</span>
         <UButton
           size="xs"
-          color="warning"
-          variant="subtle"
-          :icon="retryCopied ? 'i-lucide-check' : 'i-lucide-clipboard'"
+          color="neutral"
+          variant="outline"
+          :trailing-icon="retryCopied ? 'i-lucide-check' : undefined"
           @click="copyRetryCmd(retryCommand!, { toast: 'Retry command copied' })"
         >
           Copy retry command

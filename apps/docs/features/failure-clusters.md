@@ -80,10 +80,11 @@ Open a cluster and it reads as the same three questions the [execution page](./e
 - **What broke** — the cluster's **name** as the heading (its [AI title](./ai-diagnosis) when one exists, else the deterministic fingerprint name), with the **latest occurrence's headline** as a smaller second line only when it adds a value the name doesn't.
 - **Most likely** — the one explanation: the completed [diagnosis](./ai-diagnosis) when there is one, else the [story or top clue](./evidence#clues) from the latest occurrence.
 - **The occurrence sparkline** — how often the cluster failed across the project's recent runs, oldest to newest, with a summary: *N occurrences in M tests over D · last X ago*.
+- **What changed** — *why now*: how many commits and files changed between the last passing run (or your baseline) and this failure, with **See the changes** leading to the card below the block. With nothing to diff, the line says why and offers **Browse commits** to pick the range by hand.
 - **The state line** — where the cluster stands, in one sentence (below).
 - **Next** — the one [recommended step](./fix-plans#the-next-step) for the cluster.
 
-Below the block, **What changed** answers *why now* — the commits between the last green run and the failing one, and the environment diff — collapsed to one line when there is nothing to show (no SCM connection, no last green run). The **Affected tests** list is the evidence selector: every test in the cluster, sorted by its latest failure; selecting a row switches the evidence below to that test's latest execution and links straight to it. Everything else — the diagnosis and its patch, the locator fix, verify, reproduce — is in the folded [**More ways to fix**](./fix-plans#more-ways-to-fix) toolbox.
+Below the block, the **What changed** card — baseline picker, commits and diff — appears only with a range to browse. The **Affected tests** list is the evidence selector: every test in the cluster, sorted by its latest failure; selecting a row switches the evidence below to that test's latest execution and links straight to it. Everything else — the diagnosis and its patch, the locator fix, verify, reproduce — is in the folded [**More ways to fix**](./fix-plans#more-ways-to-fix) toolbox.
 
 ### The state line
 

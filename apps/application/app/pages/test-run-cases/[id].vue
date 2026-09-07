@@ -3,7 +3,7 @@ import type { AiStepIntent, AttemptOutcome, TestCaseHistoryPoint, TraceInfo } fr
 import { isPiwiAnnotation } from '@piwitests/core/test-meta';
 import { renderAnsi } from '~/utils';
 import { buildRetryCommand } from '~/utils/retry-command';
-import type { FailureVerdict, FailureWhy } from '#shared/failure-verdict';
+import type { FailureVerdict } from '#shared/failure-verdict';
 import type { FailureCluesResult } from '#shared/handlers/test-cases';
 import { clusterSectionLocatorKey } from '~/composables/useClusterSectionLocator';
 import { EVIDENCE_SECTION_TAB } from '~/utils/evidence-sections';
@@ -158,15 +158,7 @@ const storyDiagnosis = computed(() =>
 const situation = computed(() => (testCase.value as { situation?: Situation | null } | null)?.situation ?? null);
 const nextStep = computed(() => (testCase.value as { nextStep?: NextStep | null } | null)?.nextStep ?? null);
 
-// The situation's leading why renders as the one exceptional badge; the rest as
-// prose. A `commit` part links to the SCM host only when the run has a repository.
-const WHY_BADGE: Record<FailureWhy, { label: string; color: 'error' | 'warning' | 'neutral' }> = {
-  'new-regression': { label: 'New regression', color: 'error' },
-  'passed-on-retry': { label: 'Passed on retry', color: 'warning' },
-  'new-flaky': { label: 'Newly flaky', color: 'warning' },
-  infrastructure: { label: 'Infrastructure failure', color: 'neutral' },
-};
-const leadWhy = computed<FailureWhy | null>(() => verdict.value?.why ?? null);
+// A `commit` part of the situation links to the SCM host only when the run has a repository.
 const repositoryUrl = computed(() => reproduceData.value?.desktop?.repositoryUrl ?? null);
 function situationCommitHref(part: SituationPart): string | null {
   return part.id != null ? commitUrl(repositoryUrl.value, String(part.id)) : null;
@@ -756,23 +748,19 @@ const { handle: handleNextStepAction } = useNextStepActions({
         <SituationBlock help="case.situation">
           <!-- Line 1: identity kicker — status, title, marks, quarantine -->
           <template #identity>
-            <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
               <StatusChip :status="testCase?.status ?? ''" class="shrink-0" />
-              <span class="font-medium text-highlighted min-w-0 break-words">
+              <span class="text-highlighted min-w-0 break-words">
                 {{ testCase?.title || `Execution #${testCaseId}` }}
               </span>
-              <template v-for="badge in headerBadges" :key="badge.label">
-                <UBadge
-                  :color="badge.color ?? 'neutral'"
-                  variant="subtle"
-                  size="xs"
-                  :title="badge.title"
-                  :class="['inline-flex items-center gap-1', badge.mono ? 'font-mono' : '']"
-                >
-                  <UIcon v-if="badge.icon" :name="badge.icon" class="size-3 shrink-0" />
-                  {{ badge.label }}
-                </UBadge>
-              </template>
+              <span
+                v-for="badge in headerBadges"
+                :key="badge.label"
+                :title="badge.title"
+                :class="badge.mono ? 'font-mono text-xs' : ''"
+              >
+                {{ badge.label }}
+              </span>
               <QuarantinedChip v-if="quarantined" />
             </div>
           </template>
@@ -783,7 +771,7 @@ const { handle: handleNextStepAction } = useNextStepActions({
               data-shot="failure-headline"
               class="text-lg sm:text-xl font-semibold leading-snug text-highlighted break-words"
             >
-              <FailureHeadline :parts="verdict.parts" />
+              <FailureHeadline :parts="verdict.parts" plain />
             </h1>
             <p
               v-if="verdict.detail && !story"
@@ -801,18 +789,12 @@ const { handle: handleNextStepAction } = useNextStepActions({
 
           <!-- Line 4: the situation sentence — one clause per fact, with links -->
           <template v-if="situation" #situation>
-            <p data-shot="situation" class="text-sm text-toned leading-relaxed">
+            <p data-shot="situation">
               <template v-for="(part, i) in situation.parts" :key="i">
-                <template v-if="i === 0 && leadWhy">
-                  <UBadge :color="WHY_BADGE[leadWhy].color" variant="subtle" size="sm" class="mr-0.5 align-middle">
-                    {{ WHY_BADGE[leadWhy].label }}
-                  </UBadge>
-                  <span>{{ part.text.slice(WHY_BADGE[leadWhy].label.length) }}</span>
-                </template>
                 <NuxtLink
-                  v-else-if="part.href"
+                  v-if="part.href"
                   :to="part.href"
-                  class="text-primary hover:underline"
+                  class="underline decoration-dotted underline-offset-2 hover:decoration-solid"
                   :class="part.kind === 'commit' ? 'font-mono' : ''"
                   >{{ part.text }}</NuxtLink
                 >
@@ -821,7 +803,7 @@ const { handle: handleNextStepAction } = useNextStepActions({
                   :href="situationCommitHref(part)!"
                   target="_blank"
                   rel="noopener"
-                  class="text-primary hover:underline font-mono"
+                  class="underline decoration-dotted underline-offset-2 hover:decoration-solid font-mono"
                   >{{ part.text }}</a
                 >
                 <span v-else-if="part.kind === 'commit'" class="font-mono">{{ part.text }}</span>
@@ -856,12 +838,10 @@ const { handle: handleNextStepAction } = useNextStepActions({
                   </span>
                 </span>
                 <span v-if="testCase?.status !== 'didnotrun'" class="inline-flex items-center gap-1 tabular-nums">
-                  <DurationValue :ms="testCase?.duration" class="font-medium text-toned" />
-                  <span v-if="historicalTiming" class="text-dimmed">
-                    (avg <DurationValue :ms="historicalTiming.avg" />,
-                    <span :class="historicalTiming.diff > 0 ? 'text-red-600' : 'text-green-600'">
-                      {{ historicalTiming.diff > 0 ? '+' : '' }}{{ historicalTiming.pct }}%</span
-                    >)
+                  <DurationValue :ms="testCase?.duration" />
+                  <span v-if="historicalTiming">
+                    (avg <DurationValue :ms="historicalTiming.avg" />, {{ historicalTiming.diff > 0 ? '+' : ''
+                    }}{{ historicalTiming.pct }}%)
                   </span>
                 </span>
                 <span
@@ -897,29 +877,19 @@ const { handle: handleNextStepAction } = useNextStepActions({
                     </UBadge>
                   </template>
                 </span>
-                <span v-if="scmInfo?.branch" class="inline-flex items-center gap-1">
-                  <UIcon name="i-lucide-git-branch" class="size-3.5 shrink-0" />
-                  <span class="font-medium">{{ scmInfo.branch }}</span>
-                </span>
+                <span v-if="scmInfo?.branch">{{ scmInfo.branch }}</span>
                 <a
                   v-if="ciInfo?.buildUrl || ciInfo?.buildNumber"
                   :href="ciInfo?.buildUrl || undefined"
                   :target="ciInfo?.buildUrl ? '_blank' : undefined"
                   :class="
-                    ciInfo?.buildUrl
-                      ? 'text-primary hover:underline inline-flex items-center gap-1'
-                      : 'inline-flex items-center gap-1'
+                    ciInfo?.buildUrl ? 'underline decoration-dotted underline-offset-2 hover:decoration-solid' : ''
                   "
                 >
-                  <UIcon name="i-lucide-cloud" class="size-3.5 shrink-0" />
                   {{ ciInfo?.buildNumber ? `Build #${ciInfo.buildNumber}` : 'View build' }}
                 </a>
                 <ClientOnly>
-                  <span
-                    v-if="testCase?.startedAt"
-                    class="text-dimmed"
-                    :title="new Date(testCase.startedAt).toLocaleString()"
-                  >
+                  <span v-if="testCase?.startedAt" :title="new Date(testCase.startedAt).toLocaleString()">
                     {{ formatRelativeTime(testCase.startedAt) }}
                   </span>
                 </ClientOnly>
@@ -1031,16 +1001,17 @@ const { handle: handleNextStepAction } = useNextStepActions({
               </UPopover>
 
               <!-- Raw error: the verbatim ANSI output, one click below the block. -->
-              <button
+              <UButton
                 v-if="testCase?.error"
-                type="button"
-                class="inline-flex items-center gap-1 text-primary hover:underline shrink-0"
+                size="xs"
+                variant="ghost"
+                color="neutral"
+                :trailing-icon="rawErrorOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
+                label="Raw error"
+                class="shrink-0"
                 :aria-expanded="rawErrorOpen"
                 @click="rawErrorOpen = !rawErrorOpen"
-              >
-                <UIcon :name="rawErrorOpen ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'" class="size-3.5" />
-                Raw error
-              </button>
+              />
             </div>
 
             <div v-if="rawErrorOpen && testCase?.error" ref="rawErrorEl" class="mt-2 space-y-1 scroll-mt-4">

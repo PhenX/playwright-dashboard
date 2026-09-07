@@ -129,11 +129,9 @@ export function computeNextStep(input: NextStepInput): NextStep {
   // 4 — a completed diagnosis whose patch applies cleanly.
   if (hasCleanPatch) {
     const file = input.patchFile?.trim();
-    const summary = input.diagnosisSummary?.trim();
-    const tail = [file, summary].filter(Boolean).join(', ');
     return {
       kind: 'apply-patch',
-      title: `Apply the diagnosed fix${tail ? ` — ${tail}` : ''}`,
+      title: `Apply the diagnosed fix${file ? ` to ${file}` : ''}`,
       why: 'The diagnosis suggests a patch that applies cleanly to the current code.',
       primary: { label: 'Copy git apply', action: 'copy-git-apply', payload: withCluster },
       secondary: [
@@ -146,10 +144,9 @@ export function computeNextStep(input: NextStepInput): NextStep {
 
   // 5 — a completed diagnosis whose patch is stale or absent.
   if (input.diagnosisCompleted) {
-    const summary = input.diagnosisSummary?.trim();
     return {
       kind: 'follow-diagnosis',
-      title: `Follow the diagnosis${summary ? ` — ${summary}` : ''}`,
+      title: 'Follow the diagnosis',
       why: 'A diagnosis explains the failure, but its patch no longer applies cleanly.',
       primary: { label: 'Read the diagnosis', action: 'read-diagnosis', payload: withCluster },
       secondary: [{ label: 'Re-diagnose', action: 're-diagnose', payload: withCluster }],
