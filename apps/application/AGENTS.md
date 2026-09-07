@@ -292,8 +292,8 @@ same files load unchanged in Vite, Vitest and plain Node (the generator script r
   registered in `shared/test-project-names.ts`.
 - **AI test** — an E2E that needs a model goes against the mock OpenAI-compatible server in `tests/ai-diagnosis.spec.ts`,
   so the main suite stays at zero tokens. `tests/live/` is the only place that talks to a real provider: it is excluded
-  from `playwright.config.ts`, has its own config, and runs from `npm run app:test:ai:live` or the `ai-live-e2e`
-  workflow. Assume the live model is text-only — that suite pins `PIWI_AI_MAX_IMAGES=0`.
+  from `playwright.config.ts`, has its own config, and runs from `npm run app:test:ai:live`. Assume the live model is
+  text-only — that suite pins `PIWI_AI_MAX_IMAGES=0`.
 
 ## Extension points
 
