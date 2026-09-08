@@ -308,12 +308,11 @@ const columns: TableColumn<ProjectWithStats>[] = [
           </template>
           <template #branch-cell="{ row }">
             <div v-if="row.original.latestRun?.metadata?.scm" class="flex items-center gap-1 flex-wrap">
-              <span
+              <BranchLabel
                 v-if="row.original.latestRun.metadata.scm.branch"
-                class="text-xs font-medium bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded"
-              >
-                {{ row.original.latestRun.metadata.scm.branch }}
-              </span>
+                :name="row.original.latestRun.metadata.scm.branch"
+                class="text-xs max-w-[12rem]"
+              />
               <code v-if="row.original.latestRun.metadata.scm.commit" class="text-xs text-gray-500">
                 {{ row.original.latestRun.metadata.scm.commit.substring(0, 7) }}
               </code>

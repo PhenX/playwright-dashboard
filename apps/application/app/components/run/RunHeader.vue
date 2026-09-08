@@ -216,10 +216,7 @@ function onLabelKeydown(e: KeyboardEvent) {
       </template>
       <template v-if="scm?.branch || scm?.commit || scm?.author">
         <span class="text-dimmed">·</span>
-        <span v-if="scm?.branch" class="inline-flex items-center gap-1">
-          <UIcon name="i-lucide-git-branch" class="size-3 shrink-0" />
-          {{ scm.branch }}
-        </span>
+        <BranchLabel v-if="scm?.branch" :name="scm.branch" inherit />
         <code
           v-if="scm?.commit"
           class="font-mono bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded"
@@ -230,7 +227,7 @@ function onLabelKeydown(e: KeyboardEvent) {
       </template>
       <template v-if="testRun?.environment">
         <span class="text-dimmed">·</span>
-        <span class="rounded-full border border-default px-2 py-0.5 bg-elevated/60">{{ testRun.environment }}</span>
+        <EnvironmentBadge :name="testRun.environment" />
       </template>
       <template v-if="ci?.buildNumber || ci?.buildUrl">
         <span class="text-dimmed">·</span>

@@ -139,7 +139,7 @@ defineExpose({ revealRawError });
           </UBadge>
         </template>
       </span>
-      <span v-if="scmInfo?.branch">{{ scmInfo.branch }}</span>
+      <BranchLabel v-if="scmInfo?.branch" :name="scmInfo.branch" class="max-w-[12rem]" />
       <a
         v-if="ciInfo?.buildUrl || ciInfo?.buildNumber"
         :href="ciInfo?.buildUrl || undefined"
@@ -173,7 +173,7 @@ defineExpose({ revealRawError });
               Duration: <DurationValue :ms="testCase?.duration" />
             </p>
             <p v-if="scmInfo?.branch">
-              Branch: <span class="text-highlighted">{{ scmInfo.branch }}</span>
+              Branch: <BranchLabel :name="scmInfo.branch" class="text-highlighted" inherit />
             </p>
             <p v-if="ciInfo?.buildNumber">Build #{{ ciInfo.buildNumber }}</p>
             <ClientOnly>

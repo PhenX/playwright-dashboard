@@ -12,6 +12,7 @@
 import { computed, ref, watch } from 'vue';
 import type { TestRunDetails, TestCaseResult, ProjectWithTestRuns } from '~~/types/api';
 import type { RunInsightsResult } from '#shared/handlers/run-insights';
+import { describeRunBaselineParts, type RunBaselinePart } from '#shared/run-baseline';
 
 const props = defineProps<{
   testRun: TestRunDetails | null | undefined;
@@ -90,6 +91,10 @@ watch(
 interface RunOption {
   label: string;
   value: number;
+  branch: string | null;
+  environment: string | null;
+  date: string;
+  status: string;
 }
 
 const runOptions = computed<RunOption[]>(() => {
@@ -101,6 +106,10 @@ const runOptions = computed<RunOption[]>(() => {
     .map((r) => ({
       label: `Run #${r.id} · ${r.branch ?? 'no branch'} · ${r.environment ?? 'no environment'} · ${prettyDateFormat(r.startTime, { dateOnly: true })} (${r.status})`,
       value: r.id,
+      branch: r.branch ?? null,
+      environment: r.environment ?? null,
+      date: prettyDateFormat(r.startTime, { dateOnly: true }),
+      status: r.status,
     }));
 });
 
@@ -108,7 +117,11 @@ const runOptions = computed<RunOption[]>(() => {
 // earlier passing run. Offered only when a branch other than the run's own
 // has one — otherwise there is nothing to choose.
 const AUTO_BASE = '';
-const baseBranchOptions = computed<Array<{ label: string; value: string }>>(() => {
+interface BaseBranchOption {
+  label: string;
+  value: string;
+}
+const baseBranchOptions = computed<BaseBranchOption[]>(() => {
   const d = data.value;
   if (!d || !d.baseBranches.some((b) => b !== d.run.branch)) return [];
   const own = d.run.branch;
@@ -159,11 +172,17 @@ const baseBranchValue = computed<{ label: string; value: string } | undefined>({
   set: (opt) => selectBaseBranch(opt?.value || null),
 });
 
-// "main · staging · 3 days ago" — where the baseline run comes from.
-const baselineScope = computed(() => {
-  const b = data.value?.baseline;
-  if (!b) return '';
-  return [b.branch ?? 'no branch', b.environment ?? 'no environment', formatRelativeTime(b.startTime)].join(' · ');
+// Why this baseline, as parts, so branch and environment names carry their icon.
+const noteParts = computed<RunBaselinePart[]>(() => {
+  const d = data.value;
+  if (!d?.hasBaseline || !d.baseline) return [];
+  if (!d.baselineMatch) return [{ kind: 'text', text: d.baselineNote ?? 'The run you picked.' }];
+  return describeRunBaselineParts({
+    run: d.run,
+    baseline: { branch: d.baseline.branch, environment: d.baseline.environment },
+    match: d.baselineMatch,
+    fallback: d.fallbackBranch,
+  });
 });
 
 // ── Section data ─────────────────────────────────────────────────────────────
@@ -236,8 +255,8 @@ function clusterName(tc: TestCaseResult): string | null {
 
     <EmptyState v-else-if="!data?.hasBaseline" icon="i-lucide-git-compare-arrows" text="No baseline run found">
       <p v-if="data?.baseBranch" class="text-sm text-muted max-w-sm text-center">
-        No earlier passing run exists on {{ data.baseBranch }}. Pick another base branch, or go back to the automatic
-        choice.
+        No earlier passing run exists on <BranchLabel :name="data.baseBranch" />. Pick another base branch, or go back
+        to the automatic choice.
       </p>
       <p v-else class="text-sm text-muted max-w-sm text-center">
         Changes compare this run against the last passing run in the same environment — on the same branch, then the
@@ -252,7 +271,19 @@ function clusterName(tc: TestCaseResult): string | null {
           placeholder="Base branch…"
           class="w-64"
           title="Take the baseline from this branch only"
-        />
+        >
+          <template #default="{ modelValue: selected }">
+            <BranchLabel v-if="selected?.value" :name="selected.value" />
+            <span v-else class="inline-flex items-center gap-1.5">
+              <UIcon name="i-lucide-git-branch" class="size-3 shrink-0 text-muted" />
+              {{ selected?.label ?? 'Base branch…' }}
+            </span>
+          </template>
+          <template #item-label="{ item }">
+            <BranchLabel v-if="item.value" :name="item.value" />
+            <span v-else>{{ item.label }}</span>
+          </template>
+        </USelectMenu>
         <UButton
           v-if="data?.baselineSource !== 'auto'"
           size="xs"
@@ -276,12 +307,20 @@ function clusterName(tc: TestCaseResult): string | null {
             <RunStatusBadge :status="data.baseline!.status" />
             Run #{{ data.baseline!.id }}
           </NuxtLink>
-          <span class="text-xs text-muted">{{ baselineScope }}</span>
+          <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
+            <BranchLabel :name="data.baseline!.branch" />
+            <EnvironmentBadge :name="data.baseline!.environment" />
+            <span>{{ formatRelativeTime(data.baseline!.startTime) }}</span>
+          </span>
         </div>
-        <p class="text-xs text-muted">
-          {{ data.baselineNote }}
+        <p class="text-xs text-muted leading-6">
+          <template v-for="(part, i) in noteParts" :key="i">
+            <BranchLabel v-if="part.kind === 'branch'" :name="part.name" />
+            <EnvironmentBadge v-else-if="part.kind === 'environment'" :name="part.name" />
+            <template v-else>{{ part.text }}</template>
+          </template>
           <template v-if="data.run.branch || data.run.environment">
-            This run is on {{ data.run.branch ?? 'no branch' }} in {{ data.run.environment ?? 'no environment' }}.
+            This run is on <BranchLabel :name="data.run.branch" /> in <EnvironmentBadge :name="data.run.environment" />.
           </template>
         </p>
         <div class="flex flex-wrap items-center gap-2">
@@ -293,9 +332,21 @@ function clusterName(tc: TestCaseResult): string | null {
             size="xs"
             class="w-64"
             title="Take the baseline from this branch only"
-          />
-          <span v-else class="text-xs text-muted">
-            {{ data.fallbackBranch.branch }} (no other branch has a passing run yet)
+          >
+            <template #default="{ modelValue: selected }">
+              <BranchLabel v-if="selected?.value" :name="selected.value" />
+              <span v-else class="inline-flex items-center gap-1.5 min-w-0">
+                <UIcon name="i-lucide-git-branch" class="size-3 shrink-0 text-muted" />
+                <span class="truncate">{{ selected?.label ?? 'Automatic' }}</span>
+              </span>
+            </template>
+            <template #item-label="{ item }">
+              <BranchLabel v-if="item.value" :name="item.value" />
+              <span v-else>{{ item.label }}</span>
+            </template>
+          </USelectMenu>
+          <span v-else class="inline-flex items-center gap-1 text-xs text-muted">
+            <BranchLabel :name="data.fallbackBranch.branch" /> (no other branch has a passing run yet)
           </span>
           <span class="text-xs font-medium text-muted ml-2">Run</span>
           <USelectMenu
@@ -303,9 +354,26 @@ function clusterName(tc: TestCaseResult): string | null {
             :items="runOptions"
             size="xs"
             placeholder="Pick a run…"
-            class="w-72"
+            class="w-80"
             title="Compare against one specific run"
-          />
+          >
+            <template #default="{ modelValue: selected }">
+              <span v-if="selected" class="inline-flex items-center gap-2 min-w-0">
+                <span class="shrink-0">Run #{{ selected.value }}</span>
+                <BranchLabel :name="selected.branch" />
+                <EnvironmentBadge :name="selected.environment" />
+              </span>
+              <span v-else class="text-muted">Pick a run…</span>
+            </template>
+            <template #item-label="{ item }">
+              <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0">
+                <span class="shrink-0">Run #{{ item.value }}</span>
+                <BranchLabel :name="item.branch" />
+                <EnvironmentBadge :name="item.environment" />
+                <span class="text-xs text-muted">{{ item.date }} ({{ item.status }})</span>
+              </span>
+            </template>
+          </USelectMenu>
           <UButton
             v-if="previousRunId && previousRunId !== data.baseline!.id"
             size="xs"

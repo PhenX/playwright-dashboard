@@ -910,9 +910,7 @@ const moreMenuItems = computed(() => {
                   />
                 </template>
                 <template #environment-cell="{ row }">
-                  <UBadge v-if="row.original.environment" color="info" variant="subtle" size="sm">
-                    {{ row.original.environment }}
-                  </UBadge>
+                  <EnvironmentBadge v-if="row.original.environment" :name="row.original.environment" class="text-xs" />
                 </template>
                 <template #metadata-cell="{ row }">
                   <div
@@ -920,14 +918,11 @@ const moreMenuItems = computed(() => {
                     class="flex items-center gap-1.5 flex-wrap text-xs cursor-pointer"
                     @click="openRun(row.original.id)"
                   >
-                    <span
+                    <BranchLabel
                       v-if="runBranch(row.original)"
-                      class="inline-flex items-center gap-1 text-gray-600 dark:text-gray-300 max-w-[12rem] truncate"
-                      :title="runBranch(row.original) ?? ''"
-                    >
-                      <UIcon name="i-lucide-git-branch" class="size-3 shrink-0 text-gray-400" />
-                      {{ runBranch(row.original) }}
-                    </span>
+                      :name="runBranch(row.original)"
+                      class="text-gray-600 dark:text-gray-300 max-w-[12rem]"
+                    />
                     <code v-if="row.original.metadata?.scm?.commit" class="text-gray-500">
                       {{ row.original.metadata.scm.commit.substring(0, 7) }}
                     </code>
@@ -979,7 +974,7 @@ const moreMenuItems = computed(() => {
                     <div class="flex items-center gap-2 flex-wrap">
                       <RunStatusBadge :status="run.status" />
                       <span class="font-medium text-primary">Run #{{ run.id }}</span>
-                      <span v-if="run.environment" class="text-xs text-muted">{{ run.environment }}</span>
+                      <EnvironmentBadge v-if="run.environment" :name="run.environment" class="text-xs text-muted" />
                     </div>
                     <TestStatusBar
                       :passed="run.passedTests"

@@ -121,10 +121,7 @@ function flakyBadges(test: FlakyTest) {
             Tests that fail intermittently — detected by retry passes and status alternations
             <HelpHint topic="project.flaky-tests" />
           </p>
-          <UBadge v-if="environment" color="neutral" variant="subtle" size="sm" class="gap-1">
-            <UIcon name="i-lucide-layers" class="size-3" />
-            {{ environment }}
-          </UBadge>
+          <EnvironmentBadge v-if="environment" :name="environment" class="text-xs" />
           <div class="flex items-center gap-1.5">
             <UButton
               v-for="opt in ROOT_CAUSE_OPTIONS"

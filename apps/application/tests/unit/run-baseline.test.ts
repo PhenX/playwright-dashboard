@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { describeRunBaseline, type RunBaselineMatch } from '#shared/run-baseline';
+import { describeRunBaseline, describeRunBaselineParts, type RunBaselineMatch } from '#shared/run-baseline';
 
 const run = { branch: 'feature/x', environment: 'staging' };
 const fallback = { branch: 'main', source: 'default' as const };
@@ -98,5 +98,40 @@ describe('describeRunBaseline', () => {
         { run: { branch: null, environment: null } },
       ),
     ).toBe('The most recent passing run.');
+  });
+});
+
+describe('describeRunBaselineParts', () => {
+  test('marks branch and environment names as their own parts, merging the words between', () => {
+    const parts = describeRunBaselineParts({
+      run,
+      baseline: { branch: 'main', environment: 'staging' },
+      match: { branch: 'fallback', environment: 'same' },
+      fallback,
+    });
+    expect(parts).toEqual([
+      { kind: 'text', text: 'No passing ' },
+      { kind: 'environment', name: 'staging' },
+      { kind: 'text', text: ' run exists on ' },
+      { kind: 'branch', name: 'feature/x' },
+      { kind: 'text', text: '; the last passing run on the default branch ' },
+      { kind: 'branch', name: 'main' },
+      { kind: 'text', text: ' in ' },
+      { kind: 'environment', name: 'staging' },
+      { kind: 'text', text: '.' },
+    ]);
+  });
+
+  test('joins back to the plain sentence', () => {
+    const input = {
+      run,
+      baseline: { branch: 'hotfix', environment: 'production' },
+      match: { branch: 'any', environment: 'other' } as RunBaselineMatch,
+      fallback,
+    };
+    const joined = describeRunBaselineParts(input)
+      .map((p) => (p.kind === 'text' ? p.text : p.name))
+      .join('');
+    expect(joined).toBe(describeRunBaseline(input));
   });
 });
