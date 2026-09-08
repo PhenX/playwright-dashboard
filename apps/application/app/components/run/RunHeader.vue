@@ -216,7 +216,7 @@ function onLabelKeydown(e: KeyboardEvent) {
       </template>
       <template v-if="scm?.branch || scm?.commit || scm?.author">
         <span class="text-dimmed">·</span>
-        <BranchLabel v-if="scm?.branch" :name="scm.branch" inherit />
+        <BranchLabel v-if="scm?.branch" :name="scm.branch" inherit copyable />
         <code
           v-if="scm?.commit"
           class="font-mono bg-zinc-100 dark:bg-zinc-800 px-1 py-0.5 rounded"

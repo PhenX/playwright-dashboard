@@ -255,8 +255,8 @@ function clusterName(tc: TestCaseResult): string | null {
 
     <EmptyState v-else-if="!data?.hasBaseline" icon="i-lucide-git-compare-arrows" text="No baseline run found">
       <p v-if="data?.baseBranch" class="text-sm text-muted max-w-sm text-center">
-        No earlier passing run exists on <BranchLabel :name="data.baseBranch" />. Pick another base branch, or go back
-        to the automatic choice.
+        No earlier passing run exists on <BranchLabel :name="data.baseBranch" copyable />. Pick another base branch, or
+        go back to the automatic choice.
       </p>
       <p v-else class="text-sm text-muted max-w-sm text-center">
         Changes compare this run against the last passing run in the same environment — on the same branch, then the
@@ -308,19 +308,20 @@ function clusterName(tc: TestCaseResult): string | null {
             Run #{{ data.baseline!.id }}
           </NuxtLink>
           <span class="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-            <BranchLabel :name="data.baseline!.branch" />
+            <BranchLabel :name="data.baseline!.branch" copyable />
             <EnvironmentBadge :name="data.baseline!.environment" />
             <span>{{ formatRelativeTime(data.baseline!.startTime) }}</span>
           </span>
         </div>
         <p class="text-xs text-muted leading-6">
           <template v-for="(part, i) in noteParts" :key="i">
-            <BranchLabel v-if="part.kind === 'branch'" :name="part.name" />
-            <EnvironmentBadge v-else-if="part.kind === 'environment'" :name="part.name" />
+            <BranchLabel v-if="part.kind === 'branch'" :name="part.name" copyable />
+            <EnvironmentBadge v-else-if="part.kind === 'environment'" :name="part.name" inline />
             <template v-else>{{ part.text }}</template>
           </template>
           <template v-if="data.run.branch || data.run.environment">
-            This run is on <BranchLabel :name="data.run.branch" /> in <EnvironmentBadge :name="data.run.environment" />.
+            This run is on <BranchLabel :name="data.run.branch" copyable /> in
+            <EnvironmentBadge :name="data.run.environment" inline />.
           </template>
         </p>
         <div class="flex flex-wrap items-center gap-2">
@@ -346,7 +347,7 @@ function clusterName(tc: TestCaseResult): string | null {
             </template>
           </USelectMenu>
           <span v-else class="inline-flex items-center gap-1 text-xs text-muted">
-            <BranchLabel :name="data.fallbackBranch.branch" /> (no other branch has a passing run yet)
+            <BranchLabel :name="data.fallbackBranch.branch" copyable /> (no other branch has a passing run yet)
           </span>
           <span class="text-xs font-medium text-muted ml-2">Run</span>
           <USelectMenu
