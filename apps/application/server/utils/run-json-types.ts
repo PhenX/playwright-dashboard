@@ -57,6 +57,8 @@ export interface RunScmMetadata {
   branch?: string | null;
   /** Pull-request number captured from the CI provider, when it exposes one. */
   prNumber?: string | number | null;
+  /** The branch a pull-request build targets, when the CI provider exposes it. */
+  baseBranch?: string | null;
   remoteUrl?: string | null;
 }
 

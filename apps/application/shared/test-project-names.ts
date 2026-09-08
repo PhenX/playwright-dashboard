@@ -82,6 +82,7 @@ export const PROJECT = {
   IMPORT_TRACE_RETRY: 'import-trace-retry-test',
   INCOMPLETE: 'incomplete-project',
   INLINE_HELP: 'inline-help-test',
+  INSIGHTS_BASELINE: 'insights-baseline-test',
   INSIGHTS_SPEC_HEALTH: 'insights-spec-health-test',
   INVALID_KEY: 'invalid-key-test',
   KEYBOARD_NAV: 'keyboard-nav-test',

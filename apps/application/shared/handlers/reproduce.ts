@@ -4,14 +4,18 @@
  * server (the fix plan, the execution endpoint) and the demo mirror compute it
  * the same way — the generators stay pure and testable, this does the reads.
  *
- * The bisect window's `good` end is the last green run before this one on the
- * same branch (falling back to any branch), and its `bad` end is the failing
- * run's own commit. When either commit is missing the bisect degrades to a
- * plain reason, so a demo with no SCM metadata still renders the recipe.
+ * The bisect window's `good` end is the run-level baseline — the last green
+ * run before this one in the same environment, on the same branch, else the
+ * branch it forked from, else any — and its `bad` end is the failing run's own
+ * commit. When either commit is missing the bisect degrades to a plain reason,
+ * so a demo with no SCM metadata still renders the recipe.
  */
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { failureClusters, testCases, testRuns, testRunsCases } from '../../server/database/schema';
 import { normalizeGitUrl } from '../../server/utils/scm/git-url';
+import { selectBaselineRun } from '../../server/utils/branch-baseline';
+import { resolveRunBranch } from '../../server/utils/run-branch';
+import { readProjectDefaultBranch, resolveFallbackBranch } from './baseline-scope';
 import {
   buildBisectScript,
   buildReproRecipe,
@@ -95,7 +99,15 @@ export async function computeReproduceContext(db: DrizzleDB, input: ReproduceInp
 
   let lastGreenCommit: string | null = null;
   if (run) {
-    lastGreenCommit = await lastGreenCommitBefore(db, run.projectId, run.startTime, run.branch);
+    const defaultBranch = await readProjectDefaultBranch(db, run.projectId, run.metadata);
+    const baseline = await selectBaselineRun(db, {
+      projectId: run.projectId,
+      before: run.startTime,
+      branch: run.branch ?? resolveRunBranch(run.metadata),
+      environment: run.environment ?? null,
+      fallbackBranch: resolveFallbackBranch(run.metadata, defaultBranch).branch,
+    });
+    lastGreenCommit = (baseline?.run.metadata as RunScm)?.scm?.commit ?? null;
   }
 
   const projectName = input.cases.find((c) => c.projectName)?.projectName ?? null;
@@ -162,35 +174,4 @@ export async function buildExecutionReproduce(db: DrizzleDB, executionId: number
     verifyCommand,
     clusterId: row.failureClusterId ?? null,
   });
-}
-
-/**
- * The commit of the last green run before `before`, preferring the same branch
- * (a fresh branch's history) and falling back to any branch when it has none.
- */
-async function lastGreenCommitBefore(
-  db: DrizzleDB,
-  projectId: number,
-  before: Date,
-  branch: string | null,
-): Promise<string | null> {
-  const pick = async (branchFilter: boolean): Promise<string | null> => {
-    const conditions = [
-      eq(testRuns.projectId, projectId),
-      eq(testRuns.status, 'passed'),
-      lt(testRuns.startTime, before),
-    ];
-    if (branchFilter && branch) conditions.push(eq(testRuns.branch, branch));
-    const [green] = await db
-      .select({ metadata: testRuns.metadata })
-      .from(testRuns)
-      .where(and(...conditions))
-      .orderBy(desc(testRuns.startTime))
-      .limit(1);
-    return (green?.metadata as RunScm)?.scm?.commit ?? null;
-  };
-
-  const sameBranch = await pick(true);
-  if (sameBranch) return sameBranch;
-  return branch ? pick(false) : null;
 }

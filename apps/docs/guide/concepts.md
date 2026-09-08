@@ -119,22 +119,33 @@ machine-observed verdict; when they disagree the state line offers the one actio
 
 ## Baseline (last green run)
 
-Several views answer "what changed?" — run insights, the regression signals on a test, the environment
-and visual diffs, and the git diff behind an AI diagnosis. They all compare against a **baseline**,
-chosen to be branch-aware: the most recent passing run **on the same branch**, falling back to the
-**default branch** (what a fresh pull-request branch forked from) when the branch has no history yet,
-and to any branch only when neither exists. A run whose branch is unknown compares against the most
-recent passing run in the project, as before.
+Several views answer "what changed?" — the Changes tab and run insights, the regression signals on a
+test, the CI gate and pull-request feedback, the bisect window, the environment and visual diffs, and
+the git diff behind an AI diagnosis. They all compare against a **baseline**: the same test's, or the
+project's, most recent passing run — chosen by **environment first, then branch**.
 
-The environment and visual diffs compare one execution against the same test's last passing execution
-on the same browser, and put the run's **environment label** first: a `development` failure is diffed
+For a whole run, the ladder is walked **within the run's environment label** first, then again without
+it. On each pass: the most recent passing run **on the same branch**, else on the **base branch** the
+run's branch forked from (the pull request's target branch when the reporter captured one, else the
+project's default branch), else on any branch. So a `staging` run on `feature/x` compares with the last
+passing `staging` run on `feature/x`, then the last passing `staging` run on `main`, then any passing
+`staging` run, and only then with a run from another environment. A run whose branch is unknown only
+has the "any branch" rung; a run with no environment label only walks the branch ladder. The Changes
+tab names the run it picked and the rung that applied ("No passing staging run exists on feature/x; the
+last passing run on the default branch main in staging"), and lets you pick a different **base branch**
+or one specific run — see [What changed in a run](/features/run-changes#the-baseline).
+
+The environment, visual and page diffs compare one execution against the same test's last passing
+execution on the same browser, with the same environment-first order: a `development` failure is diffed
 against the last passing `development` run, then the same branch, then whatever is most recent. When no
 passing run from the same environment exists, the card says which environment the baseline came from
 ("compared with a production run; no passing development run of this test exists") and leaves the
-environment label out of the diff. The regression signals stored on a run stay branch-aware only.
+environment label out of the diff.
 
 The **default branch** is resolved per project: an explicit setting in **project settings**, else the
-repository's default branch read from the SCM provider, else `main`.
+repository's default branch read from the SCM provider, else `main`. The **base branch** of a
+pull-request run is the branch the CI provider says the pull request targets (`GITHUB_BASE_REF` and its
+equivalents), or `PIWI_BASE_BRANCH` when you set it — see [Branches](/features/branches).
 
 Two derived flags are stored per execution:
 

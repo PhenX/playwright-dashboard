@@ -317,10 +317,17 @@ export const MCP_TOOL_DEFS = [
   {
     name: 'get_run_insights',
     description:
-      'Compare a run to its last green baseline: pass-rate delta, new regressions, recurrences, recovered tests, new flaky tests, biggest perf improvements/regressions, worker imbalance, and newly opened clusters. Use this to answer "what changed?" and "did my fix work?".',
+      'Compare a run to its baseline: pass-rate delta, new regressions, recurrences, recovered tests, new flaky tests, biggest perf improvements/regressions, worker imbalance, and newly opened clusters. The baseline is the last passing run in the same environment, on the same branch, else the branch it forked from, else any; `baseline` names why it was chosen. Use this to answer "what changed?" and "did my fix work?".',
     inputSchema: {
       type: 'object',
-      properties: { runId: { type: 'number', description: 'Test run ID' } },
+      properties: {
+        runId: { type: 'number', description: 'Test run ID' },
+        baseBranch: {
+          type: 'string',
+          description:
+            'Optional: take the baseline from this branch only (its last passing run, same environment first) instead of the automatic choice',
+        },
+      },
       required: ['runId'],
     },
   },
