@@ -30,7 +30,7 @@ Manage both from **Settings → Notifications**, and subscribe to a single proje
 | `cluster.fixed` | A run passes every test a cluster covers — the fix landed (a filtered re-run of just those tests counts). The payload's `verification` says whether the diagnosis was corroborated (`diagnosis-verified`) or the tests merely stopped failing, and `resolved` whether the triage status was closed automatically |
 | `cluster.regressed` | A cluster with a recorded fix fails again; `reopened` says whether a *resolved* cluster was set back to open |
 | `flakiness.spike` | A completed run contains flaky tests — use the flakiness-threshold filter to only hear about rates above N% |
-| `perf.regression` | A run is at least 20% slower than the median of the previous five completed runs on the same branch — raise the bar per subscription with the regression-% filter |
+| `perf.regression` | A run is at least 20% slower than the median of the previous five completed runs on the same branch in the same environment — raise the bar per subscription with the regression-% filter |
 | `diagnosis.completed` | An AI diagnosis finishes (requires an AI provider) |
 
 ## Channels

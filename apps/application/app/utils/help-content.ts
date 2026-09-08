@@ -219,7 +219,7 @@ export const HELP_TOPICS = {
   },
   'run.changes': {
     title: 'Changes',
-    text: 'What differs between this run and one baseline — the last passing run on the same branch by default, or the run you pick. The tests that started or stopped failing, the ones that got slower or faster, the commits landed since the baseline, and the environment fields that moved. New failures are counted once against that baseline.',
+    text: 'What differs between this run and one baseline. By default that is the last passing run in the same environment — on the same branch, then the branch it forked from (the pull request’s target, else the project’s default branch), then any branch; the line under the selector says which rung applied. Pick a base branch to take the baseline from that branch only, or pick one specific run. The tests that started or stopped failing, the ones that got slower or faster, the commits landed since the baseline, and the environment fields that moved are all read against that one baseline.',
     doc: 'features/run-changes',
   },
   'run.timeline': {

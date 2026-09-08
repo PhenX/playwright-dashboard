@@ -101,10 +101,15 @@ export async function emitRunNotifications(db: DbClient, runId: number): Promise
     }
 
     // Perf regression: the run is markedly slower than the median of prior
-    // completed runs on the same branch.
+    // completed runs on the same branch and in the same environment.
     if (runRow.duration && runRow.duration > 0) {
       const priorRuns = await db
-        .select({ duration: testRuns.duration, branch: testRuns.branch, metadata: testRuns.metadata })
+        .select({
+          duration: testRuns.duration,
+          branch: testRuns.branch,
+          environment: testRuns.environment,
+          metadata: testRuns.metadata,
+        })
         .from(testRuns)
         .where(
           and(
@@ -118,6 +123,7 @@ export async function emitRunNotifications(db: DbClient, runId: number): Promise
 
       const priorDurations = priorRuns
         .filter((r) => (r.branch ?? resolveRunBranch(r.metadata)) === branch)
+        .filter((r) => (r.environment ?? null) === (runRow.environment ?? null))
         .map((r) => r.duration ?? 0)
         .filter((d) => d > 0)
         .slice(0, PERF_BASELINE_RUNS);

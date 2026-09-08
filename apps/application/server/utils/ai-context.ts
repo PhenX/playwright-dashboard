@@ -2315,6 +2315,7 @@ async function scmInvestigationSections(
       const lines: string[] = [
         `## What Changed Since Last Green Run`,
         `- Last green run: #${regression.lastGreenRunId} (${regression.lastGreenRunAt.toISOString()})`,
+        `- Baseline: ${regression.baselineNote}`,
         `- New failures in this run: ${regression.newFailures}`,
       ];
       if (regression.commitRange) {

@@ -1,11 +1,13 @@
-import { eq, and } from 'drizzle-orm';
-import { projects, testRuns, testRunsCases, testCases, failureClusters } from '../../server/database/schema';
+import { eq, and, isNotNull } from 'drizzle-orm';
+import { testRuns, testRunsCases, testCases, failureClusters } from '../../server/database/schema';
 import type { TestRun } from '../../server/database/schema';
 import type { DrizzleDB } from './db';
 import { resolveRunBranch } from '../../server/utils/run-branch';
 import { selectBaselineRun } from '../../server/utils/branch-baseline';
-import { FALLBACK_DEFAULT_BRANCH, normalizeGitUrl } from '../../server/utils/scm/git-url';
+import { normalizeGitUrl } from '../../server/utils/scm/git-url';
 import { buildCommitRange, computeMetadataDiff, type CommitRange, type MetaDiffEntry } from '../utils/run-metadata';
+import { readProjectDefaultBranch, resolveFallbackBranch } from './baseline-scope';
+import { describeRunBaseline, type RunBaselineFallback, type RunBaselineMatch } from '#shared/run-baseline';
 
 interface TestCaseEntry {
   executionId: number;
@@ -29,12 +31,30 @@ export interface InsightsBaseline {
   startTime: Date;
   status: string;
   label: string | null;
+  branch: string | null;
+  environment: string | null;
 }
+
+/** How the baseline was picked: the automatic ladder, a run, or a base branch someone chose. */
+export type InsightsBaselineSource = 'auto' | 'run' | 'branch';
 
 export interface RunInsightsResult {
   hasBaseline: boolean;
-  /** The baseline this comparison used (branch-aware default, or the one asked for). */
+  /** The baseline this comparison used (the automatic choice, or the one asked for). */
   baseline: InsightsBaseline | null;
+  baselineSource: InsightsBaselineSource;
+  /** How the baseline relates to this run; null when a specific run was asked for. */
+  baselineMatch: RunBaselineMatch | null;
+  /** Why this baseline — the sentence the Changes tab shows under the selector. */
+  baselineNote: string | null;
+  /** The run being compared, so the selector can say which branch and environment it is on. */
+  run: { branch: string | null; environment: string | null };
+  /** The branch the automatic ladder falls back to, and where that came from. */
+  fallbackBranch: RunBaselineFallback;
+  /** The base branch asked for, echoed even when it yielded no baseline. */
+  baseBranch: string | null;
+  /** Branches with at least one earlier passing run in the project — the base branches on offer. */
+  baseBranches: string[];
   /** Tests that passed in the baseline and fail here — the one "new failures" set. */
   newFailures: number;
   commitRange: CommitRange | null;
@@ -70,7 +90,7 @@ const FAIL_STATUSES: ReadonlySet<string> = new Set(['failed', 'timedOut', 'timed
 export async function computeRunInsights(
   db: DrizzleDB,
   runId: number,
-  options?: { baselineId?: number | null },
+  options?: { baselineId?: number | null; baseBranch?: string | null },
 ): Promise<RunInsightsResult> {
   const runResults: any[] = await db
     .select({
@@ -104,42 +124,65 @@ export async function computeRunInsights(
     .innerJoin(testCases, eq(testRunsCases.testCaseId, testCases.id))
     .where(eq(testRunsCases.testRunId, runId));
 
-  // Find the baseline branch-aware: a passing full run on this branch, else on
-  // the default branch (what a fresh PR branch forked from), else any branch.
-  // The SCM-backed default-branch resolution runs in the server-only ingest
-  // paths and caches onto projects.default_branch; here (a shared handler that
-  // also runs in the demo) we read that cached column, then the reporter hint,
-  // then 'main'.
-  const [project] = await db
-    .select({ defaultBranch: projects.defaultBranch })
-    .from(projects)
-    .where(eq(projects.id, run.projectId));
+  // The baseline ladder: a passing full run in this run's environment, on its
+  // own branch, else on the branch it forked from (the pull request's target
+  // when the reporter captured one, else the project's default branch), else
+  // any branch; then the same three rungs without the environment.
   const branch = run.branch ?? resolveRunBranch(run.metadata);
-  const defaultBranch =
-    project?.defaultBranch?.trim() ||
-    (run.metadata as { defaultBranch?: string | null } | null)?.defaultBranch?.trim() ||
-    FALLBACK_DEFAULT_BRANCH;
+  const environment: string | null = run.environment ?? null;
+  const fallbackBranch = resolveFallbackBranch(
+    run.metadata,
+    await readProjectDefaultBranch(db, run.projectId, run.metadata),
+  );
+
+  // The base branches on offer: every branch with an earlier passing run.
+  const branchRows: Array<{ branch: string | null }> = await db
+    .selectDistinct({ branch: testRuns.branch })
+    .from(testRuns)
+    .where(and(eq(testRuns.projectId, run.projectId), eq(testRuns.status, 'passed'), isNotNull(testRuns.branch)));
+  const baseBranches = branchRows
+    .map((r) => r.branch)
+    .filter((b): b is string => !!b)
+    .sort();
 
   // An explicit baseline (the `?baseline=` selection on the Changes tab) wins,
-  // as long as it is a different run in the same project. Otherwise fall back to
-  // the branch-aware default the docs define.
+  // as long as it is a different run in the same project. Then a chosen base
+  // branch restricts the ladder to that branch. Otherwise the automatic choice.
+  const chosenBranch = options?.baseBranch?.trim() || null;
   let baselineRun: TestRun | null = null;
+  let baselineSource: InsightsBaselineSource = 'auto';
+  let baselineMatch: RunBaselineMatch | null = null;
   if (options?.baselineId != null && options.baselineId !== runId) {
     const [picked] = await db.select().from(testRuns).where(eq(testRuns.id, options.baselineId));
-    if (picked && picked.projectId === run.projectId) baselineRun = picked as TestRun;
+    if (picked && picked.projectId === run.projectId) {
+      baselineRun = picked as TestRun;
+      baselineSource = 'run';
+    }
   }
   if (!baselineRun) {
-    baselineRun = await selectBaselineRun(db, {
+    const selection = await selectBaselineRun(db, {
       projectId: run.projectId,
       before: run.startTime,
       branch,
-      defaultBranch,
+      environment,
+      fallbackBranch: fallbackBranch.branch,
+      baseBranch: chosenBranch,
       fullRunOnly: true,
     });
+    if (selection) {
+      baselineRun = selection.run;
+      baselineMatch = selection.match;
+      baselineSource = chosenBranch ? 'branch' : 'auto';
+    }
   }
+  const scope = { run: { branch, environment }, fallbackBranch, baseBranch: chosenBranch, baseBranches };
   const empty = {
     hasBaseline: false,
     baseline: null,
+    baselineSource,
+    baselineMatch: null,
+    baselineNote: null,
+    ...scope,
     newFailures: 0,
     commitRange: null,
     metadataDiff: [],
@@ -323,6 +366,20 @@ export async function computeRunInsights(
     .where(and(eq(failureClusters.firstSeenRunId, runId)))
     .limit(20);
 
+  const baselineScope = {
+    branch: baselineRun.branch ?? resolveRunBranch(baselineRun.metadata),
+    environment: baselineRun.environment ?? null,
+  };
+  const baselineNote =
+    baselineSource === 'run'
+      ? 'The run you picked.'
+      : describeRunBaseline({
+          run: scope.run,
+          baseline: baselineScope,
+          match: baselineMatch!,
+          fallback: fallbackBranch,
+        });
+
   return {
     hasBaseline: true,
     baseline: {
@@ -330,7 +387,12 @@ export async function computeRunInsights(
       startTime: baselineRun.startTime,
       status: baselineRun.status,
       label: baselineRun.label ?? null,
+      ...baselineScope,
     },
+    baselineSource,
+    baselineMatch,
+    baselineNote,
+    ...scope,
     newFailures: newRegressions.length,
     commitRange,
     metadataDiff,

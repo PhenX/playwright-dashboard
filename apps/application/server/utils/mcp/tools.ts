@@ -1237,11 +1237,21 @@ const HANDLERS: Record<McpToolName, McpToolHandler> = {
     const runId = numericParam(params.runId, 'runId');
     if ((await checkEntityScope(db, ctx, runId, resolveRunProjectId)) === 'not-found') return null;
 
-    const r = await computeRunInsights(db, runId);
+    const baseBranch = typeof params.baseBranch === 'string' ? params.baseBranch.trim() || null : null;
+    const r = await computeRunInsights(db, runId, { baseBranch });
     const cap = <T>(a: T[]) => a.slice(0, 15);
     return dropNulls({
       runId,
       hasBaseline: r.hasBaseline,
+      baseline: r.baseline
+        ? {
+            runId: r.baseline.id,
+            branch: r.baseline.branch,
+            environment: r.baseline.environment,
+            note: r.baselineNote,
+          }
+        : null,
+      baseBranches: r.baseBranches,
       totalTests: r.totalTests,
       passedTests: r.passedTests,
       failedTests: r.failedTests,

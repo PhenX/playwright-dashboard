@@ -67,19 +67,25 @@ reporter is platform-specific; unrecognized CI just means less auto-filled metad
 
 Without any configuration, the reporter records:
 
-- **Source control** — commit SHA, message, author, branch, pull-request number, and the repository URL.
+- **Source control** — commit SHA, message, author, branch, pull-request number, the pull request's
+  target branch, and the repository URL.
   The branch is resolved through a fallback chain so a CI pull-request build never records the literal
   `HEAD` git reports on a detached checkout: an explicit `PIWI_BRANCH` override, then the CI provider's
   branch variables (`GITHUB_HEAD_REF`/`GITHUB_REF_NAME`, `CI_MERGE_REQUEST_SOURCE_BRANCH_NAME`/
   `CI_COMMIT_REF_NAME`, `CIRCLE_BRANCH`, and the equivalents for Travis, Azure, Jenkins and Bitbucket),
-  then the local git checkout.
+  then the local git checkout. On a pull-request build the target branch (`GITHUB_BASE_REF`,
+  `CI_MERGE_REQUEST_TARGET_BRANCH_NAME`, `SYSTEM_PULLREQUEST_TARGETBRANCH`,
+  `BITBUCKET_PR_DESTINATION_BRANCH`, `CHANGE_TARGET`, or `PIWI_BASE_BRANCH` to name it yourself) is
+  recorded as the run's **base branch**, which [baselines](/guide/concepts#baseline-last-green-run) fall
+  back to when the branch has no history of its own.
 - **CI** — provider, workflow/job name, build number, and a link back to the CI build, from the
   provider's environment variables.
 - **Environment** — Node, Playwright and OS versions, plus each test's browser and viewport.
 - **Shard index** — from Playwright's own `--shard` config.
 
 Turn off either collector with `collectScmInfo: false` / `collectCiInfo: false` if you'd rather not
-store it. Set `PIWI_BRANCH` to override the resolved branch for a CI setup the chain does not cover.
+store it. Set `PIWI_BRANCH` (and `PIWI_BASE_BRANCH`) to override the resolved branches for a CI setup
+the chain does not cover.
 
 ## Sharding
 

@@ -671,8 +671,10 @@ const routes: RouteEntry[] = [
       await assertDemoEntityScope(ctx, 'run', +m[1]!);
       const baselineRaw = q?.get('baseline');
       const baselineId = baselineRaw ? Number(baselineRaw) : null;
+      const baseBranch = q?.get('baseBranch')?.trim() || null;
       return computeRunInsights(await getDemoDb(), +m[1]!, {
         baselineId: baselineId != null && Number.isFinite(baselineId) ? baselineId : null,
+        baseBranch,
       });
     },
   },
