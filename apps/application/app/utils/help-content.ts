@@ -252,7 +252,7 @@ export const HELP_TOPICS = {
     // Deliberately avoids the word "Export": the hint sits beside a button with
     // that label, and a substring role query would match both.
     title: 'Reading this offline',
-    text: 'Takes this investigation out of the dashboard as a file that needs no network and no Piwi server. HTML is one self-contained page with screenshots and video embedded; ZIP adds the raw artifacts — trace archives, full-size video, logs — plus a machine-readable data.json; PDF is the HTML printed from your browser. Evidence past the size budget is listed in the report as omitted rather than dropped quietly.',
+    text: 'Takes this investigation out of the dashboard as a file that needs no network and no Piwi server. HTML is one self-contained page with screenshots and video embedded; ZIP adds the raw artifacts — trace archives, full-size video, logs — plus a machine-readable data.json; PDF is a formatted document with screenshots embedded, generated directly with no browser print. Evidence past the size budget is listed in the report as omitted rather than dropped quietly.',
     doc: 'features/offline-export',
     envVars: ['PIWI_EXPORT_MAX_INLINE_BYTES', 'PIWI_EXPORT_MAX_BYTES', 'PIWI_EXPORT_MAX_CASES'],
   },

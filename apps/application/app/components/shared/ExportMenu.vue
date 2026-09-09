@@ -29,11 +29,11 @@ function withBase(path: string): string {
   return `${base.value}${path}`;
 }
 
-async function run(format: 'html' | 'zip' | 'json' | 'md') {
+async function run(format: 'html' | 'zip' | 'pdf' | 'json' | 'md') {
   open.value = false;
-  // ZIP is the only binary format; the rest are text the shell can write directly.
+  // ZIP and PDF are the binary formats; the rest are text the shell writes directly.
   await download(withBase(`${props.endpoint}?format=${format}`), `${props.baseName}.${format}`, {
-    binary: format === 'zip',
+    binary: format === 'zip' || format === 'pdf',
   });
 }
 
@@ -42,15 +42,6 @@ async function runPerfetto() {
   open.value = false;
   if (!props.perfettoEndpoint) return;
   await download(withBase(props.perfettoEndpoint), `${props.baseName}-perfetto.json`, { binary: false });
-}
-
-/**
- * PDF is the HTML report rendered in a tab and printed, so it opens the page
- * rather than downloading it — the server serves `print=1` inline for this.
- */
-function printReport() {
-  open.value = false;
-  window.open(withBase(`${props.endpoint}?format=html&print=1`), '_blank');
 }
 
 /**
@@ -130,11 +121,11 @@ function copyReport() {
             color="neutral"
             variant="ghost"
             class="justify-start"
-            icon="i-lucide-printer"
-            title="Opens the report with your browser's print dialog, for Save as PDF"
-            @click="printReport"
+            icon="i-lucide-file-down"
+            title="A formatted PDF with screenshots embedded — generated directly, no browser print needed"
+            @click="run('pdf')"
           >
-            PDF — via print
+            PDF — formatted document
           </UButton>
 
           <UButton

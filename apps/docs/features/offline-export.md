@@ -21,7 +21,7 @@ The **Export** button sits on a test-case execution (`/test-run-cases/:id`) and 
 |--------|--------------|
 | **HTML** | One file. Screenshots and video are embedded as `data:` URIs; error, steps, console, network, ARIA snapshot, test source and the AI diagnosis are all inline. Double-click it. |
 | **ZIP** | `report.html` plus the raw artifacts on disk — full-size video, reconstructed `trace.zip` archives, console and network logs — and `data.json` with everything the report shows, machine-readable. |
-| **PDF** | The HTML report opened with your browser's print dialog. Video and traces cannot survive printing; everything else does. |
+| **PDF** | A formatted document generated directly — no browser print dialog, so it is identical on the web app, the desktop app and the demo. Screenshots embed; video and trace archives can't live in a PDF, so they're listed as omitted (use ZIP to keep them). |
 | **Markdown / JSON** | Text only, for pasting into an issue or feeding an agent. |
 
 A cluster export carries the most recent failing execution of each affected test.
