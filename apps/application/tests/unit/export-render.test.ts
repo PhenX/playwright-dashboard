@@ -107,12 +107,12 @@ describe('renderExportHtml', () => {
     expect(renderExportHtml(bundle(), noAssets)).toContain("default-src 'none'");
   });
 
-  it('emits the auto-print hook only when asked', () => {
-    expect(renderExportHtml(bundle(), { ...noAssets, print: true })).toContain('window.print()');
-    const plain = renderExportHtml(bundle(), noAssets);
-    // The permanent button still exists; only the automatic call is conditional.
-    expect(plain).toContain('data-action="print"');
-    expect(plain).not.toContain("window.addEventListener('load'");
+  it('keeps a print button in the standalone report but never auto-prints', () => {
+    const html = renderExportHtml(bundle(), noAssets);
+    // The HTML file offers its own print button, but nothing prints on load —
+    // the dashboard's PDF export is a real generated file, not a print.
+    expect(html).toContain('data-action="print"');
+    expect(html).not.toContain("window.addEventListener('load'");
   });
 
   it('lists omitted evidence with a reason', () => {
@@ -249,6 +249,46 @@ describe('buildExport', () => {
   it('names the file after the kind, id and title', async () => {
     const built = await buildExport(bundle({ title: 'login works!' }), 'zip', 42, { reader, budget });
     expect(built.fileName).toBe('piwi-execution-42-login-works.zip');
+  });
+
+  it('produces a real PDF document', async () => {
+    const built = await buildExport(
+      bundle({
+        cases: [
+          exportCase({
+            detail: {
+              error: 'boom',
+              steps: [{ title: 'click', category: 'action', duration: 12 }],
+              consoleLogs: [{ type: 'error', text: 'bad' }],
+              networkRequests: [{ method: 'GET', status: 500, url: '/api/x' }],
+              testSource: 'await expect(page).toHaveTitle();',
+              ariaSnapshot: 'button "Save"',
+            },
+          }),
+        ],
+      }),
+      'pdf',
+      7,
+      { reader, budget },
+    );
+    expect(built.contentType).toBe('application/pdf');
+    expect(built.fileName).toBe('piwi-execution-7-login-works.pdf');
+    // A valid PDF begins with the %PDF- signature.
+    expect(decoder.decode(built.bytes.subarray(0, 5))).toBe('%PDF-');
+    expect(built.bytes.length).toBeGreaterThan(500);
+  });
+
+  it('lists evidence a PDF cannot carry as omitted', async () => {
+    const traceAsset = asset({
+      kind: 'trace',
+      name: 'trace.zip',
+      zipPath: 'evidence/login-1/traces/trace.zip',
+      contentType: 'application/zip',
+      storagePath: 'project-1/trace.zip',
+    });
+    const b = bundle({ cases: [exportCase({ assets: [traceAsset] })] });
+    await buildExport(b, 'pdf', 1, { reader, budget });
+    expect(b.omitted[0]).toMatchObject({ name: 'trace.zip', reason: 'pdf-format' });
   });
 
   it('reads back as JSON and Markdown without touching storage', async () => {
