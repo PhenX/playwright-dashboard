@@ -10,7 +10,7 @@ hero:
   actions:
     - theme: brand
       text: Getting started
-      link: /getting-started
+      link: /guide/getting-started
     - theme: alt
       text: Live demo
       link: https://piwitests.dev/demo/
