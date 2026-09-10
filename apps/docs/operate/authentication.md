@@ -120,6 +120,8 @@ The dashboard supports signing in with Google or GitHub as an alternative to use
 
 3. **Restart the application.** The login page now shows **Sign in with Google** and/or **Sign in with GitHub** buttons above the password form.
 
+> **Docker image and `npx @piwitests/server`:** the prebuilt server reads these settings from its runtime config, which only honors `NUXT_*` names, so the launcher maps each `PIWI_OAUTH_*` variable onto its `NUXT_OAUTH_*` counterpart at start and lists the configured providers in `NUXT_PUBLIC_OAUTH_PROVIDERS` for the login page. A `NUXT_*` value you set yourself is left untouched.
+
 > **Behind a reverse proxy:** set `PIWI_SITE_URL` to your public URL (e.g. `https://piwi.example.com`). The OAuth `redirect_uri` is built from it, so it stays consistent with the value you registered even when the proxy rewrites the request host. Without it the redirect URI is inferred from the incoming request.
 
 ### Restricting who can sign in (allowlists)
