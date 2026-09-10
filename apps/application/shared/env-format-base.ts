@@ -47,7 +47,7 @@ export interface EmitOptions {
   region?: string;
 }
 
-export const DEFAULT_IMAGE = 'phenx/piwitests-server:latest';
+export const DEFAULT_IMAGE = 'phenx/piwitests-server:0.27.0';
 export const DEFAULT_NAME = 'piwi';
 
 /** Where the container's persistent data (SQLite DB + report/trace storage) must be mounted. */

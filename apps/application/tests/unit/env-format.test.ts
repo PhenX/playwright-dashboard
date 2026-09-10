@@ -119,7 +119,7 @@ describe('docker run emitters', () => {
     expect(out).toContain('docker run -d --name piwi \\');
     expect(out).toContain("  -e PIWI_AUTH_ENABLED='true' \\");
     expect(out).toContain("  -e PIWI_AUTH_SECRET='s3cr'\\''et' \\");
-    expect(out.trimEnd().endsWith('phenx/piwitests-server:latest')).toBe(true);
+    expect(out.trimEnd().endsWith('phenx/piwitests-server:0.27.0')).toBe(true);
   });
 
   test('powershell form uses backtick continuations and doubled quotes', () => {
@@ -137,7 +137,7 @@ describe('docker run emitters', () => {
 describe('emitDockerCompose', () => {
   test('quotes every value and keeps the canonical service shape', () => {
     const out = emitDockerCompose([plain('PIWI_SMTP_PORT', '587'), plain('PIWI_AUTH_ENABLED', 'true')]);
-    expect(out).toContain('image: phenx/piwitests-server:latest');
+    expect(out).toContain('image: phenx/piwitests-server:0.27.0');
     expect(out).toContain("      PIWI_SMTP_PORT: '587'");
     expect(out).toContain("      PIWI_AUTH_ENABLED: 'true'");
     expect(out).toContain('- ./.data:/app/.data');
@@ -190,7 +190,7 @@ describe('emitRenderBlueprint', () => {
   test('pulls a qualified image onto a paid plan with a disk at the data mount', () => {
     const out = emitRenderBlueprint([plain('PIWI_AUTH_ENABLED', 'true')]);
     expect(out).toContain('runtime: image');
-    expect(out).toContain('url: docker.io/phenx/piwitests-server:latest');
+    expect(out).toContain('url: docker.io/phenx/piwitests-server:0.27.0');
     expect(out).toContain('healthCheckPath: /api/health');
     expect(out).toContain('mountPath: /app/.data');
     expect(out).toContain('autoDeploy: false');
@@ -262,7 +262,7 @@ describe('emitKoyebDeployUrl', () => {
 
   test('carries the whole service definition in the query string', () => {
     expect(out).toContain('https://app.koyeb.com/deploy?type=docker');
-    expect(out).toContain('image=docker.io/phenx/piwitests-server:latest');
+    expect(out).toContain('image=docker.io/phenx/piwitests-server:0.27.0');
     expect(out).toContain('ports=3000;http;/');
     expect(out).toContain('env[PIWI_AUTH_ENABLED]=true');
   });
