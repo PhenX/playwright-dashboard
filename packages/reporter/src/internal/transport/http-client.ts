@@ -235,6 +235,14 @@ export class HttpClient {
           res.on('end', () => {
             resolve({ status: res.statusCode ?? 0, text: data, headers: res.headers });
           });
+          // A connection dropped after the headers closes the response without
+          // `end`; an incomplete body is a failed request, not a pending one.
+          res.on('error', reject);
+          res.on('close', () => {
+            if (!res.complete) {
+              reject(new Error(`Connection to ${pathname} closed before the response completed`));
+            }
+          });
         },
       );
 
